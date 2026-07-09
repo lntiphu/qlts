@@ -844,7 +844,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCongTy(filterText = '') {
         tbodyCongTy.innerHTML = '';
         
-        const filtered = congTyList.filter(item => {
+        const sortedList = [...congTyList].sort((a, b) => {
+            const nameA = a.name ? a.name.trim() : "";
+            const nameB = b.name ? b.name.trim() : "";
+            return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+        });
+
+        const filtered = sortedList.filter(item => {
             const keyword = filterText.toLowerCase();
             return (
                 (item.code || '').toLowerCase().includes(keyword) ||
@@ -1030,7 +1036,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderAccount(filterText = '') {
         tbodyAccount.innerHTML = '';
         
-        const filtered = accountList.filter(item => {
+        const sortedList = [...accountList].sort((a, b) => {
+            const funcA = a.func ? a.func.trim() : "";
+            const funcB = b.func ? b.func.trim() : "";
+            return funcA.localeCompare(funcB, 'vi', { sensitivity: 'base' });
+        });
+
+        const filtered = sortedList.filter(item => {
             const keyword = filterText.toLowerCase();
             return (
                 (item.func || '').toLowerCase().includes(keyword) ||
@@ -1242,7 +1254,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderHoTro(filterText = '') {
         tbodyHoTro.innerHTML = '';
         
-        const filtered = hoTroList.filter(item => {
+        const sortedList = [...hoTroList].sort((a, b) => {
+            const unitA = a.unit ? a.unit.trim() : "";
+            const unitB = b.unit ? b.unit.trim() : "";
+            return unitA.localeCompare(unitB, 'vi', { sensitivity: 'base' });
+        });
+
+        const filtered = sortedList.filter(item => {
             const keyword = filterText.toLowerCase();
             return (
                 (item.unit || '').toLowerCase().includes(keyword) ||
@@ -1437,7 +1455,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderCamera(filterText = '') {
         tbodyCamera.innerHTML = '';
         
-        const filtered = cameraList.filter(item => {
+        const sortedList = [...cameraList].sort((a, b) => {
+            const projectA = a.project ? a.project.trim() : "";
+            const projectB = b.project ? b.project.trim() : "";
+            return projectA.localeCompare(projectB, 'vi', { sensitivity: 'base' });
+        });
+
+        const filtered = sortedList.filter(item => {
             const keyword = filterText.toLowerCase();
             return (
                 (item.project || '').toLowerCase().includes(keyword) ||
@@ -1698,7 +1722,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderTips(filterText = "") {
         tbodyTips.innerHTML = '';
         
-        const filtered = tipsList.filter(item => {
+        const sortedList = [...tipsList].sort((a, b) => {
+            const issueA = a.issue ? a.issue.trim() : "";
+            const issueB = b.issue ? b.issue.trim() : "";
+            return issueA.localeCompare(issueB, 'vi', { sensitivity: 'base' });
+        });
+
+        const filtered = sortedList.filter(item => {
             const keyword = filterText.toLowerCase();
             return (
                 (item.issue || '').toLowerCase().includes(keyword) ||
