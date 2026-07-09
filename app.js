@@ -140,13 +140,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 unit: db.unit,
                 name: db.name,
                 phone: db.phone || '',
-                scope: db.scope || ''
+                scope: db.scope || '',
+                hasZalo: !!db.has_zalo
             }),
             toDB: (js) => ({
                 unit: js.unit,
                 name: js.name,
                 phone: js.phone,
-                scope: js.scope
+                scope: js.scope,
+                has_zalo: js.hasZalo || false
             })
         },
         camera: {
@@ -1260,6 +1262,9 @@ document.addEventListener('DOMContentLoaded', () => {
         filtered.forEach((item, index) => {
             const originalIndex = hoTroList.indexOf(item);
             const tr = document.createElement('tr');
+            const zaloBadge = item.hasZalo 
+                ? ` <span class="badge" style="background-color: #0068ff; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px; font-weight: 600;">Zalo</span>` 
+                : '';
             
             tr.innerHTML = `
                 <td><strong>${item.unit}</strong></td>
@@ -1270,6 +1275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <a href="tel:${item.phone}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
                         <i class="fa-solid fa-phone"></i> ${item.phone}
                     </a>
+                    ${zaloBadge}
                 </td>
                 <td><span class="badge badge-yellow">${item.scope}</span></td>
                 <td>
@@ -1310,7 +1316,8 @@ document.addEventListener('DOMContentLoaded', () => {
             unit: document.getElementById('support-unit').value.trim(),
             name: document.getElementById('support-name').value.trim(),
             phone: document.getElementById('support-phone').value.trim(),
-            scope: document.getElementById('support-scope').value.trim()
+            scope: document.getElementById('support-scope').value.trim(),
+            hasZalo: document.getElementById('support-zalo').checked
         };
 
         if (indexStr === '') {
@@ -1362,6 +1369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('support-name').value = item.name;
         document.getElementById('support-phone').value = item.phone;
         document.getElementById('support-scope').value = item.scope;
+        document.getElementById('support-zalo').checked = !!item.hasZalo;
 
         btnSaveHoTro.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Hỗ Trợ';
         btnCancelHoTro.classList.remove('hidden');
@@ -1397,6 +1405,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSaveHoTro.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Hỗ Trợ';
         btnCancelHoTro.classList.add('hidden');
         formHoTro.reset();
+        document.getElementById('support-zalo').checked = false;
     }
 
     btnCancelHoTro.addEventListener('click', resetFormHoTro);
