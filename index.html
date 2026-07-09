@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-laptop-file brand-icon"></i>
+                <div class="brand-text">
+                    <h2>ERG Asset</h2>
+                    <span>Hệ thống Quản lý</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <button class="menu-item active" data-tab="tab-cap-phat-form">
+                    <i class="fa-solid fa-file-signature"></i>
+                    <span>Quản lý cấp phát</span>
+                </button>
+                <button class="menu-item" data-tab="tab-cap-phat-list">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Danh sách đã cấp phát</span>
+                </button>
+                <button class="menu-item" data-tab="tab-cong-ty">
+                    <i class="fa-solid fa-building"></i>
+                    <span>Thông tin công ty</span>
+                </button>
+                <button class="menu-item" data-tab="tab-account">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>Tài khoản (Account)</span>
+                </button>
+                <button class="menu-item" data-tab="tab-ho-tro">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Trang hỗ trợ</span>
+                </button>
+                <button class="menu-item" data-tab="tab-camera">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Thông tin camera</span>
+                </button>
+                <button class="menu-item" data-tab="tab-tips">
+                    <i class="fa-solid fa-lightbulb"></i>
+                    <span>Tip & Trick</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <p>&copy; 2026 ERG Asset</p>
+                <span class="version">Version 2.0</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-title">
+                    <h1 id="page-title">ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản</h1>
+                </div>
+                <div class="header-user">
+                    <div class="user-avatar">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <div class="user-info">
+                        <span class="user-name">Quản trị viên</span>
+                        <span class="user-role">ERG Member</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Notification container for alerts -->
+            <div id="toast-container" class="toast-container"></div>
+
+            <!-- Tab Content Sections -->
+            <div class="tab-container">
+                
+                <!-- 1.1 TAB THÔNG TIN QUẢN LÝ CẤP PHÁT -->
+                <section id="tab-cap-phat-form" class="tab-content active">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-file-invoice"></i> Thông Tin Quản Lý Cấp Phát</h3>
+                        
+                        <form id="form-cap-phat" autocomplete="off">
+                            <input type="hidden" id="edit-index-thiet-bi" value="">
+                            
+                            <!-- Subsection 1: Thông tin người sử dụng -->
+                            <div class="form-subsection">
+                                <h4 class="subsection-title">1. Thông tin người sử dụng</h4>
+                                <div class="grid grid-col-6">
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="user-id">ID (*)</label>
+                                        <input type="text" id="user-id" required placeholder="VD: NV001">
+                                        <span class="error-msg" id="err-user-id"></span>
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="user-name">Họ và Tên (*)</label>
+                                        <input type="text" id="user-name" required placeholder="Nhập họ và tên">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user-title">Chức Danh</label>
+                                        <input type="text" id="user-title" placeholder="VD: Nhân viên">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="user-dept">Phòng Ban</label>
+                                        <input type="text" id="user-dept" placeholder="VD: Hành chính, Kỹ thuật...">
+                                    </div>
+                                    <div class="form-group col-span-3-lg">
+                                        <label for="user-email">Email</label>
+                                        <input type="email" id="user-email" placeholder="VD: user@company.com">
+                                    </div>
+                                    <div class="form-group col-span-3-lg">
+                                        <label for="user-phone">Số Điện Thoại</label>
+                                        <input type="text" id="user-phone" placeholder="VD: 0987654321">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subsection 2: Thông tin thiết bị -->
+                            <div class="form-subsection">
+                                <h4 class="subsection-title">2. Thông tin thiết bị</h4>
+                                <div class="grid grid-col-6">
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-id">ID Thiết bị</label>
+                                        <input type="text" id="dev-id" placeholder="VD: PC-001 (Để trống nếu không cấp phát)">
+                                        <span class="error-msg" id="err-dev-id"></span>
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-type">Thiết Bị</label>
+                                        <input type="text" id="dev-type" placeholder="VD: Laptop, PC...">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-status">Tình trạng thiết bị</label>
+                                        <select id="dev-status">
+                                            <option value="">-- Chọn tình trạng --</option>
+                                            <option value="Mới">Mới</option>
+                                            <option value="Trung bình">Trung bình</option>
+                                            <option value="Cũ">Cũ</option>
+                                            <option value="Xem xét thay thế">Xem xét thay thế</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Cấu hình thiết bị -->
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-main">Mainboard</label>
+                                        <input type="text" id="dev-main" placeholder="VD: H610M">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-cpu">CPU</label>
+                                        <input type="text" id="dev-cpu" placeholder="VD: Core i5 12400F">
+                                    </div>
+                                    <div class="form-group col-span-1-lg">
+                                        <label for="dev-ram">RAM</label>
+                                         <select id="dev-ram">
+                                             <option value="">-- Chọn loại RAM --</option>
+                                             <optgroup label="DDR3">
+                                                 <option value="8GB DDR3">8GB DDR3</option>
+                                                 <option value="12GB DDR3">12GB DDR3</option>
+                                                 <option value="16GB DDR3">16GB DDR3</option>
+                                                 <option value="24GB DDR3">24GB DDR3</option>
+                                                 <option value="32GB DDR3">32GB DDR3</option>
+                                             </optgroup>
+                                             <optgroup label="DDR4">
+                                                 <option value="8GB DDR4">8GB DDR4</option>
+                                                 <option value="12GB DDR4">12GB DDR4</option>
+                                                 <option value="16GB DDR4">16GB DDR4</option>
+                                                 <option value="24GB DDR4">24GB DDR4</option>
+                                                 <option value="32GB DDR4">32GB DDR4</option>
+                                             </optgroup>
+                                             <optgroup label="DDR5">
+                                                 <option value="8GB DDR5">8GB DDR5</option>
+                                                 <option value="12GB DDR5">12GB DDR5</option>
+                                                 <option value="16GB DDR5">16GB DDR5</option>
+                                                 <option value="24GB DDR5">24GB DDR5</option>
+                                                 <option value="32GB DDR5">32GB DDR5</option>
+                                             </optgroup>
+                                         </select>
+                                    </div>
+                                    <div class="form-group col-span-1-lg">
+                                        <label for="dev-ram-slots">Số thanh RAM</label>
+                                        <select id="dev-ram-slots">
+                                            <option value="">-- Chọn --</option>
+                                            <option value="1 thanh">1 thanh</option>
+                                            <option value="2 thanh">2 thanh</option>
+                                            <option value="3 thanh">3 thanh</option>
+                                            <option value="4 thanh">4 thanh</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-ssd">SSD</label>
+                                        <input type="text" id="dev-ssd" placeholder="VD: 256GB">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-hdd">HDD</label>
+                                        <input type="text" id="dev-hdd" placeholder="VD: 1TB">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-vga">VGA</label>
+                                        <input type="text" id="dev-vga" placeholder="VD: GTX 1650">
+                                    </div>
+
+                                    <!-- Màn hình & Dây kết nối -->
+                                    <div class="form-group col-span-3-lg">
+                                        <label for="dev-monitor">Thông tin màn hình</label>
+                                        <input type="text" id="dev-monitor" placeholder="VD: Dell 24 inch, HP 21.5 inch...">
+                                    </div>
+                                    <div class="form-group col-span-3-lg">
+                                        <label for="dev-cables">Dây kết nối</label>
+                                        <select id="dev-cables">
+                                            <option value="">-- Chọn dây kết nối --</option>
+                                            <option value="VGA và nguồn nhỏ">VGA và nguồn nhỏ</option>
+                                            <option value="VGA và nguồn lớn">VGA và nguồn lớn</option>
+                                            <option value="HDMI và nguồn nhỏ">HDMI và nguồn nhỏ</option>
+                                            <option value="HDMI và nguồn lớn">HDMI và nguồn lớn</option>
+                                            <option value="DP và nguồn nhỏ">DP và nguồn nhỏ</option>
+                                            <option value="DP và nguồn lớn">DP và nguồn lớn</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Bản quyền -->
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="key-win">Key Windows</label>
+                                        <input type="text" id="key-win" placeholder="Nhập Key Windows">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="key-office">Key Office</label>
+                                        <input type="text" id="key-office" placeholder="Nhập Key Office">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="key-pdf">Key PDF</label>
+                                        <input type="text" id="key-pdf" placeholder="Nhập Key PDF">
+                                    </div>
+                                    <div class="form-group col-span-3-lg">
+                                        <label for="dev-notes">Ghi chú thiết bị</label>
+                                        <input type="text" id="dev-notes" placeholder="Nhập các vấn đề, lỗi hoặc lưu ý về thiết bị...">
+                                    </div>
+                                    <div class="form-group col-span-3-lg">
+                                        <label for="dev-apps">Các app bản quyền đã trang bị trên máy đó</label>
+                                        <input type="text" id="dev-apps" placeholder="VD: Photoshop, AutoCad, SolidWorks...">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-thiet-bi">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-thiet-bi">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- 1.2 TAB DANH SÁCH THIẾT BỊ ĐÃ CẤP PHÁT -->
+                <section id="tab-cap-phat-list" class="tab-content">
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-list-check"></i> Danh Sách Thiết Bị Đã Cấp Phát</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm theo ID, Tên NV, ID Thiết bị, Phòng ban...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-thiet-bi">
+                                <thead>
+                                    <tr>
+                                        <th>Thông tin Nhân Sự</th>
+                                        <th>Thiết bị</th>
+                                        <th>Cấu hình</th>
+                                        <th>Bản quyền (Keys)</th>
+                                        <th>Ghi chú</th>
+                                        <th class="text-center" style="width: 130px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-thiet-bi">
+                                    <!-- Dynamic rows loaded from app.js -->
+                                    <tr class="empty-row">
+                                        <td colspan="6" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
+                            <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
+                                Đang hiển thị <span id="pag-start">0</span> - <span id="pag-end">0</span> trên tổng số <span id="pag-total">0</span> bản ghi
+                            </div>
+                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" style="padding: 6px 12px; font-size: 13px;">
+                                    <i class="fa-solid fa-angle-left"></i> Trang trước
+                                </button>
+                                <span id="pag-current" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" style="padding: 6px 12px; font-size: 13px;">
+                                    Trang sau <i class="fa-solid fa-angle-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. TAB THÔNG TIN CÔNG TY -->
+                <section id="tab-cong-ty" class="tab-content">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-building"></i> Thông Tin Công Ty</h3>
+                        
+                        <form id="form-cong-ty" autocomplete="off">
+                            <input type="hidden" id="edit-index-cong-ty" value="">
+                            
+                            <div class="grid grid-col-6">
+                                <div class="form-group col-span-2-lg">
+                                    <label for="company-code">Ký hiệu công ty (*)</label>
+                                    <input type="text" id="company-code" required placeholder="VD: ERG">
+                                </div>
+                                <div class="form-group col-span-4-lg">
+                                    <label for="company-name">Tên công ty (*)</label>
+                                    <input type="text" id="company-name" required placeholder="Nhập tên đầy đủ của công ty">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="company-tax-code">Mã số thuế (*)</label>
+                                    <!-- type="text" to preserve leading zero -->
+                                    <input type="text" id="company-tax-code" required placeholder="VD: 0102345678" pattern="[0-9]{10,13}" title="Mã số thuế chỉ chứa từ 10 đến 13 chữ số">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="company-rep">Đại diện hồ sơ nội bộ (*)</label>
+                                    <input type="text" id="company-rep" required placeholder="Nhập tên người đại diện">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="company-rep-role">Chức vụ người đại diện (*)</label>
+                                    <input type="text" id="company-rep-role" required placeholder="VD: Giám đốc, Đại diện pháp luật">
+                                </div>
+                                <div class="form-group col-span-6">
+                                    <label for="company-address">Thông tin địa chỉ (*)</label>
+                                    <input type="text" id="company-address" required placeholder="Nhập địa chỉ trụ sở chính">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-cong-ty">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Công Ty
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-cong-ty">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Công Ty -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-list"></i> Danh Sách Công Ty</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-cong-ty" placeholder="Tìm kiếm theo Tên, Mã số thuế, Ký hiệu...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-cong-ty">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 100px;">Ký hiệu</th>
+                                        <th>Tên công ty</th>
+                                        <th style="width: 150px;">Mã số thuế</th>
+                                        <th>Đại diện hồ sơ</th>
+                                        <th>Địa chỉ</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-cong-ty">
+                                    <tr class="empty-row">
+                                        <td colspan="6" class="text-center text-muted">Chưa có dữ liệu công ty nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3. TAB TÀI KHOẢN (ACCOUNT) -->
+                <section id="tab-account" class="tab-content">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-user-shield"></i> Quản Lý Tài Khoản Hệ Thống</h3>
+                        
+                        <form id="form-account" autocomplete="off">
+                            <input type="hidden" id="edit-index-account" value="">
+                            
+                            <div class="grid grid-col-4">
+                                <div class="form-group col-span-2-lg">
+                                    <label for="acc-func">Chức năng (*)</label>
+                                    <input type="text" id="acc-func" required placeholder="VD: Quản trị mạng, Hosting, Mail Server">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="acc-ip">Địa chỉ IP</label>
+                                    <input type="text" id="acc-ip" placeholder="VD: 192.168.1.10">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="acc-username">Tên tài khoản (*)</label>
+                                    <input type="text" id="acc-username" required placeholder="Nhập tên đăng nhập">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="acc-password">Mật khẩu (*)</label>
+                                    <div class="password-input-wrapper">
+                                        <input type="password" id="acc-password" required placeholder="Nhập mật khẩu">
+                                        <button type="button" class="btn-toggle-password" tabindex="-1">
+                                            <i class="fa-regular fa-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-account">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Tài Khoản
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-account">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Account -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-key"></i> Danh Sách Tài Khoản</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-account" placeholder="Tìm kiếm theo Chức năng, IP, Tài khoản...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-account">
+                                <thead>
+                                    <tr>
+                                        <th>Chức năng</th>
+                                        <th style="width: 180px;">Địa chỉ IP</th>
+                                        <th>Tên tài khoản</th>
+                                        <th>Mật khẩu</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-account">
+                                    <tr class="empty-row">
+                                        <td colspan="5" class="text-center text-muted">Chưa có dữ liệu tài khoản!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. TAB TRANG HỖ TRỢ -->
+                <section id="tab-ho-tro" class="tab-content">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-headset"></i> Danh Sách Thông Tin Hỗ Trợ</h3>
+                        
+                        <form id="form-ho-tro" autocomplete="off">
+                            <input type="hidden" id="edit-index-ho-tro" value="">
+                            
+                            <div class="grid grid-col-4">
+                                <div class="form-group">
+                                    <label for="support-unit">Đơn vị (*)</label>
+                                    <input type="text" id="support-unit" required placeholder="VD: FPT Telecom, IT Nội Bộ">
+                                </div>
+                                <div class="form-group">
+                                    <label for="support-name">Họ và tên (*)</label>
+                                    <input type="text" id="support-name" required placeholder="Nhập họ tên kỹ thuật viên">
+                                </div>
+                                <div class="form-group">
+                                    <label for="support-phone">Số điện thoại (*)</label>
+                                    <input type="tel" id="support-phone" required placeholder="VD: 1900xxxx hoặc di động">
+                                </div>
+                                <div class="form-group">
+                                    <label for="support-scope">Nơi có thể hỗ trợ (*)</label>
+                                    <input type="text" id="support-scope" required placeholder="VD: Toàn quốc, Văn phòng HN">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-ho-tro">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Hỗ Trợ
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-ho-tro">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Hỗ Trợ -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-address-book"></i> Danh Sách Đầu Mối Hỗ Trợ</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-ho-tro" placeholder="Tìm kiếm theo Đơn vị, Họ tên, SĐT...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-ho-tro">
+                                <thead>
+                                    <tr>
+                                        <th>Đơn vị</th>
+                                        <th>Họ và tên</th>
+                                        <th>Số điện thoại</th>
+                                        <th>Phạm vi hỗ trợ</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-ho-tro">
+                                    <tr class="empty-row">
+                                        <td colspan="5" class="text-center text-muted">Chưa có thông tin hỗ trợ nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. TAB THÔNG TIN CAMERA -->
+                <section id="tab-camera" class="tab-content">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-video"></i> Quản Lý Thông Tin Camera</h3>
+                        
+                        <form id="form-camera" autocomplete="off">
+                            <input type="hidden" id="edit-index-camera" value="">
+                            
+                            <div class="grid grid-col-6">
+                                <div class="form-group col-span-2-lg">
+                                    <label for="cam-project">Dự án (*)</label>
+                                    <input type="text" id="cam-project" required placeholder="VD: Nhà kho NKC">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="cam-device">Thiết bị (*)</label>
+                                    <input type="text" id="cam-device" required placeholder="VD: Đầu ghi Hikvision 16 kênh">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="cam-ip-wan">IPWan / Tên miền (*)</label>
+                                    <input type="text" id="cam-ip-wan" required placeholder="VD: camera.nkc.com hoặc 113.x.x.x">
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="cam-rtsp">RTSP (Port)</label>
+                                    <input type="number" id="cam-rtsp" placeholder="VD: 554">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cam-tcp">TCP (Port)</label>
+                                    <input type="number" id="cam-tcp" placeholder="VD: 8000">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cam-http">HTTP (Port)</label>
+                                    <input type="number" id="cam-http" placeholder="VD: 80">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cam-https">HTTPS (Port)</label>
+                                    <input type="number" id="cam-https" placeholder="VD: 443">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cam-username">User (*)</label>
+                                    <input type="text" id="cam-username" required placeholder="VD: admin">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cam-password">Pass (*)</label>
+                                    <input type="text" id="cam-password" required placeholder="Mật khẩu camera">
+                                </div>
+
+                                <div class="form-group col-span-2-lg">
+                                    <label for="cam-onvif-user">ACC ONVIF</label>
+                                    <input type="text" id="cam-onvif-user" placeholder="User ONVIF (nếu có)">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="cam-onvif-pass">Pass ONVIF</label>
+                                    <input type="text" id="cam-onvif-pass" placeholder="Pass ONVIF (nếu có)">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="cam-notes">Ghi chú</label>
+                                    <input type="text" id="cam-notes" placeholder="Ghi chú thêm về camera">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-camera">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Camera
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-camera">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Camera -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-camera"></i> Danh Sách Thiết Bị Camera / Đầu ghi</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-camera" placeholder="Tìm kiếm theo Dự án, Thiết bị, IP...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-camera">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 180px;">Dự án & Thiết bị</th>
+                                        <th style="width: 200px;">Địa chỉ WAN / Tên miền</th>
+                                        <th style="width: 160px;">Thông tin Ports</th>
+                                        <th style="width: 160px;">Tài khoản truy cập</th>
+                                        <th style="width: 180px;">Tài khoản ONVIF</th>
+                                        <th>Ghi chú</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-camera">
+                                    <tr class="empty-row">
+                                        <td colspan="7" class="text-center text-muted">Chưa có thông tin camera nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. TAB TIP & TRICK -->
+                <section id="tab-tips" class="tab-content">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-lightbulb"></i> Quản Lý Tip & Trick</h3>
+                        
+                        <form id="form-tips" autocomplete="off">
+                            <input type="hidden" id="edit-index-tips" value="">
+                            
+                            <div class="grid grid-col-6">
+                                <div class="form-group col-span-6">
+                                    <label for="tip-issue">Tên lỗi (*)</label>
+                                    <input type="text" id="tip-issue" required placeholder="VD: Lỗi không kết nối được máy in qua mạng LAN">
+                                </div>
+                                <div class="form-group col-span-6">
+                                    <label for="tip-solution">Cách khắc phục (*)</label>
+                                    <textarea id="tip-solution" required rows="5" placeholder="Nhập chi tiết các bước xử lý lỗi..."></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-tips">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Tip & Trick
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-tips">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Tip & Trick -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-book-open"></i> Danh Sách Lỗi & Cách Khắc Phục</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-tips" placeholder="Tìm kiếm theo Tên lỗi, Cách khắc phục...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-tips">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 250px;">Tên lỗi</th>
+                                        <th>Cách khắc phục</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-tips">
+                                    <tr class="empty-row">
+                                        <td colspan="3" class="text-center text-muted">Chưa có bài viết Tip & Trick nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Lịch Sử Cập Nhật Chi Tiết -->
+    <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Cập Nhật Chi Tiết</h3>
+                <button class="modal-close" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="device-summary">
+                    <p><strong>Nhân sự:</strong> <span id="hist-user">—</span></p>
+                    <p><strong>Thiết bị:</strong> <span id="hist-device">—</span></p>
+                </div>
+                <div class="timeline" id="hist-timeline">
+                    <!-- Dynamic timeline entries -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-footer-close-modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
