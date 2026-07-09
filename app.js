@@ -843,6 +843,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSaveCongTy = document.getElementById('btn-save-cong-ty');
     const editIndexCongTy = document.getElementById('edit-index-cong-ty');
 
+    let currentPageCongTy = 1;
+    const itemsPerPageCongTy = 10;
+
     function renderCongTy(filterText = '') {
         tbodyCongTy.innerHTML = '';
         
@@ -862,7 +865,30 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        if (filtered.length === 0) {
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageCongTy) || 1;
+        if (currentPageCongTy > totalPages) currentPageCongTy = totalPages;
+        if (currentPageCongTy < 1) currentPageCongTy = 1;
+
+        const startIndex = (currentPageCongTy - 1) * itemsPerPageCongTy;
+        const endIndex = Math.min(startIndex + itemsPerPageCongTy, totalItems);
+
+        document.getElementById('pag-start-congty').innerText = totalItems > 0 ? startIndex + 1 : 0;
+        document.getElementById('pag-end-congty').innerText = endIndex;
+        document.getElementById('pag-total-congty').innerText = totalItems;
+        document.getElementById('pag-current-congty').innerText = `Trang ${currentPageCongTy} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-page-congty');
+        const btnNext = document.getElementById('btn-next-page-congty');
+        
+        btnPrev.disabled = currentPageCongTy === 1;
+        btnNext.disabled = currentPageCongTy === totalPages;
+        btnPrev.style.opacity = currentPageCongTy === 1 ? '0.5' : '1';
+        btnPrev.style.cursor = currentPageCongTy === 1 ? 'not-allowed' : 'pointer';
+        btnNext.style.opacity = currentPageCongTy === totalPages ? '0.5' : '1';
+        btnNext.style.cursor = currentPageCongTy === totalPages ? 'not-allowed' : 'pointer';
+
+        if (totalItems === 0) {
             tbodyCongTy.innerHTML = `
                 <tr class="empty-row">
                     <td colspan="6" class="text-center text-muted">Chưa có dữ liệu công ty nào!</td>
@@ -871,7 +897,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        filtered.forEach((item, index) => {
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item, index) => {
             const originalIndex = congTyList.indexOf(item);
             const tr = document.createElement('tr');
             
@@ -1021,7 +1049,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCancelCongTy.addEventListener('click', resetFormCongTy);
     searchCongTy.addEventListener('input', (e) => {
+        currentPageCongTy = 1;
         renderCongTy(e.target.value.trim());
+    });
+
+    document.getElementById('btn-prev-page-congty').addEventListener('click', () => {
+        if (currentPageCongTy > 1) {
+            currentPageCongTy--;
+            renderCongTy(searchCongTy.value.trim());
+        }
+    });
+
+    document.getElementById('btn-next-page-congty').addEventListener('click', () => {
+        const keyword = searchCongTy.value.trim().toLowerCase();
+        const totalItems = congTyList.filter(item => {
+            return (
+                (item.code || '').toLowerCase().includes(keyword) ||
+                (item.name || '').toLowerCase().includes(keyword) ||
+                (item.taxCode || '').toLowerCase().includes(keyword) ||
+                (item.rep || '').toLowerCase().includes(keyword)
+            );
+        }).length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageCongTy) || 1;
+        if (currentPageCongTy < totalPages) {
+            currentPageCongTy++;
+            renderCongTy(searchCongTy.value.trim());
+        }
     });
 
 
@@ -1034,6 +1087,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelAccount = document.getElementById('btn-cancel-account');
     const btnSaveAccount = document.getElementById('btn-save-account');
     const editIndexAccount = document.getElementById('edit-index-account');
+
+    let currentPageAccount = 1;
+    const itemsPerPageAccount = 10;
 
     function renderAccount(filterText = '') {
         tbodyAccount.innerHTML = '';
@@ -1053,7 +1109,30 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        if (filtered.length === 0) {
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageAccount) || 1;
+        if (currentPageAccount > totalPages) currentPageAccount = totalPages;
+        if (currentPageAccount < 1) currentPageAccount = 1;
+
+        const startIndex = (currentPageAccount - 1) * itemsPerPageAccount;
+        const endIndex = Math.min(startIndex + itemsPerPageAccount, totalItems);
+
+        document.getElementById('pag-start-account').innerText = totalItems > 0 ? startIndex + 1 : 0;
+        document.getElementById('pag-end-account').innerText = endIndex;
+        document.getElementById('pag-total-account').innerText = totalItems;
+        document.getElementById('pag-current-account').innerText = `Trang ${currentPageAccount} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-page-account');
+        const btnNext = document.getElementById('btn-next-page-account');
+        
+        btnPrev.disabled = currentPageAccount === 1;
+        btnNext.disabled = currentPageAccount === totalPages;
+        btnPrev.style.opacity = currentPageAccount === 1 ? '0.5' : '1';
+        btnPrev.style.cursor = currentPageAccount === 1 ? 'not-allowed' : 'pointer';
+        btnNext.style.opacity = currentPageAccount === totalPages ? '0.5' : '1';
+        btnNext.style.cursor = currentPageAccount === totalPages ? 'not-allowed' : 'pointer';
+
+        if (totalItems === 0) {
             tbodyAccount.innerHTML = `
                 <tr class="empty-row">
                     <td colspan="5" class="text-center text-muted">Chưa có dữ liệu tài khoản!</td>
@@ -1062,7 +1141,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        filtered.forEach((item, index) => {
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item, index) => {
             const originalIndex = accountList.indexOf(item);
             const tr = document.createElement('tr');
             
@@ -1249,7 +1330,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCancelAccount.addEventListener('click', resetFormAccount);
     searchAccount.addEventListener('input', (e) => {
+        currentPageAccount = 1;
         renderAccount(e.target.value.trim());
+    });
+
+    document.getElementById('btn-prev-page-account').addEventListener('click', () => {
+        if (currentPageAccount > 1) {
+            currentPageAccount--;
+            renderAccount(searchAccount.value.trim());
+        }
+    });
+
+    document.getElementById('btn-next-page-account').addEventListener('click', () => {
+        const keyword = searchAccount.value.trim().toLowerCase();
+        const totalItems = accountList.filter(item => {
+            return (
+                (item.func || '').toLowerCase().includes(keyword) ||
+                (item.ip || '').toLowerCase().includes(keyword) ||
+                (item.username || '').toLowerCase().includes(keyword)
+            );
+        }).length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageAccount) || 1;
+        if (currentPageAccount < totalPages) {
+            currentPageAccount++;
+            renderAccount(searchAccount.value.trim());
+        }
     });
 
 
@@ -1262,6 +1367,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelHoTro = document.getElementById('btn-cancel-ho-tro');
     const btnSaveHoTro = document.getElementById('btn-save-ho-tro');
     const editIndexHoTro = document.getElementById('edit-index-ho-tro');
+
+    let currentPageHoTro = 1;
+    const itemsPerPageHoTro = 10;
 
     function renderHoTro(filterText = '') {
         tbodyHoTro.innerHTML = '';
@@ -1282,7 +1390,30 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        if (filtered.length === 0) {
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageHoTro) || 1;
+        if (currentPageHoTro > totalPages) currentPageHoTro = totalPages;
+        if (currentPageHoTro < 1) currentPageHoTro = 1;
+
+        const startIndex = (currentPageHoTro - 1) * itemsPerPageHoTro;
+        const endIndex = Math.min(startIndex + itemsPerPageHoTro, totalItems);
+
+        document.getElementById('pag-start-hotro').innerText = totalItems > 0 ? startIndex + 1 : 0;
+        document.getElementById('pag-end-hotro').innerText = endIndex;
+        document.getElementById('pag-total-hotro').innerText = totalItems;
+        document.getElementById('pag-current-hotro').innerText = `Trang ${currentPageHoTro} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-page-hotro');
+        const btnNext = document.getElementById('btn-next-page-hotro');
+        
+        btnPrev.disabled = currentPageHoTro === 1;
+        btnNext.disabled = currentPageHoTro === totalPages;
+        btnPrev.style.opacity = currentPageHoTro === 1 ? '0.5' : '1';
+        btnPrev.style.cursor = currentPageHoTro === 1 ? 'not-allowed' : 'pointer';
+        btnNext.style.opacity = currentPageHoTro === totalPages ? '0.5' : '1';
+        btnNext.style.cursor = currentPageHoTro === totalPages ? 'not-allowed' : 'pointer';
+
+        if (totalItems === 0) {
             tbodyHoTro.innerHTML = `
                 <tr class="empty-row">
                     <td colspan="5" class="text-center text-muted">Chưa có thông tin hỗ trợ nào!</td>
@@ -1291,7 +1422,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        filtered.forEach((item, index) => {
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item, index) => {
             const originalIndex = hoTroList.indexOf(item);
             const tr = document.createElement('tr');
             const zaloBadge = item.hasZalo 
@@ -1450,7 +1583,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCancelHoTro.addEventListener('click', resetFormHoTro);
     searchHoTro.addEventListener('input', (e) => {
+        currentPageHoTro = 1;
         renderHoTro(e.target.value.trim());
+    });
+
+    document.getElementById('btn-prev-page-hotro').addEventListener('click', () => {
+        if (currentPageHoTro > 1) {
+            currentPageHoTro--;
+            renderHoTro(searchHoTro.value.trim());
+        }
+    });
+
+    document.getElementById('btn-next-page-hotro').addEventListener('click', () => {
+        const keyword = searchHoTro.value.trim().toLowerCase();
+        const totalItems = hoTroList.filter(item => {
+            return (
+                (item.unit || '').toLowerCase().includes(keyword) ||
+                (item.name || '').toLowerCase().includes(keyword) ||
+                (item.phone || '').toLowerCase().includes(keyword) ||
+                (item.scope || '').toLowerCase().includes(keyword)
+            );
+        }).length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageHoTro) || 1;
+        if (currentPageHoTro < totalPages) {
+            currentPageHoTro++;
+            renderHoTro(searchHoTro.value.trim());
+        }
     });
 
 
@@ -1463,6 +1621,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelCamera = document.getElementById('btn-cancel-camera');
     const btnSaveCamera = document.getElementById('btn-save-camera');
     const editIndexCamera = document.getElementById('edit-index-camera');
+
+    let currentPageCamera = 1;
+    const itemsPerPageCamera = 10;
 
     function renderCamera(filterText = '') {
         tbodyCamera.innerHTML = '';
@@ -1482,16 +1643,41 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        if (filtered.length === 0) {
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageCamera) || 1;
+        if (currentPageCamera > totalPages) currentPageCamera = totalPages;
+        if (currentPageCamera < 1) currentPageCamera = 1;
+
+        const startIndex = (currentPageCamera - 1) * itemsPerPageCamera;
+        const endIndex = Math.min(startIndex + itemsPerPageCamera, totalItems);
+
+        document.getElementById('pag-start-camera').innerText = totalItems > 0 ? startIndex + 1 : 0;
+        document.getElementById('pag-end-camera').innerText = endIndex;
+        document.getElementById('pag-total-camera').innerText = totalItems;
+        document.getElementById('pag-current-camera').innerText = `Trang ${currentPageCamera} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-page-camera');
+        const btnNext = document.getElementById('btn-next-page-camera');
+        
+        btnPrev.disabled = currentPageCamera === 1;
+        btnNext.disabled = currentPageCamera === totalPages;
+        btnPrev.style.opacity = currentPageCamera === 1 ? '0.5' : '1';
+        btnPrev.style.cursor = currentPageCamera === 1 ? 'not-allowed' : 'pointer';
+        btnNext.style.opacity = currentPageCamera === totalPages ? '0.5' : '1';
+        btnNext.style.cursor = currentPageCamera === totalPages ? 'not-allowed' : 'pointer';
+
+        if (totalItems === 0) {
             tbodyCamera.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="6" class="text-center text-muted">Chưa có thông tin camera nào!</td>
+                    <td colspan="7" class="text-center text-muted">Chưa có thông tin camera nào!</td>
                 </tr>
             `;
             return;
         }
 
-        filtered.forEach((item, index) => {
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item, index) => {
             const originalIndex = cameraList.indexOf(item);
             const tr = document.createElement('tr');
             
@@ -1717,7 +1903,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCancelCamera.addEventListener('click', resetFormCamera);
     searchCamera.addEventListener('input', (e) => {
+        currentPageCamera = 1;
         renderCamera(e.target.value.trim());
+    });
+
+    document.getElementById('btn-prev-page-camera').addEventListener('click', () => {
+        if (currentPageCamera > 1) {
+            currentPageCamera--;
+            renderCamera(searchCamera.value.trim());
+        }
+    });
+
+    document.getElementById('btn-next-page-camera').addEventListener('click', () => {
+        const keyword = searchCamera.value.trim().toLowerCase();
+        const totalItems = cameraList.filter(item => {
+            return (
+                (item.project || '').toLowerCase().includes(keyword) ||
+                (item.device || '').toLowerCase().includes(keyword) ||
+                (item.ipWan || '').toLowerCase().includes(keyword)
+            );
+        }).length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageCamera) || 1;
+        if (currentPageCamera < totalPages) {
+            currentPageCamera++;
+            renderCamera(searchCamera.value.trim());
+        }
     });
 
 
@@ -1730,6 +1940,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelTips = document.getElementById('btn-cancel-tips');
     const btnSaveTips = document.getElementById('btn-save-tips');
     const editIndexTips = document.getElementById('edit-index-tips');
+
+    let currentPageTips = 1;
+    const itemsPerPageTips = 10;
 
     function renderTips(filterText = "") {
         tbodyTips.innerHTML = '';
@@ -1748,7 +1961,30 @@ document.addEventListener('DOMContentLoaded', () => {
             );
         });
 
-        if (filtered.length === 0) {
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageTips) || 1;
+        if (currentPageTips > totalPages) currentPageTips = totalPages;
+        if (currentPageTips < 1) currentPageTips = 1;
+
+        const startIndex = (currentPageTips - 1) * itemsPerPageTips;
+        const endIndex = Math.min(startIndex + itemsPerPageTips, totalItems);
+
+        document.getElementById('pag-start-tips').innerText = totalItems > 0 ? startIndex + 1 : 0;
+        document.getElementById('pag-end-tips').innerText = endIndex;
+        document.getElementById('pag-total-tips').innerText = totalItems;
+        document.getElementById('pag-current-tips').innerText = `Trang ${currentPageTips} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-page-tips');
+        const btnNext = document.getElementById('btn-next-page-tips');
+        
+        btnPrev.disabled = currentPageTips === 1;
+        btnNext.disabled = currentPageTips === totalPages;
+        btnPrev.style.opacity = currentPageTips === 1 ? '0.5' : '1';
+        btnPrev.style.cursor = currentPageTips === 1 ? 'not-allowed' : 'pointer';
+        btnNext.style.opacity = currentPageTips === totalPages ? '0.5' : '1';
+        btnNext.style.cursor = currentPageTips === totalPages ? 'not-allowed' : 'pointer';
+
+        if (totalItems === 0) {
             tbodyTips.innerHTML = `
                 <tr class="empty-row">
                     <td colspan="3" class="text-center text-muted">Chưa có bài viết Tip & Trick nào!</td>
@@ -1757,7 +1993,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        filtered.forEach((item, index) => {
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item, index) => {
             const originalIndex = tipsList.indexOf(item);
             
             const tr = document.createElement('tr');
@@ -1898,7 +2136,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnCancelTips.addEventListener('click', resetFormTips);
     searchTips.addEventListener('input', (e) => {
+        currentPageTips = 1;
         renderTips(e.target.value.trim());
+    });
+
+    document.getElementById('btn-prev-page-tips').addEventListener('click', () => {
+        if (currentPageTips > 1) {
+            currentPageTips--;
+            renderTips(searchTips.value.trim());
+        }
+    });
+
+    document.getElementById('btn-next-page-tips').addEventListener('click', () => {
+        const keyword = searchTips.value.trim().toLowerCase();
+        const totalItems = tipsList.filter(item => {
+            return (
+                (item.issue || '').toLowerCase().includes(keyword) ||
+                (item.solution || '').toLowerCase().includes(keyword)
+            );
+        }).length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageTips) || 1;
+        if (currentPageTips < totalPages) {
+            currentPageTips++;
+            renderTips(searchTips.value.trim());
+        }
     });
 
 
