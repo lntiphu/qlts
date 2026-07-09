@@ -5,25 +5,180 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // -------------------------------------------------------------------------
-    // 1. STATE & LOCALSTORAGE INIT
+    // 1. SUPABASE CLIENT & STATE INIT
     // -------------------------------------------------------------------------
     
-    // Load lists from LocalStorage or initialize default arrays
-    let thietBiList = JSON.parse(localStorage.getItem('erg_thiet_bi') || localStorage.getItem('elodie_thiet_bi') || localStorage.getItem('nkc_thiet_bi')) || [];
-    let congTyList = JSON.parse(localStorage.getItem('erg_cong_ty') || localStorage.getItem('elodie_cong_ty') || localStorage.getItem('nkc_cong_ty')) || [];
-    let accountList = JSON.parse(localStorage.getItem('erg_account') || localStorage.getItem('elodie_account') || localStorage.getItem('nkc_account')) || [];
-    let hoTroList = JSON.parse(localStorage.getItem('erg_ho_tro') || localStorage.getItem('elodie_ho_tro') || localStorage.getItem('nkc_ho_tro')) || [];
-    let cameraList = JSON.parse(localStorage.getItem('erg_camera') || localStorage.getItem('elodie_camera') || localStorage.getItem('nkc_camera')) || [];
-    let tipsList = JSON.parse(localStorage.getItem('erg_tips') || localStorage.getItem('elodie_tips') || localStorage.getItem('nkc_tips')) || [];
+    const supabaseUrl = 'https://nmfeyrokdfjrsbmtxwts.supabase.co';
+    const supabaseKey = 'sb_publishable_xkNEdZfr-_zenINmII9zPg_VhaFkGOX';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // Helper functions to sync memory array with LocalStorage
+    let thietBiList = [];
+    let congTyList = [];
+    let accountList = [];
+    let hoTroList = [];
+    let cameraList = [];
+    let tipsList = [];
+
+    // Keep saveState empty mock for backward compatibility
     const saveState = {
-        thietBi: () => localStorage.setItem('erg_thiet_bi', JSON.stringify(thietBiList)),
-        congTy: () => localStorage.setItem('erg_cong_ty', JSON.stringify(congTyList)),
-        account: () => localStorage.setItem('erg_account', JSON.stringify(accountList)),
-        hoTro: () => localStorage.setItem('erg_ho_tro', JSON.stringify(hoTroList)),
-        camera: () => localStorage.setItem('erg_camera', JSON.stringify(cameraList)),
-        tips: () => localStorage.setItem('erg_tips', JSON.stringify(tipsList))
+        thietBi: () => {},
+        congTy: () => {},
+        account: () => {},
+        hoTro: () => {},
+        camera: () => {},
+        tips: () => {}
+    };
+
+    // Mappers to translate between Javascript camelCase and PostgreSQL snake_case
+    const mappers = {
+        thietBi: {
+            fromDB: (db) => ({
+                id: db.id,
+                userId: db.user_id,
+                userName: db.user_name,
+                userTitle: db.user_title || '',
+                userDept: db.user_dept || '',
+                userEmail: db.user_email || '',
+                userPhone: db.user_phone || '',
+                devId: db.dev_id || '',
+                devType: db.dev_type || '',
+                devMain: db.dev_main || '',
+                devCpu: db.dev_cpu || '',
+                devRam: db.dev_ram || '',
+                devRamSlots: db.dev_ram_slots || '',
+                devSsd: db.dev_ssd || '',
+                devHdd: db.dev_hdd || '',
+                devVga: db.dev_vga || '',
+                devMonitor: db.dev_monitor || '',
+                devCables: db.dev_cables || '',
+                keyWin: db.key_win || '',
+                keyOffice: db.key_office || '',
+                keyPdf: db.key_pdf || '',
+                devNotes: db.dev_notes || '',
+                devApps: db.dev_apps || '',
+                devStatus: db.dev_status || '',
+                updatedAt: db.updated_at || '',
+                history: db.history || []
+            }),
+            toDB: (js) => ({
+                user_id: js.userId,
+                user_name: js.userName,
+                user_title: js.userTitle,
+                user_dept: js.userDept,
+                user_email: js.userEmail,
+                user_phone: js.userPhone,
+                dev_id: js.devId || null,
+                dev_type: js.devType,
+                dev_main: js.devMain,
+                dev_cpu: js.devCpu,
+                dev_ram: js.devRam,
+                dev_ram_slots: js.devRamSlots,
+                dev_ssd: js.devSsd,
+                dev_hdd: js.devHdd,
+                dev_vga: js.devVga,
+                dev_monitor: js.devMonitor,
+                dev_cables: js.devCables,
+                key_win: js.keyWin,
+                key_office: js.keyOffice,
+                key_pdf: js.keyPdf,
+                dev_notes: js.devNotes,
+                dev_apps: js.devApps,
+                dev_status: js.devStatus,
+                updated_at: new Date().toISOString(),
+                history: js.history
+            })
+        },
+        congTy: {
+            fromDB: (db) => ({
+                id: db.id,
+                code: db.code,
+                name: db.name,
+                taxCode: db.tax_code || '',
+                rep: db.rep || '',
+                repRole: db.rep_role || '',
+                address: db.address || ''
+            }),
+            toDB: (js) => ({
+                code: js.code,
+                name: js.name,
+                tax_code: js.taxCode,
+                rep: js.rep,
+                rep_role: js.repRole,
+                address: js.address
+            })
+        },
+        account: {
+            fromDB: (db) => ({
+                id: db.id,
+                func: db.func,
+                ip: db.ip || '',
+                username: db.username,
+                password: db.password
+            }),
+            toDB: (js) => ({
+                func: js.func,
+                ip: js.ip,
+                username: js.username,
+                password: js.password
+            })
+        },
+        hoTro: {
+            fromDB: (db) => ({
+                id: db.id,
+                unit: db.unit,
+                name: db.name,
+                phone: db.phone || '',
+                scope: db.scope || ''
+            }),
+            toDB: (js) => ({
+                unit: js.unit,
+                name: js.name,
+                phone: js.phone,
+                scope: js.scope
+            })
+        },
+        camera: {
+            fromDB: (db) => ({
+                id: db.id,
+                project: db.project,
+                device: db.device || '',
+                ipWan: db.ip_wan || '',
+                rtsp: db.rtsp || '',
+                tcp: db.tcp || '',
+                http: db.http || '',
+                https: db.https || '',
+                username: db.username || '',
+                password: db.password || '',
+                notes: db.notes || '',
+                onvifUser: db.onvif_user || '',
+                onvifPass: db.onvif_pass || ''
+            }),
+            toDB: (js) => ({
+                project: js.project,
+                device: js.device,
+                ip_wan: js.ipWan,
+                rtsp: js.rtsp,
+                tcp: js.tcp,
+                http: js.http,
+                https: js.https,
+                username: js.username,
+                password: js.password,
+                notes: js.notes,
+                onvif_user: js.onvifUser,
+                onvif_pass: js.onvifPass
+            })
+        },
+        tips: {
+            fromDB: (db) => ({
+                id: db.id,
+                issue: db.issue,
+                solution: db.solution
+            }),
+            toDB: (js) => ({
+                issue: js.issue,
+                solution: js.solution
+            })
+        }
     };
 
     // -------------------------------------------------------------------------
@@ -404,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Submit Action for Asset management form
-    formCapPhat.addEventListener('submit', (e) => {
+    formCapPhat.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexThietBi.value;
 
@@ -453,8 +608,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 action: 'Tạo mới',
                 details: 'Khởi tạo cấp phát thiết bị ban đầu.'
             }];
-            thietBiList.push(data);
-            showToast('Thành công', 'Đã lưu thông tin cấp phát thiết bị mới!');
+            try {
+                const dbData = mappers.thietBi.toDB(data);
+                const { data: insertedData, error } = await supabaseClient
+                    .from('thiet_bi')
+                    .insert([dbData])
+                    .select();
+                if (error) throw error;
+                thietBiList.push(mappers.thietBi.fromDB(insertedData[0]));
+                showToast('Thành công', 'Đã lưu thông tin cấp phát thiết bị mới!');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể lưu dữ liệu lên Supabase!', 'error');
+                return;
+            }
         } else {
             const idx = parseInt(indexStr);
             const oldItem = thietBiList[idx];
@@ -507,12 +674,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.updatedAt = oldItem.updatedAt || formattedDate;
             }
             
-            thietBiList[idx] = data;
-            showToast('Thành công', 'Đã cập nhật thông tin cấp phát thiết bị!');
-            resetFormThietBi();
+            try {
+                const dbData = mappers.thietBi.toDB(data);
+                const { data: updatedData, error } = await supabaseClient
+                    .from('thiet_bi')
+                    .update(dbData)
+                    .eq('id', oldItem.id)
+                    .select();
+                if (error) throw error;
+                thietBiList[idx] = mappers.thietBi.fromDB(updatedData[0]);
+                showToast('Thành công', 'Đã cập nhật thông tin cấp phát thiết bị!');
+                resetFormThietBi();
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể cập nhật dữ liệu lên Supabase!', 'error');
+                return;
+            }
         }
 
-        saveState.thietBi();
         renderThietBi();
         formCapPhat.reset();
         resetFormThietBi();
@@ -567,16 +746,26 @@ document.addEventListener('DOMContentLoaded', () => {
         devIdInput.style.borderColor = '';
     }
 
-    function deleteThietBi(index) {
-        if (confirm(`Bạn có chắc chắn muốn xóa cấp phát thiết bị của nhân sự ${thietBiList[index].userName} (${thietBiList[index].userId})?`)) {
-            thietBiList.splice(index, 1);
-            saveState.thietBi();
-            renderThietBi();
-            showToast('Đã xóa', 'Xóa thông tin cấp phát thành công!', 'warning');
-            
-            // If deleting the item currently being edited, reset the form status
-            if (editIndexThietBi.value === index.toString()) {
-                resetFormThietBi();
+    async function deleteThietBi(index) {
+        const item = thietBiList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa cấp phát thiết bị của nhân sự ${item.userName} (${item.userId})?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('thiet_bi')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                thietBiList.splice(index, 1);
+                renderThietBi();
+                showToast('Đã xóa', 'Xóa thông tin cấp phát thành công!', 'warning');
+                
+                // If deleting the item currently being edited, reset the form status
+                if (editIndexThietBi.value === index.toString()) {
+                    resetFormThietBi();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể xóa dữ liệu trên Supabase!', 'error');
             }
         }
     }
@@ -705,7 +894,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    formCongTy.addEventListener('submit', (e) => {
+    formCongTy.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexCongTy.value;
 
@@ -719,16 +908,41 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (indexStr === '') {
-            congTyList.push(data);
-            showToast('Thành công', 'Đã lưu thông tin công ty mới!');
+            try {
+                const dbData = mappers.congTy.toDB(data);
+                const { data: insertedData, error } = await supabaseClient
+                    .from('cong_ty')
+                    .insert([dbData])
+                    .select();
+                if (error) throw error;
+                congTyList.push(mappers.congTy.fromDB(insertedData[0]));
+                showToast('Thành công', 'Đã lưu thông tin công ty mới!');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể lưu dữ liệu công ty lên Supabase!', 'error');
+                return;
+            }
         } else {
             const idx = parseInt(indexStr);
-            congTyList[idx] = data;
-            showToast('Thành công', 'Đã cập nhật thông tin công ty!');
-            resetFormCongTy();
+            const oldItem = congTyList[idx];
+            try {
+                const dbData = mappers.congTy.toDB(data);
+                const { data: updatedData, error } = await supabaseClient
+                    .from('cong_ty')
+                    .update(dbData)
+                    .eq('id', oldItem.id)
+                    .select();
+                if (error) throw error;
+                congTyList[idx] = mappers.congTy.fromDB(updatedData[0]);
+                showToast('Thành công', 'Đã cập nhật thông tin công ty!');
+                resetFormCongTy();
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể cập nhật dữ liệu công ty lên Supabase!', 'error');
+                return;
+            }
         }
 
-        saveState.congTy();
         renderCongTy();
         formCongTy.reset();
         resetFormCongTy();
@@ -751,15 +965,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.tab-container').scrollTop = 0;
     }
 
-    function deleteCongTy(index) {
-        if (confirm(`Bạn có chắc chắn muốn xóa thông tin công ty: ${congTyList[index].name}?`)) {
-            congTyList.splice(index, 1);
-            saveState.congTy();
-            renderCongTy();
-            showToast('Đã xóa', 'Xóa thông tin công ty thành công!', 'warning');
+    async function deleteCongTy(index) {
+        const item = congTyList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa thông tin công ty: ${item.name}?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('cong_ty')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                congTyList.splice(index, 1);
+                renderCongTy();
+                showToast('Đã xóa', 'Xóa thông tin công ty thành công!', 'warning');
 
-            if (editIndexCongTy.value === index.toString()) {
-                resetFormCongTy();
+                if (editIndexCongTy.value === index.toString()) {
+                    resetFormCongTy();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể xóa dữ liệu công ty trên Supabase!', 'error');
             }
         }
     }
@@ -875,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    formAccount.addEventListener('submit', (e) => {
+    formAccount.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexAccount.value;
 
@@ -887,16 +1111,41 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (indexStr === '') {
-            accountList.push(data);
-            showToast('Thành công', 'Đã lưu tài khoản mới!');
+            try {
+                const dbData = mappers.account.toDB(data);
+                const { data: insertedData, error } = await supabaseClient
+                    .from('account')
+                    .insert([dbData])
+                    .select();
+                if (error) throw error;
+                accountList.push(mappers.account.fromDB(insertedData[0]));
+                showToast('Thành công', 'Đã lưu tài khoản mới!');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể lưu tài khoản lên Supabase!', 'error');
+                return;
+            }
         } else {
             const idx = parseInt(indexStr);
-            accountList[idx] = data;
-            showToast('Thành công', 'Đã cập nhật thông tin tài khoản!');
-            resetFormAccount();
+            const oldItem = accountList[idx];
+            try {
+                const dbData = mappers.account.toDB(data);
+                const { data: updatedData, error } = await supabaseClient
+                    .from('account')
+                    .update(dbData)
+                    .eq('id', oldItem.id)
+                    .select();
+                if (error) throw error;
+                accountList[idx] = mappers.account.fromDB(updatedData[0]);
+                showToast('Thành công', 'Đã cập nhật thông tin tài khoản!');
+                resetFormAccount();
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể cập nhật tài khoản lên Supabase!', 'error');
+                return;
+            }
         }
 
-        saveState.account();
         renderAccount();
         formAccount.reset();
         resetFormAccount();
@@ -923,15 +1172,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.tab-container').scrollTop = 0;
     }
 
-    function deleteAccount(index) {
-        if (confirm(`Bạn có chắc chắn muốn xóa tài khoản thuộc chức năng: ${accountList[index].func}?`)) {
-            accountList.splice(index, 1);
-            saveState.account();
-            renderAccount();
-            showToast('Đã xóa', 'Xóa tài khoản thành công!', 'warning');
+    async function deleteAccount(index) {
+        const item = accountList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa tài khoản thuộc chức năng: ${item.func}?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('account')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                accountList.splice(index, 1);
+                renderAccount();
+                showToast('Đã xóa', 'Xóa tài khoản thành công!', 'warning');
 
-            if (editIndexAccount.value === index.toString()) {
-                resetFormAccount();
+                if (editIndexAccount.value === index.toString()) {
+                    resetFormAccount();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể xóa tài khoản trên Supabase!', 'error');
             }
         }
     }
@@ -1031,7 +1290,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    formHoTro.addEventListener('submit', (e) => {
+    formHoTro.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexHoTro.value;
 
@@ -1043,16 +1302,41 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (indexStr === '') {
-            hoTroList.push(data);
-            showToast('Thành công', 'Đã thêm thông tin hỗ trợ mới!');
+            try {
+                const dbData = mappers.hoTro.toDB(data);
+                const { data: insertedData, error } = await supabaseClient
+                    .from('ho_tro')
+                    .insert([dbData])
+                    .select();
+                if (error) throw error;
+                hoTroList.push(mappers.hoTro.fromDB(insertedData[0]));
+                showToast('Thành công', 'Đã thêm thông tin hỗ trợ mới!');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể lưu thông tin hỗ trợ lên Supabase!', 'error');
+                return;
+            }
         } else {
             const idx = parseInt(indexStr);
-            hoTroList[idx] = data;
-            showToast('Thành công', 'Đã cập nhật thông tin hỗ trợ!');
-            resetFormHoTro();
+            const oldItem = hoTroList[idx];
+            try {
+                const dbData = mappers.hoTro.toDB(data);
+                const { data: updatedData, error } = await supabaseClient
+                    .from('ho_tro')
+                    .update(dbData)
+                    .eq('id', oldItem.id)
+                    .select();
+                if (error) throw error;
+                hoTroList[idx] = mappers.hoTro.fromDB(updatedData[0]);
+                showToast('Thành công', 'Đã cập nhật thông tin hỗ trợ!');
+                resetFormHoTro();
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể cập nhật thông tin hỗ trợ lên Supabase!', 'error');
+                return;
+            }
         }
 
-        saveState.hoTro();
         renderHoTro();
         formHoTro.reset();
         resetFormHoTro();
@@ -1073,15 +1357,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.tab-container').scrollTop = 0;
     }
 
-    function deleteHoTro(index) {
-        if (confirm(`Bạn có chắc chắn muốn xóa thông tin hỗ trợ của đầu mối: ${hoTroList[index].name}?`)) {
-            hoTroList.splice(index, 1);
-            saveState.hoTro();
-            renderHoTro();
-            showToast('Đã xóa', 'Xóa thông tin hỗ trợ thành công!', 'warning');
+    async function deleteHoTro(index) {
+        const item = hoTroList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa thông tin hỗ trợ của đầu mối: ${item.name}?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('ho_tro')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                hoTroList.splice(index, 1);
+                renderHoTro();
+                showToast('Đã xóa', 'Xóa thông tin hỗ trợ thành công!', 'warning');
 
-            if (editIndexHoTro.value === index.toString()) {
-                resetFormHoTro();
+                if (editIndexHoTro.value === index.toString()) {
+                    resetFormHoTro();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể xóa thông tin hỗ trợ trên Supabase!', 'error');
             }
         }
     }
@@ -1241,7 +1535,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    formCamera.addEventListener('submit', (e) => {
+    formCamera.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexCamera.value;
 
@@ -1261,16 +1555,41 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (indexStr === '') {
-            cameraList.push(data);
-            showToast('Thành công', 'Đã lưu thông tin camera mới!');
+            try {
+                const dbData = mappers.camera.toDB(data);
+                const { data: insertedData, error } = await supabaseClient
+                    .from('camera')
+                    .insert([dbData])
+                    .select();
+                if (error) throw error;
+                cameraList.push(mappers.camera.fromDB(insertedData[0]));
+                showToast('Thành công', 'Đã lưu thông tin camera mới!');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể lưu camera lên Supabase!', 'error');
+                return;
+            }
         } else {
             const idx = parseInt(indexStr);
-            cameraList[idx] = data;
-            showToast('Thành công', 'Đã cập nhật thông tin camera!');
-            resetFormCamera();
+            const oldItem = cameraList[idx];
+            try {
+                const dbData = mappers.camera.toDB(data);
+                const { data: updatedData, error } = await supabaseClient
+                    .from('camera')
+                    .update(dbData)
+                    .eq('id', oldItem.id)
+                    .select();
+                if (error) throw error;
+                cameraList[idx] = mappers.camera.fromDB(updatedData[0]);
+                showToast('Thành công', 'Đã cập nhật thông tin camera!');
+                resetFormCamera();
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể cập nhật camera lên Supabase!', 'error');
+                return;
+            }
         }
 
-        saveState.camera();
         renderCamera();
         formCamera.reset();
         resetFormCamera();
@@ -1299,15 +1618,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.tab-container').scrollTop = 0;
     }
 
-    function deleteCamera(index) {
-        if (confirm(`Bạn có chắc chắn muốn xóa thông tin camera dự án: ${cameraList[index].project}?`)) {
-            cameraList.splice(index, 1);
-            saveState.camera();
-            renderCamera();
-            showToast('Đã xóa', 'Xóa thông tin camera thành công!', 'warning');
+    async function deleteCamera(index) {
+        const item = cameraList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa thông tin camera dự án: ${item.project}?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('camera')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                cameraList.splice(index, 1);
+                renderCamera();
+                showToast('Đã xóa', 'Xóa thông tin camera thành công!', 'warning');
 
-            if (editIndexCamera.value === index.toString()) {
-                resetFormCamera();
+                if (editIndexCamera.value === index.toString()) {
+                    resetFormCamera();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể xóa camera trên Supabase!', 'error');
             }
         }
     }
@@ -1401,7 +1730,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    formTips.addEventListener('submit', (e) => {
+    formTips.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexTips.value;
 
@@ -1411,16 +1740,41 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         if (indexStr === '') {
-            tipsList.push(data);
-            showToast('Thành công', 'Đã lưu Tip & Trick mới!');
+            try {
+                const dbData = mappers.tips.toDB(data);
+                const { data: insertedData, error } = await supabaseClient
+                    .from('tips')
+                    .insert([dbData])
+                    .select();
+                if (error) throw error;
+                tipsList.push(mappers.tips.fromDB(insertedData[0]));
+                showToast('Thành công', 'Đã lưu Tip & Trick mới!');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể lưu bài viết lên Supabase!', 'error');
+                return;
+            }
         } else {
             const idx = parseInt(indexStr);
-            tipsList[idx] = data;
-            showToast('Thành công', 'Đã cập nhật bài viết Tip & Trick!');
-            resetFormTips();
+            const oldItem = tipsList[idx];
+            try {
+                const dbData = mappers.tips.toDB(data);
+                const { data: updatedData, error } = await supabaseClient
+                    .from('tips')
+                    .update(dbData)
+                    .eq('id', oldItem.id)
+                    .select();
+                if (error) throw error;
+                tipsList[idx] = mappers.tips.fromDB(updatedData[0]);
+                showToast('Thành công', 'Đã cập nhật bài viết Tip & Trick!');
+                resetFormTips();
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể cập nhật bài viết lên Supabase!', 'error');
+                return;
+            }
         }
 
-        saveState.tips();
         renderTips();
         formTips.reset();
         resetFormTips();
@@ -1439,15 +1793,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.tab-container').scrollTop = 0;
     }
 
-    function deleteTips(index) {
-        if (confirm(`Bạn có chắc chắn muốn xóa bài viết Tip & Trick: "${tipsList[index].issue}"?`)) {
-            tipsList.splice(index, 1);
-            saveState.tips();
-            renderTips();
-            showToast('Đã xóa', 'Xóa Tip & Trick thành công!', 'warning');
+    async function deleteTips(index) {
+        const item = tipsList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa bài viết Tip & Trick: "${item.issue}"?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('tips')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                tipsList.splice(index, 1);
+                renderTips();
+                showToast('Đã xóa', 'Xóa Tip & Trick thành công!', 'warning');
 
-            if (editIndexTips.value === index.toString()) {
-                resetFormTips();
+                if (editIndexTips.value === index.toString()) {
+                    resetFormTips();
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi', 'Không thể xóa bài viết trên Supabase!', 'error');
             }
         }
     }
@@ -1466,16 +1830,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // =========================================================================
-    // 10. INITIALIZATION RUN
+    // 10. INITIALIZATION RUN (FETCH FROM SUPABASE)
     // =========================================================================
-    // Render all lists at initial load
-    renderThietBi();
-    renderCongTy();
-    renderAccount();
-    renderHoTro();
-    renderCamera();
-    renderTips();
+    async function initApp() {
+        showToast('Đang kết nối', 'Đang đồng bộ dữ liệu với Supabase...', 'warning');
+        
+        const fetchPromises = [
+            supabaseClient.from('thiet_bi').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                thietBiList = (data || []).map(mappers.thietBi.fromDB);
+                renderThietBi();
+            }),
+            supabaseClient.from('cong_ty').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                congTyList = (data || []).map(mappers.congTy.fromDB);
+                renderCongTy();
+            }),
+            supabaseClient.from('account').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                accountList = (data || []).map(mappers.account.fromDB);
+                renderAccount();
+            }),
+            supabaseClient.from('ho_tro').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                hoTroList = (data || []).map(mappers.hoTro.fromDB);
+                renderHoTro();
+            }),
+            supabaseClient.from('camera').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                cameraList = (data || []).map(mappers.camera.fromDB);
+                renderCamera();
+            }),
+            supabaseClient.from('tips').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                tipsList = (data || []).map(mappers.tips.fromDB);
+                renderTips();
+            })
+        ];
 
-    // Show a welcome message toast
-    showToast('Chào mừng', 'ERG Asset đã sẵn sàng hoạt động!', 'success');
+        try {
+            await Promise.all(fetchPromises);
+            showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
+        } catch (err) {
+            console.error('Initial load failed:', err);
+            showToast('Lỗi đồng bộ', 'Không thể kết nối đến Supabase. Vui lòng kiểm tra lại cấu hình hoặc bảng dữ liệu.', 'error');
+        }
+    }
+
+    initApp();
 });
