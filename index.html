@@ -16,30 +16,28 @@
 <body>
     <!-- Login Screen -->
     <div id="login-screen" class="login-screen">
-        <div class="login-background">
-            <div class="bubble bubble-1"></div>
-            <div class="bubble bubble-2"></div>
-        </div>
-        <div class="login-card">
-            <div class="login-header">
-                <i class="fa-solid fa-laptop-file login-logo"></i>
-                <h2>ERG Asset</h2>
-                <p>Hệ thống Quản lý Thiết bị & Tài sản</p>
+        <div class="login-card-corporate">
+            <div class="login-header-corporate">
+                <h2>ERG ID PORTAL</h2>
+                <p>Trung tâm Quản trị Định danh</p>
             </div>
-            <form id="form-login">
-                <div class="form-group">
-                    <label for="login-username"><i class="fa-solid fa-user"></i> Tên đăng nhập</label>
-                    <input type="text" id="login-username" placeholder="Nhập tài khoản admin" required>
-                </div>
-                <div class="form-group password-group">
-                    <label for="login-password"><i class="fa-solid fa-lock"></i> Mật khẩu</label>
-                    <div style="position: relative;">
-                        <input type="password" id="login-password" placeholder="Nhập mật khẩu" required>
+            <div class="login-body-corporate">
+                <p class="login-instruction">Vui lòng sử dụng tài khoản ERG ID để truy cập không gian làm việc.</p>
+                <form id="form-login">
+                    <div class="login-input-group">
+                        <span class="input-icon"><i class="fa-solid fa-at"></i></span>
+                        <input type="text" id="login-username" placeholder="tiphu@erasgroup.vn" required>
+                    </div>
+                    <div class="login-input-group password-group">
+                        <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                        <input type="password" id="login-password" placeholder="••••••••" required>
                         <button type="button" class="btn-toggle-password" id="btn-toggle-login-pass"><i class="fa-regular fa-eye"></i></button>
                     </div>
-                </div>
-                <button type="submit" class="btn-login">Đăng Nhập <i class="fa-solid fa-right-to-bracket"></i></button>
-            </form>
+                    <button type="submit" class="btn-login-corporate">
+                        <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập Hệ thống
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 

@@ -10,7 +10,19 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const supabaseUrl = 'https://nmfeyrokdfjrsbmtxwts.supabase.co';
     const supabaseKey = 'sb_publishable_xkNEdZfr-_zenINmII9zPg_VhaFkGOX';
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    let supabaseClient = null;
+    try {
+        if (typeof supabase !== 'undefined') {
+            supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+        } else {
+            console.error("Supabase SDK is not loaded. Please make sure index.html has the Supabase script tag.");
+            setTimeout(() => {
+                showToast("Lỗi hệ thống", "Không thể nạp thư viện Supabase. Hãy kiểm tra lại file index.html!", "error");
+            }, 1000);
+        }
+    } catch (e) {
+        console.error("Error initializing Supabase client:", e);
+    }
 
     let thietBiList = [];
     let congTyList = [];
@@ -1833,6 +1845,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 10. INITIALIZATION RUN (FETCH FROM SUPABASE)
     // =========================================================================
     async function initApp() {
+        if (!supabaseClient) {
+            showToast('Lỗi đồng bộ', 'Không thể kết nối đến Supabase. Chi tiết: Thư viện Supabase chưa được nạp (vui lòng kiểm tra lại file index.html).', 'error');
+            return;
+        }
         showToast('Đang kết nối', 'Đang đồng bộ dữ liệu với Supabase...', 'warning');
         
         const fetchPromises = [
@@ -1909,11 +1925,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const passwordInput = document.getElementById('login-password').value;
 
             // Admin credential check
-            if (usernameInput === 'admin' && passwordInput === 'Cntt@262') {
+            if ((usernameInput === 'admin' || usernameInput === 'tiphu@erasgroup.vn') && passwordInput === 'Cntt@262') {
                 localStorage.setItem('erg_asset_logged_in', 'true');
                 showToast('Đăng nhập', 'Đăng nhập thành công! Đang đồng bộ...', 'success');
-                loginScreen.classList.add('hidden');
-                appContainer.classList.remove('hidden');
+                if (loginScreen) loginScreen.classList.add('hidden');
+                if (appContainer) appContainer.classList.remove('hidden');
                 initApp();
             } else {
                 showToast('Lỗi đăng nhập', 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
