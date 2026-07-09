@@ -141,14 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 name: db.name,
                 phone: db.phone || '',
                 scope: db.scope || '',
-                hasZalo: !!db.has_zalo
+                hasZalo: !!db.has_zalo,
+                role: db.role || ''
             }),
             toDB: (js) => ({
                 unit: js.unit,
                 name: js.name,
                 phone: js.phone,
                 scope: js.scope,
-                has_zalo: js.hasZalo || false
+                has_zalo: js.hasZalo || false,
+                role: js.role
             })
         },
         camera: {
@@ -1266,10 +1268,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ? ` <span class="badge" style="background-color: #0068ff; color: white; padding: 2px 6px; border-radius: 4px; font-size: 11px; margin-left: 4px; font-weight: 600;">Zalo</span>` 
                 : '';
             
+            const roleSubText = item.role 
+                ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${item.role}</div>` 
+                : '';
+
             tr.innerHTML = `
                 <td><strong>${item.unit}</strong></td>
                 <td>
                     <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                    ${roleSubText}
                 </td>
                 <td>
                     <a href="tel:${item.phone}" style="color: var(--primary-color); text-decoration: none; font-weight: 500;">
@@ -1317,7 +1324,8 @@ document.addEventListener('DOMContentLoaded', () => {
             name: document.getElementById('support-name').value.trim(),
             phone: document.getElementById('support-phone').value.trim(),
             scope: document.getElementById('support-scope').value.trim(),
-            hasZalo: document.getElementById('support-zalo').checked
+            hasZalo: document.getElementById('support-zalo').checked,
+            role: document.getElementById('support-role').value.trim()
         };
 
         if (indexStr === '') {
@@ -1370,6 +1378,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('support-phone').value = item.phone;
         document.getElementById('support-scope').value = item.scope;
         document.getElementById('support-zalo').checked = !!item.hasZalo;
+        document.getElementById('support-role').value = item.role || '';
 
         btnSaveHoTro.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Hỗ Trợ';
         btnCancelHoTro.classList.remove('hidden');
@@ -1406,6 +1415,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCancelHoTro.classList.add('hidden');
         formHoTro.reset();
         document.getElementById('support-zalo').checked = false;
+        document.getElementById('support-role').value = '';
     }
 
     btnCancelHoTro.addEventListener('click', resetFormHoTro);

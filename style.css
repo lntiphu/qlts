@@ -281,6 +281,10 @@ body {
     grid-template-columns: repeat(4, 1fr);
 }
 
+.grid-col-5 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
 .grid-col-6 {
     grid-template-columns: repeat(6, 1fr);
 }
@@ -302,7 +306,7 @@ body {
 }
 
 @media (max-width: 1024px) {
-    .grid-col-4, .grid-col-6 {
+    .grid-col-4, .grid-col-5, .grid-col-6 {
         grid-template-columns: repeat(2, 1fr);
     }
     .col-span-2-lg, .col-span-3-lg, .col-span-4-lg, .col-span-6 {
@@ -311,7 +315,7 @@ body {
 }
 
 @media (max-width: 640px) {
-    .grid-col-4, .grid-col-6 {
+    .grid-col-4, .grid-col-5, .grid-col-6 {
         grid-template-columns: 1fr;
     }
     .col-span-2-lg, .col-span-3-lg, .col-span-4-lg, .col-span-6 {
