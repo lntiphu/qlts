@@ -1873,7 +1873,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
         } catch (err) {
             console.error('Initial load failed:', err);
-            showToast('Lỗi đồng bộ', 'Không thể kết nối đến Supabase. Vui lòng kiểm tra lại cấu hình hoặc bảng dữ liệu.', 'error');
+            const errorDetails = err.message || err.details || (typeof err === 'object' ? JSON.stringify(err) : err);
+            showToast('Lỗi đồng bộ', `Không thể kết nối đến Supabase. Chi tiết: ${errorDetails}`, 'error');
         }
     }
 
