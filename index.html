@@ -14,7 +14,36 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
+    <!-- Login Screen -->
+    <div id="login-screen" class="login-screen">
+        <div class="login-background">
+            <div class="bubble bubble-1"></div>
+            <div class="bubble bubble-2"></div>
+        </div>
+        <div class="login-card">
+            <div class="login-header">
+                <i class="fa-solid fa-laptop-file login-logo"></i>
+                <h2>ERG Asset</h2>
+                <p>Hệ thống Quản lý Thiết bị & Tài sản</p>
+            </div>
+            <form id="form-login">
+                <div class="form-group">
+                    <label for="login-username"><i class="fa-solid fa-user"></i> Tên đăng nhập</label>
+                    <input type="text" id="login-username" placeholder="Nhập tài khoản admin" required>
+                </div>
+                <div class="form-group password-group">
+                    <label for="login-password"><i class="fa-solid fa-lock"></i> Mật khẩu</label>
+                    <div style="position: relative;">
+                        <input type="password" id="login-password" placeholder="Nhập mật khẩu" required>
+                        <button type="button" class="btn-toggle-password" id="btn-toggle-login-pass"><i class="fa-regular fa-eye"></i></button>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">Đăng Nhập <i class="fa-solid fa-right-to-bracket"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <div class="app-container hidden" id="app-container">
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-brand">
@@ -53,6 +82,11 @@
                 <button class="menu-item" data-tab="tab-tips">
                     <i class="fa-solid fa-lightbulb"></i>
                     <span>Tip & Trick</span>
+                </button>
+                
+                <button class="menu-item btn-logout-sidebar" id="btn-logout" style="margin-top: auto; color: var(--danger-color); background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15);">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Đăng xuất</span>
                 </button>
             </nav>
 

@@ -1878,5 +1878,67 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    initApp();
+    // -------------------------------------------------------------------------
+    // 11. LOGIN & ADMIN AUTHENTICATION LOGIC
+    // -------------------------------------------------------------------------
+    const loginScreen = document.getElementById('login-screen');
+    const appContainer = document.getElementById('app-container');
+    const formLogin = document.getElementById('form-login');
+    const btnToggleLoginPass = document.getElementById('btn-toggle-login-pass');
+    const btnLogout = document.getElementById('btn-logout');
+
+    // Toggle Password Visibility on Login Screen
+    if (btnToggleLoginPass) {
+        btnToggleLoginPass.addEventListener('click', () => {
+            const passInput = document.getElementById('login-password');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                btnToggleLoginPass.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+            } else {
+                passInput.type = 'password';
+                btnToggleLoginPass.innerHTML = '<i class="fa-regular fa-eye"></i>';
+            }
+        });
+    }
+
+    // Handle Login Form Submit
+    if (formLogin) {
+        formLogin.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim();
+            const passwordInput = document.getElementById('login-password').value;
+
+            // Admin credential check
+            if (usernameInput === 'admin' && passwordInput === 'Cntt@262') {
+                localStorage.setItem('erg_asset_logged_in', 'true');
+                showToast('Đăng nhập', 'Đăng nhập thành công! Đang đồng bộ...', 'success');
+                loginScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                initApp();
+            } else {
+                showToast('Lỗi đăng nhập', 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
+            }
+        });
+    }
+
+    // Handle Logout Click
+    if (btnLogout) {
+        btnLogout.addEventListener('click', () => {
+            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+                localStorage.removeItem('erg_asset_logged_in');
+                location.reload();
+            }
+        });
+    }
+
+    // Check auth status on load
+    const isLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
+    if (isLoggedIn) {
+        if (loginScreen) loginScreen.classList.add('hidden');
+        if (appContainer) appContainer.classList.remove('hidden');
+        initApp();
+    } else {
+        if (loginScreen) loginScreen.classList.remove('hidden');
+        if (appContainer) appContainer.classList.add('hidden');
+    }
 });
