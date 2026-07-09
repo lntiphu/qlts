@@ -125,13 +125,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 func: db.func,
                 ip: db.ip || '',
                 username: db.username,
-                password: db.password
+                password: db.password,
+                notes: db.notes || ''
             }),
             toDB: (js) => ({
                 func: js.func,
                 ip: js.ip,
                 username: js.username,
-                password: js.password
+                password: js.password,
+                notes: js.notes
             })
         },
         hoTro: {
@@ -1064,8 +1066,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const originalIndex = accountList.indexOf(item);
             const tr = document.createElement('tr');
             
+            const notesSubText = item.notes 
+                ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${item.notes}</div>` 
+                : '';
+
             tr.innerHTML = `
-                <td><strong>${item.func}</strong></td>
+                <td>
+                    <strong>${item.func}</strong>
+                    ${notesSubText}
+                </td>
                 <td><span class="badge badge-blue">${item.ip || 'Local/Cloud'}</span></td>
                 <td><span style="font-family: monospace; font-size: 14px;">${item.username}</span></td>
                 <td>
@@ -1135,7 +1144,8 @@ document.addEventListener('DOMContentLoaded', () => {
             func: document.getElementById('acc-func').value.trim(),
             ip: document.getElementById('acc-ip').value.trim(),
             username: document.getElementById('acc-username').value.trim(),
-            password: document.getElementById('acc-password').value.trim()
+            password: document.getElementById('acc-password').value.trim(),
+            notes: document.getElementById('acc-notes').value.trim()
         };
 
         if (indexStr === '') {
@@ -1187,6 +1197,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('acc-ip').value = item.ip;
         document.getElementById('acc-username').value = item.username;
         document.getElementById('acc-password').value = item.password;
+        document.getElementById('acc-notes').value = item.notes || '';
 
         // Reset toggled raw pass view inside input if it was open
         const passInput = document.getElementById('acc-password');
@@ -1228,6 +1239,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSaveAccount.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Tài Khoản';
         btnCancelAccount.classList.add('hidden');
         formAccount.reset();
+        document.getElementById('acc-notes').value = '';
 
         const passInput = document.getElementById('acc-password');
         passInput.type = 'password';
