@@ -1013,7 +1013,7 @@ body {
         radial-gradient(rgba(255, 255, 255, 0.15) 1.5px, transparent 1.5px),
         linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
     background-size: 16px 16px, 100% 100%;
-    padding: 40px 24px;
+    padding: 30px 24px;
     text-align: center;
     color: #ffffff;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -1023,15 +1023,8 @@ body {
     font-size: 32px;
     font-weight: 800;
     letter-spacing: 1px;
-    margin: 0 0 8px 0;
-    text-transform: uppercase;
-}
-
-.login-header-corporate p {
-    font-size: 15px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.85);
     margin: 0;
+    text-transform: uppercase;
 }
 
 .login-body-corporate {
