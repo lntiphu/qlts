@@ -298,9 +298,20 @@
                     <div class="card table-card">
                         <div class="table-header">
                             <h3 class="table-title"><i class="fa-solid fa-list-check"></i> Danh Sách Thiết Bị Đã Cấp Phát</h3>
-                            <div class="search-box">
-                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm theo ID, Tên NV, ID Thiết bị, Phòng ban...">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm theo ID, Tên NV, ID Thiết bị, Phòng ban...">
+                                </div>
                             </div>
                         </div>
 
@@ -329,15 +340,6 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start">0</span> - <span id="pag-end">0</span> trên tổng số <span id="pag-total">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" style="padding: 6px 12px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -394,9 +396,20 @@
                     <div class="card table-card">
                         <div class="table-header">
                             <h3 class="table-title"><i class="fa-solid fa-list"></i> Danh Sách Công Ty</h3>
-                            <div class="search-box">
-                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                <input type="text" id="search-cong-ty" placeholder="Tìm kiếm theo Tên, Mã số thuế, Ký hiệu...">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-congty" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current-congty" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-congty" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-cong-ty" placeholder="Tìm kiếm theo Tên, Mã số thuế, Ký hiệu...">
+                                </div>
                             </div>
                         </div>
 
@@ -423,15 +436,6 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-congty">0</span> - <span id="pag-end-congty">0</span> trên tổng số <span id="pag-total-congty">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-congty" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current-congty" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-congty" style="padding: 6px 12px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -488,9 +492,20 @@
                     <div class="card table-card">
                         <div class="table-header">
                             <h3 class="table-title"><i class="fa-solid fa-key"></i> Danh Sách Tài Khoản</h3>
-                            <div class="search-box">
-                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                <input type="text" id="search-account" placeholder="Tìm kiếm theo Chức năng, IP, Tài khoản...">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-account" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current-account" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-account" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-account" placeholder="Tìm kiếm theo Chức năng, IP, Tài khoản...">
+                                </div>
                             </div>
                         </div>
 
@@ -516,15 +531,6 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-account">0</span> - <span id="pag-end-account">0</span> trên tổng số <span id="pag-total-account">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-account" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current-account" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-account" style="padding: 6px 12px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -581,9 +587,20 @@
                     <div class="card table-card">
                         <div class="table-header">
                             <h3 class="table-title"><i class="fa-solid fa-address-book"></i> Danh Sách Đầu Mối Hỗ Trợ</h3>
-                            <div class="search-box">
-                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                <input type="text" id="search-ho-tro" placeholder="Tìm kiếm theo Đơn vị, Họ tên, SĐT...">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-hotro" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current-hotro" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-hotro" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-ho-tro" placeholder="Tìm kiếm theo Đơn vị, Họ tên, SĐT...">
+                                </div>
                             </div>
                         </div>
 
@@ -609,15 +626,6 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-hotro">0</span> - <span id="pag-end-hotro">0</span> trên tổng số <span id="pag-total-hotro">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-hotro" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current-hotro" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-hotro" style="padding: 6px 12px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -699,9 +707,20 @@
                     <div class="card table-card">
                         <div class="table-header">
                             <h3 class="table-title"><i class="fa-solid fa-camera"></i> Danh Sách Thiết Bị Camera / Đầu ghi</h3>
-                            <div class="search-box">
-                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                <input type="text" id="search-camera" placeholder="Tìm kiếm theo Dự án, Thiết bị, IP...">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-camera" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current-camera" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-camera" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-camera" placeholder="Tìm kiếm theo Dự án, Thiết bị, IP...">
+                                </div>
                             </div>
                         </div>
 
@@ -729,15 +748,6 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-camera">0</span> - <span id="pag-end-camera">0</span> trên tổng số <span id="pag-total-camera">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-camera" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current-camera" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-camera" style="padding: 6px 12px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -777,9 +787,20 @@
                     <div class="card table-card">
                         <div class="table-header">
                             <h3 class="table-title"><i class="fa-solid fa-book-open"></i> Danh Sách Lỗi & Cách Khắc Phục</h3>
-                            <div class="search-box">
-                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                <input type="text" id="search-tips" placeholder="Tìm kiếm theo Tên lỗi, Cách khắc phục...">
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-tips" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current-tips" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-tips" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-tips" placeholder="Tìm kiếm theo Tên lỗi, Cách khắc phục...">
+                                </div>
                             </div>
                         </div>
 
@@ -803,15 +824,6 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-tips">0</span> - <span id="pag-end-tips">0</span> trên tổng số <span id="pag-total-tips">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-tips" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current-tips" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-tips" style="padding: 6px 12px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
