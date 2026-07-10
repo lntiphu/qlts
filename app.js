@@ -384,14 +384,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Safe filter matching keyword
-        const keyword = filterText.toLowerCase();
+        const keywords = filterText.toLowerCase().split(/\s+/).filter(Boolean);
         const filtered = sortedList.filter(item => {
-            return (
-                (item.userId || '').toLowerCase().includes(keyword) ||
-                (item.userName || '').toLowerCase().includes(keyword) ||
-                (item.devId || '').toLowerCase().includes(keyword) ||
-                (item.userDept || '').toLowerCase().includes(keyword)
-            );
+            if (keywords.length === 0) return true;
+            
+            const itemText = `
+                ${item.userId || ''} 
+                ${item.userName || ''} 
+                ${item.devId || ''} 
+                ${item.userDept || ''}
+                ${item.devType || ''}
+                ${item.devMain || ''}
+                ${item.devCpu || ''}
+                ${item.devRam || ''}
+                ${item.devNotes || ''}
+            `.toLowerCase();
+            
+            return keywords.every(kw => itemText.includes(kw));
         });
 
         const totalItems = filtered.length;
@@ -816,14 +825,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btn-next-page').addEventListener('click', () => {
-        const keyword = searchThietBi.value.trim().toLowerCase();
+        const keywords = searchThietBi.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
         const totalItems = thietBiList.filter(item => {
-            return (
-                (item.userId || '').toLowerCase().includes(keyword) ||
-                (item.userName || '').toLowerCase().includes(keyword) ||
-                (item.devId || '').toLowerCase().includes(keyword) ||
-                (item.userDept || '').toLowerCase().includes(keyword)
-            );
+            if (keywords.length === 0) return true;
+            const itemText = `
+                ${item.userId || ''} 
+                ${item.userName || ''} 
+                ${item.devId || ''} 
+                ${item.userDept || ''}
+                ${item.devType || ''}
+                ${item.devMain || ''}
+                ${item.devCpu || ''}
+                ${item.devRam || ''}
+                ${item.devNotes || ''}
+            `.toLowerCase();
+            return keywords.every(kw => itemText.includes(kw));
         }).length;
         const totalPages = Math.ceil(totalItems / itemsPerPageThietBi) || 1;
         if (currentPageThietBi < totalPages) {
