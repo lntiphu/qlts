@@ -488,9 +488,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${item.devId ? `
+                        ${(item.devId || item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus) ? `
                             <span class="name">
-                                <span class="badge badge-green">${item.devId}</span>
+                                ${item.devId ? `<span class="badge badge-green">${item.devId}</span>` : ''}
                                 ${item.devStatus ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}
                             </span>
                             <span class="details">Loại: ${item.devType || 'Chưa phân loại'}</span>
