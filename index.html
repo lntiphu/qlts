@@ -40,6 +40,8 @@
     </div>
 
     <div class="app-container hidden" id="app-container">
+        <!-- Sidebar Navigation Overlay for mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
         <!-- Sidebar Navigation -->
         <aside class="sidebar">
             <div class="sidebar-brand">
@@ -96,7 +98,10 @@
         <main class="main-content">
             <!-- Header -->
             <header class="app-header">
-                <div class="header-title">
+                <div class="header-title" style="display: flex; align-items: center; gap: 12px;">
+                    <button type="button" id="btn-toggle-sidebar" class="btn-toggle-sidebar" style="display: none;">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                     <h1 id="page-title">ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản</h1>
                 </div>
                 <div class="header-user">

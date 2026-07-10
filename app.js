@@ -2285,6 +2285,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Sidebar toggle for mobile
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (btnToggleSidebar && sidebar && sidebarOverlay) {
+        btnToggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // Close sidebar when clicking a menu item on mobile
+        document.querySelectorAll('.sidebar-menu .menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                if (window.innerWidth <= 992) {
+                    sidebar.classList.remove('active');
+                    sidebarOverlay.classList.remove('active');
+                }
+            });
+        });
+    }
+
     // Check auth status on load
     const isLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
     if (isLoggedIn) {
