@@ -371,6 +371,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentPageThietBi = 1;
     const itemsPerPageThietBi = 10;
 
+    function updateDeptFilterThietBi() {
+        const select = document.getElementById('filter-dept-thietbi');
+        if (!select) return;
+        const currentValue = select.value;
+        
+        const depts = [...new Set(thietBiList.map(item => (item.userDept || '').trim()).filter(Boolean))];
+        depts.sort((a, b) => a.localeCompare(b, 'vi', { sensitivity: 'base' }));
+        
+        select.innerHTML = '<option value="">-- Tất cả phòng ban --</option>';
+        depts.forEach(dept => {
+            const opt = document.createElement('option');
+            opt.value = dept;
+            opt.textContent = dept;
+            select.appendChild(opt);
+        });
+        
+        if (depts.includes(currentValue)) {
+            select.value = currentValue;
+        } else {
+            select.value = '';
+        }
+    }
+
     function renderThietBi(filterText = '') {
         tbodyThietBi.innerHTML = '';
         
@@ -383,9 +406,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return deptA.localeCompare(deptB, 'vi', { sensitivity: 'base' });
         });
 
+        const deptFilter = document.getElementById('filter-dept-thietbi') 
+            ? document.getElementById('filter-dept-thietbi').value 
+            : '';
+
         // Safe filter matching keyword
         const keywords = filterText.toLowerCase().split(/\s+/).filter(Boolean);
         const filtered = sortedList.filter(item => {
+            if (deptFilter && (item.userDept || '').trim() !== deptFilter) {
+                return false;
+            }
             if (keywords.length === 0) return true;
             
             const itemText = `
@@ -719,6 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
+        updateDeptFilterThietBi();
         renderThietBi();
         formCapPhat.reset();
         resetFormThietBi();
@@ -783,6 +814,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     .eq('id', item.id);
                 if (error) throw error;
                 thietBiList.splice(index, 1);
+                updateDeptFilterThietBi();
                 renderThietBi();
                 showToast('Đã xóa', 'Xóa thông tin cấp phát thành công!', 'warning');
                 
@@ -817,6 +849,14 @@ document.addEventListener('DOMContentLoaded', () => {
         renderThietBi(e.target.value.trim());
     });
 
+    const filterDeptThietBi = document.getElementById('filter-dept-thietbi');
+    if (filterDeptThietBi) {
+        filterDeptThietBi.addEventListener('change', () => {
+            currentPageThietBi = 1;
+            renderThietBi(searchThietBi.value.trim());
+        });
+    }
+
     document.getElementById('btn-prev-page').addEventListener('click', () => {
         if (currentPageThietBi > 1) {
             currentPageThietBi--;
@@ -825,8 +865,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('btn-next-page').addEventListener('click', () => {
-        const keywords = searchThietBi.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        const keyword = searchThietBi.value.trim();
+        const deptFilter = document.getElementById('filter-dept-thietbi') 
+            ? document.getElementById('filter-dept-thietbi').value 
+            : '';
+        const keywords = keyword.toLowerCase().split(/\s+/).filter(Boolean);
         const totalItems = thietBiList.filter(item => {
+            if (deptFilter && (item.userDept || '').trim() !== deptFilter) {
+                return false;
+            }
             if (keywords.length === 0) return true;
             const itemText = `
                 ${item.userId || ''} 
@@ -844,7 +891,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalPages = Math.ceil(totalItems / itemsPerPageThietBi) || 1;
         if (currentPageThietBi < totalPages) {
             currentPageThietBi++;
-            renderThietBi(searchThietBi.value.trim());
+            renderThietBi(keyword);
         }
     });
 
@@ -2193,6 +2240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             supabaseClient.from('thiet_bi').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 thietBiList = (data || []).map(mappers.thietBi.fromDB);
+                updateDeptFilterThietBi();
                 renderThietBi();
             }),
             supabaseClient.from('cong_ty').select('*').then(({ data, error }) => {

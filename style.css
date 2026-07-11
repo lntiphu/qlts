@@ -1250,3 +1250,22 @@ body {
 .btn-toggle-sidebar {
     display: none;
 }
+
+/* Custom Filter Dropdown Select Style */
+.filter-select {
+    padding: 10px 14px;
+    font-size: 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    outline: none;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 180px;
+    transition: var(--transition);
+}
+
+.filter-select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
