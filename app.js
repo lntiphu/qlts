@@ -2322,6 +2322,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang đăng nhập...';
 
             try {
+                // Clear any previous error message
+                const errDiv = document.getElementById('login-error-msg');
+                if (errDiv) errDiv.classList.add('hidden');
+
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: passwordInput
@@ -2335,6 +2339,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 initApp();
             } catch (err) {
                 console.error(err);
+                
+                // Show warning inside login card
+                const errDiv = document.getElementById('login-error-msg');
+                if (errDiv) {
+                    if (err.message && err.message.includes('confirm')) {
+                        errDiv.textContent = 'Đăng nhập thất bại: Tài khoản chưa được xác nhận email trên Supabase!';
+                    } else if (err.message && err.message.includes('Invalid login')) {
+                        errDiv.textContent = 'Đăng nhập thất bại: Tên đăng nhập hoặc mật khẩu không chính xác!';
+                    } else {
+                        errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Tài khoản hoặc mật khẩu không đúng!');
+                    }
+                    errDiv.classList.remove('hidden');
+                    
+                    // Re-trigger shake animation
+                    errDiv.style.animation = 'none';
+                    errDiv.offsetHeight; /* trigger reflow */
+                    errDiv.style.animation = '';
+                }
+                
                 showToast('Lỗi đăng nhập', err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
             } finally {
                 btnSubmit.disabled = false;
