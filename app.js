@@ -3,7 +3,7 @@
  * File: app.js
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // -------------------------------------------------------------------------
     // 1. SUPABASE CLIENT & STATE INIT
     // -------------------------------------------------------------------------
@@ -2305,29 +2305,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle Login Form Submit
     if (formLogin) {
-        formLogin.addEventListener('submit', (e) => {
+        formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
             const usernameInput = document.getElementById('login-username').value.trim();
             const passwordInput = document.getElementById('login-password').value;
 
-            // Admin credential check
-            if ((usernameInput === 'admin' || usernameInput === 'tiphu@erasgroup.vn') && passwordInput === 'Cntt@262') {
-                localStorage.setItem('erg_asset_logged_in', 'true');
+            let email = usernameInput;
+            if (email === 'admin') {
+                email = 'admin@erasgroup.vn';
+            }
+
+            // Show loading state
+            const btnSubmit = formLogin.querySelector('button[type="submit"]');
+            const originalText = btnSubmit.innerHTML;
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang đăng nhập...';
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: passwordInput
+                });
+
+                if (error) throw error;
+
                 showToast('Đăng nhập', 'Đăng nhập thành công! Đang đồng bộ...', 'success');
                 if (loginScreen) loginScreen.classList.add('hidden');
                 if (appContainer) appContainer.classList.remove('hidden');
                 initApp();
-            } else {
-                showToast('Lỗi đăng nhập', 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
+            } catch (err) {
+                console.error(err);
+                showToast('Lỗi đăng nhập', err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = originalText;
             }
         });
     }
 
     // Handle Logout Click
     if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
+        btnLogout.addEventListener('click', async () => {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
-                localStorage.removeItem('erg_asset_logged_in');
+                try {
+                    await supabaseClient.auth.signOut();
+                } catch (e) {
+                    console.error("Signout error:", e);
+                }
                 location.reload();
             }
         });
@@ -2361,11 +2385,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Check auth status on load
-    const isLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
-    if (isLoggedIn) {
-        if (loginScreen) loginScreen.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-        initApp();
+    if (supabaseClient) {
+        supabaseClient.auth.getSession().then(({ data: { session } }) => {
+            if (session) {
+                if (loginScreen) loginScreen.classList.add('hidden');
+                if (appContainer) appContainer.classList.remove('hidden');
+                initApp();
+            } else {
+                if (loginScreen) loginScreen.classList.remove('hidden');
+                if (appContainer) appContainer.classList.add('hidden');
+            }
+        }).catch(err => {
+            console.error("Auth session error:", err);
+            if (loginScreen) loginScreen.classList.remove('hidden');
+            if (appContainer) appContainer.classList.add('hidden');
+        });
     } else {
         if (loginScreen) loginScreen.classList.remove('hidden');
         if (appContainer) appContainer.classList.add('hidden');
