@@ -2713,6 +2713,307 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // =========================================================================
+    // 9.2. SAO LƯU & KHÔI PHỤC DỮ LIỆU (IMPORT & EXPORT DATABASE)
+    // =========================================================================
+    const btnExportDb = document.getElementById('btn-export-db');
+    const btnImportDb = document.getElementById('btn-import-db');
+    const modalBackup = document.getElementById('modal-backup');
+    const btnCloseBackupModal = document.getElementById('btn-close-backup-modal');
+    
+    const backupExportSection = document.getElementById('backup-export-section');
+    const backupImportSection = document.getElementById('backup-import-section');
+    
+    const btnDoExportJson = document.getElementById('btn-do-export-json');
+    const btnDoExportZip = document.getElementById('btn-do-export-zip');
+    const importFileSelector = document.getElementById('import-file-selector');
+
+    if (btnExportDb) {
+        btnExportDb.addEventListener('click', () => {
+            if (modalBackup) {
+                modalBackup.classList.remove('hidden');
+                backupExportSection.classList.remove('hidden');
+                backupImportSection.classList.add('hidden');
+                document.getElementById('backup-modal-title').innerHTML = '<i class="fa-solid fa-file-export"></i> Xuất Dữ Liệu Hệ Thống';
+            }
+        });
+    }
+
+    if (btnImportDb) {
+        btnImportDb.addEventListener('click', () => {
+            if (modalBackup) {
+                modalBackup.classList.remove('hidden');
+                backupExportSection.classList.add('hidden');
+                backupImportSection.classList.remove('hidden');
+                document.getElementById('backup-modal-title').innerHTML = '<i class="fa-solid fa-file-import"></i> Nhập Dữ Liệu Hệ Thống';
+            }
+        });
+    }
+
+    if (btnCloseBackupModal) {
+        btnCloseBackupModal.addEventListener('click', () => {
+            if (modalBackup) modalBackup.classList.add('hidden');
+        });
+    }
+
+    if (modalBackup) {
+        modalBackup.addEventListener('click', (e) => {
+            if (e.target === modalBackup) {
+                modalBackup.classList.add('hidden');
+            }
+        });
+    }
+
+    // Helper to escape values for CSV
+    function convertToCSV(dataList, headers, keyMap) {
+        if (!dataList || dataList.length === 0) {
+            return '\ufeff' + headers.join(',') + '\r\n';
+        }
+        
+        const escapeCSVValue = (val) => {
+            if (val === null || val === undefined) return '';
+            if (typeof val === 'object') {
+                return `"${JSON.stringify(val).replace(/"/g, '""')}"`;
+            }
+            let stringVal = String(val);
+            stringVal = stringVal.replace(/"/g, '""');
+            if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+                stringVal = `"${stringVal}"`;
+            }
+            return stringVal;
+        };
+
+        let csvRows = [];
+        csvRows.push(headers.map(escapeCSVValue).join(','));
+
+        for (const item of dataList) {
+            const rowValues = keyMap.map(key => item[key]);
+            csvRows.push(rowValues.map(escapeCSVValue).join(','));
+        }
+
+        return '\ufeff' + csvRows.join('\r\n');
+    }
+
+    // Handle Export to JSON (Full Backup)
+    if (btnDoExportJson) {
+        btnDoExportJson.addEventListener('click', () => {
+            const backup = {
+                assets: thietBiList || [],
+                companies: congTyList || [],
+                accounts: accountList || [],
+                support: hoTroList || [],
+                cameras: cameraList || [],
+                tips: tipsList || [],
+                giaHan: giaHanList || []
+            };
+
+            const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Sao_luu_database_QLTS_${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Thành công', 'Đã xuất file sao lưu hệ thống JSON thành công!');
+            if (modalBackup) modalBackup.classList.add('hidden');
+        });
+    }
+
+    // Handle Export to ZIP containing CSVs
+    if (btnDoExportZip) {
+        btnDoExportZip.addEventListener('click', () => {
+            if (typeof JSZip === 'undefined') {
+                showToast('Lỗi', 'Thư viện JSZip chưa được nạp. Không thể tạo file ZIP!', 'error');
+                return;
+            }
+
+            const zip = new JSZip();
+
+            // 1. Assets
+            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Màn hình", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
+            const assetsKeys = ["userDept", "userName", "userTitle", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
+            zip.file("1_Danh_sach_cap_phat.csv", convertToCSV(thietBiList, assetsHeaders, assetsKeys));
+
+            // 2. Companies
+            const companyHeaders = ["Mã công ty", "Tên chi nhánh/công ty", "Mã số thuế", "Người đại diện", "Chức vụ", "Địa chỉ"];
+            const companyKeys = ["code", "name", "taxCode", "rep", "repRole", "address"];
+            zip.file("2_Danh_sach_chi_nhanh.csv", convertToCSV(congTyList, companyHeaders, companyKeys));
+
+            // 3. Accounts
+            const accountHeaders = ["Hệ thống/Dịch vụ", "IP / Đường dẫn", "User", "Pass", "Ghi chú"];
+            const accountKeys = ["func", "ip", "username", "password", "notes"];
+            zip.file("3_Danh_sach_tai_khoan.csv", convertToCSV(accountList, accountHeaders, accountKeys));
+
+            // 4. Support
+            const supportHeaders = ["Đơn vị hỗ trợ", "Nội dung hỗ trợ", "Số điện thoại", "Nội dung/Phạm vi", "Zalo", "Vai trò"];
+            const supportKeys = ["unit", "name", "phone", "scope", "hasZalo", "role"];
+            zip.file("4_Danh_sach_ho_tro.csv", convertToCSV(hoTroList, supportHeaders, supportKeys));
+
+            // 5. Cameras
+            const cameraHeaders = ["Dự án", "Thiết bị", "IP Wan", "RTSP Port", "TCP Port", "HTTP Port", "HTTPS Port", "User", "Pass", "User ONVIF", "Pass ONVIF", "Ghi chú"];
+            const cameraKeys = ["project", "device", "ipWan", "rtsp", "tcp", "http", "https", "username", "password", "onvifUser", "onvifPass", "notes"];
+            zip.file("5_Danh_sach_camera.csv", convertToCSV(cameraList, cameraHeaders, cameraKeys));
+
+            // 6. Tips
+            const tipHeaders = ["Vấn đề / Lỗi", "Cách khắc phục"];
+            const tipKeys = ["issue", "solution"];
+            zip.file("6_Danh_sach_tips.csv", convertToCSV(tipsList, tipHeaders, tipKeys));
+
+            // 7. Gia Han
+            const giaHanHeaders = ["Dịch vụ", "Ghi chú", "Đơn vị thực hiện", "Ngày hết hạn"];
+            const giaHanKeys = ["name", "notes", "provider", "expiryDate"];
+            zip.file("7_Danh_sach_gia_han.csv", convertToCSV(giaHanList, giaHanHeaders, giaHanKeys));
+
+            showToast('Đang xử lý', 'Đang tạo file ZIP chứa các báo cáo...', 'info');
+
+            zip.generateAsync({ type: "blob" }).then(function (content) {
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Bao_cao_Excel_QLTS_${new Date().toISOString().slice(0, 10)}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Thành công', 'Đã xuất file báo cáo ZIP thành công!');
+                if (modalBackup) modalBackup.classList.add('hidden');
+            }).catch(err => {
+                showToast('Lỗi', 'Không thể nén file ZIP!', 'error');
+                console.error(err);
+            });
+        });
+    }
+
+    // Handle Import database
+    if (importFileSelector) {
+        importFileSelector.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function (evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+
+                    // Check if file is valid
+                    if (!data.assets && !data.companies && !data.accounts && !data.cameras && !data.giaHan) {
+                        showToast('Lỗi file', 'File sao lưu không đúng định dạng JSON hệ thống!', 'error');
+                        return;
+                    }
+
+                    const confirmRestore = confirm("CẢNH BÁO: Việc khôi phục dữ liệu sẽ XÓA TOÀN BỘ dữ liệu hiện tại trên database để nạp dữ liệu từ file sao lưu. Bạn có chắc chắn muốn thực hiện?");
+                    if (!confirmRestore) {
+                        importFileSelector.value = '';
+                        return;
+                    }
+
+                    showToast('Đang khôi phục', 'Đang xử lý khôi phục dữ liệu...', 'info');
+
+                    // 1. Assign restored lists to memory
+                    if (data.assets) {
+                        thietBiList.length = 0;
+                        thietBiList.push(...data.assets);
+                    }
+                    if (data.companies) {
+                        congTyList.length = 0;
+                        congTyList.push(...data.companies);
+                    }
+                    if (data.accounts) {
+                        accountList.length = 0;
+                        accountList.push(...data.accounts);
+                    }
+                    if (data.support) {
+                        hoTroList.length = 0;
+                        hoTroList.push(...data.support);
+                    }
+                    if (data.cameras) {
+                        cameraList.length = 0;
+                        cameraList.push(...data.cameras);
+                    }
+                    if (data.tips) {
+                        tipsList.length = 0;
+                        tipsList.push(...data.tips);
+                    }
+                    if (data.giaHan) {
+                        giaHanList.length = 0;
+                        giaHanList.push(...data.giaHan);
+                    }
+
+                    // 2. Save local storage for fallback
+                    saveGiaHanToLocalStorage();
+
+                    // 3. Synchronize with Supabase database
+                    if (supabaseClient) {
+                        const restoreTable = async (tableName, list, mapper) => {
+                            const { data: records, error: fetchErr } = await supabaseClient.from(tableName).select('id');
+                            if (fetchErr) {
+                                console.error(`Error fetching IDs from ${tableName}:`, fetchErr);
+                                return;
+                            }
+                            
+                            if (records && records.length > 0) {
+                                const ids = records.map(r => r.id);
+                                const { error: delErr } = await supabaseClient.from(tableName).delete().in('id', ids);
+                                if (delErr) {
+                                    console.error(`Error deleting from ${tableName}:`, delErr);
+                                    return;
+                                }
+                            }
+                            
+                            if (list && list.length > 0) {
+                                const dbData = list.map(item => {
+                                    const dbObj = mapper.toDB(item);
+                                    if (item.id) {
+                                        dbObj.id = item.id;
+                                    }
+                                    return dbObj;
+                                });
+                                const { error: insErr } = await supabaseClient.from(tableName).insert(dbData);
+                                if (insErr) {
+                                    console.error(`Error inserting into ${tableName}:`, insErr);
+                                }
+                            }
+                        };
+
+                        try {
+                            await restoreTable('thiet_bi', thietBiList, mappers.thietBi);
+                            await restoreTable('cong_ty', congTyList, mappers.congTy);
+                            await restoreTable('account', accountList, mappers.account);
+                            await restoreTable('ho_tro', hoTroList, mappers.hoTro);
+                            await restoreTable('camera', cameraList, mappers.camera);
+                            await restoreTable('tips', tipsList, mappers.tips);
+                            await restoreTable('gia_han', giaHanList, mappers.giaHan);
+                        } catch (supabaseErr) {
+                            console.warn("Supabase restore warning:", supabaseErr);
+                        }
+                    }
+
+                    // 4. Re-render UI
+                    updateDeptFilterThietBi();
+                    renderThietBi();
+                    renderCongTy();
+                    renderAccount();
+                    renderHoTro();
+                    renderCamera();
+                    renderTips();
+                    renderGiaHan();
+
+                    showToast('Khôi phục thành công', 'Toàn bộ dữ liệu hệ thống đã được phục hồi!', 'success');
+                    if (modalBackup) modalBackup.classList.add('hidden');
+                } catch (parseErr) {
+                    showToast('Lỗi nạp file', 'Không thể đọc nội dung file sao lưu. Vui lòng kiểm tra lại!', 'error');
+                    console.error(parseErr);
+                } finally {
+                    importFileSelector.value = '';
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+
+
+    // =========================================================================
     // 10. INITIALIZATION RUN (FETCH FROM SUPABASE)
     // =========================================================================
     async function initApp() {

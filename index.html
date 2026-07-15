@@ -87,7 +87,16 @@
                     <span>Gia hạn bản quyền</span>
                 </button>
                 
-                <button class="menu-item btn-logout-sidebar" id="btn-logout" style="margin-top: auto; color: var(--danger-color); background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15);">
+                <button class="menu-item" id="btn-export-db" style="margin-top: auto; color: var(--primary-color); background: rgba(249, 115, 22, 0.05); border: 1px solid rgba(249, 115, 22, 0.15);">
+                    <i class="fa-solid fa-file-export"></i>
+                    <span>Xuất dữ liệu</span>
+                </button>
+                <button class="menu-item" id="btn-import-db" style="color: var(--primary-color); background: rgba(249, 115, 22, 0.05); border: 1px solid rgba(249, 115, 22, 0.15); margin-bottom: 10px;">
+                    <i class="fa-solid fa-file-import"></i>
+                    <span>Nhập dữ liệu</span>
+                </button>
+                
+                <button class="menu-item btn-logout-sidebar" id="btn-logout" style="color: var(--danger-color); background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15);">
                     <i class="fa-solid fa-right-from-bracket"></i>
                     <span>Đăng xuất</span>
                 </button>
@@ -969,9 +978,52 @@
         </div>
     </div>
 
+    <!-- Export/Import Modal -->
+    <div id="modal-backup" class="backup-modal hidden">
+        <div class="backup-modal-content">
+            <div class="backup-modal-header">
+                <h3 class="backup-modal-title" id="backup-modal-title"><i class="fa-solid fa-database"></i> Sao Lưu & Khôi Phục</h3>
+                <button type="button" class="backup-modal-close" id="btn-close-backup-modal">&times;</button>
+            </div>
+            <div class="backup-modal-body">
+                <!-- Export Options -->
+                <div id="backup-export-section">
+                    <p style="font-size: 14px; margin-bottom: 16px; color: var(--text-secondary);">Chọn hình thức xuất dữ liệu của toàn bộ hệ thống:</p>
+                    <button id="btn-do-export-json" class="backup-btn-option">
+                        <i class="fa-solid fa-file-code" style="color: #6366f1;"></i>
+                        <div>
+                            <div style="font-weight: 600;">Sao lưu hệ thống (.JSON)</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 2px;">Khuyên dùng để khôi phục/nhập dữ liệu lại đầy đủ.</div>
+                        </div>
+                    </button>
+                    <button id="btn-do-export-zip" class="backup-btn-option">
+                        <i class="fa-solid fa-file-zipper" style="color: #eab308;"></i>
+                        <div>
+                            <div style="font-weight: 600;">Báo cáo Excel (.ZIP chứa các file CSV)</div>
+                            <div style="font-size: 12px; opacity: 0.8; margin-top: 2px;">Để mở xem và làm việc trực tiếp trên Excel.</div>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Import Options -->
+                <div id="backup-import-section" class="hidden">
+                    <p style="font-size: 14px; margin-bottom: 16px; color: var(--text-secondary);">Chọn file sao lưu (`.json`) để nạp lại dữ liệu:</p>
+                    <label for="import-file-selector" style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border-color); padding: 30px; border-radius: 8px; cursor: pointer; text-align: center; background-color: var(--bg-main);">
+                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 32px; color: var(--primary-color); margin-bottom: 12px;"></i>
+                        <span style="font-weight: 600;">Nhấp để tải file (.json)</span>
+                        <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">Lưu ý: Dữ liệu hiện tại sẽ bị thay thế bởi file sao lưu này.</span>
+                    </label>
+                    <input type="file" id="import-file-selector" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Supabase JS Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- JSZip Library for CSV zipping -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=2.1"></script>
+    <script src="app.js?v=2.2"></script>
 </body>
 </html>
