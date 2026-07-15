@@ -201,10 +201,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             fromDB: (db) => ({
                 id: db.id,
                 name: db.name,
+                provider: db.provider || '',
                 expiryDate: db.expiry_date
             }),
             toDB: (js) => ({
                 name: js.name,
+                provider: js.provider || null,
                 expiry_date: js.expiryDate
             })
         }
@@ -2274,9 +2276,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function formatDateDMY(dateStr) {
+        if (!dateStr) return '—';
+        let date = new Date(dateStr);
+        if (isNaN(date.getTime())) return '—';
+        
+        let year = date.getFullYear();
+        if (year < 100) {
+            year += 2000;
+        } else if (year < 1000) {
+            year = (year % 100) + 2000;
+        }
+        
+        let day = date.getDate().toString().padStart(2, '0');
+        let month = (date.getMonth() + 1).toString().padStart(2, '0');
+        
+        return `${day}/${month}/${year}`;
+    }
+
     function calculateDaysRemaining(expiryStr) {
         if (!expiryStr) return 0;
-        const expiry = new Date(expiryStr);
+        let expiry = new Date(expiryStr);
+        if (isNaN(expiry.getTime())) return 0;
+        
+        let year = expiry.getFullYear();
+        if (year < 100) {
+            expiry.setFullYear(year + 2000);
+        } else if (year < 1000) {
+            expiry.setFullYear((year % 100) + 2000);
+        }
+        
         expiry.setHours(0, 0, 0, 0);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -2345,7 +2374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (urgentLicenses.length > 0) {
             alertList.innerHTML = urgentLicenses.map(item => {
                 const days = calculateDaysRemaining(item.expiryDate);
-                const dateStr = item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('vi-VN') : 'chưa rõ';
+                const dateStr = formatDateDMY(item.expiryDate);
                 if (days > 0) {
                     return `<li>Bản quyền <strong>${item.name}</strong> sắp hết hạn vào ngày <strong>${dateStr}</strong> (Còn <strong>${days} ngày</strong> nữa). Vui lòng lên phương án gia hạn!</li>`;
                 } else if (days === 0) {
@@ -2373,7 +2402,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const keyword = filterText.toLowerCase();
         const filtered = sortedList.filter(item => {
-            return (item.name || '').toLowerCase().includes(keyword);
+            return (
+                (item.name || '').toLowerCase().includes(keyword) ||
+                (item.provider || '').toLowerCase().includes(keyword)
+            );
         });
 
         const totalItems = filtered.length;
@@ -2424,13 +2456,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const tr = document.createElement('tr');
             
             const days = calculateDaysRemaining(item.expiryDate);
-            const dateFormatted = item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('vi-VN') : '—';
+            const dateFormatted = formatDateDMY(item.expiryDate);
             const countdownBarHTML = getCountdownBarHTML(days);
             const statusBadgeHTML = getLicenseStatusBadge(days);
 
             tr.innerHTML = `
                 <td>
                     <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                </td>
+                <td>
+                    <span style="font-weight: 500; color: var(--text-secondary);">${item.provider || '—'}</span>
                 </td>
                 <td>
                     <span style="font-family: monospace; font-size: 13px; font-weight: 600;">${dateFormatted}</span>
@@ -2476,9 +2511,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.preventDefault();
             const indexStr = editIndexGiaHan.value;
 
+            let expiryInputVal = document.getElementById('license-expiry').value.trim();
+            let expiryVal = '';
+            
+            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+            const match = expiryInputVal.match(dateRegex);
+            if (!match) {
+                showToast('Lỗi nhập liệu', 'Vui lòng nhập ngày đúng định dạng dd/mm/yyyy!', 'error');
+                return;
+            }
+            
+            const day = match[1];
+            const month = match[2];
+            let year = parseInt(match[3]);
+            
+            const dayNum = parseInt(day);
+            const monthNum = parseInt(month);
+            
+            if (monthNum < 1 || monthNum > 12) {
+                showToast('Lỗi nhập liệu', 'Tháng không hợp lệ (01 - 12)!', 'error');
+                return;
+            }
+            if (dayNum < 1 || dayNum > 31) {
+                showToast('Lỗi nhập liệu', 'Ngày không hợp lệ (01 - 31)!', 'error');
+                return;
+            }
+            
+            if (year < 100) {
+                year += 2000;
+            } else if (year < 1000) {
+                year = (year % 100) + 2000;
+            }
+            
+            expiryVal = `${year}-${month}-${day}`;
+
             const data = {
                 name: document.getElementById('license-name').value.trim(),
-                expiryDate: document.getElementById('license-expiry').value
+                provider: document.getElementById('license-provider').value.trim(),
+                expiryDate: expiryVal
             };
 
             if (indexStr === '') {
@@ -2535,7 +2605,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         editIndexGiaHan.value = index;
         
         document.getElementById('license-name').value = item.name;
-        document.getElementById('license-expiry').value = item.expiryDate;
+        document.getElementById('license-provider').value = item.provider || '';
+        document.getElementById('license-expiry').value = formatDateDMY(item.expiryDate);
 
         btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Bản Quyền';
         btnCancelGiaHan.classList.remove('hidden');
@@ -2609,6 +2680,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentPageGiaHan++;
                 renderGiaHan(searchGiaHan.value.trim());
             }
+        });
+    }
+
+    const expiryInput = document.getElementById('license-expiry');
+    if (expiryInput) {
+        expiryInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Keep only numbers
+            if (value.length > 8) {
+                value = value.substring(0, 8);
+            }
+            let formatted = '';
+            if (value.length > 0) {
+                formatted += value.substring(0, 2);
+            }
+            if (value.length > 2) {
+                formatted += '/' + value.substring(2, 4);
+            }
+            if (value.length > 4) {
+                formatted += '/' + value.substring(4, 8);
+            }
+            e.target.value = formatted;
         });
     }
 
