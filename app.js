@@ -2467,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
                 </td>
                 <td>
-                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic;">${item.notes || '—'}</span>
+                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word; display: block; line-height: 1.4;">${item.notes || '—'}</span>
                 </td>
                 <td>
                     <span style="font-weight: 500; color: var(--text-secondary);">${item.provider || '—'}</span>
