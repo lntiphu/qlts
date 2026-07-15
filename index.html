@@ -82,6 +82,10 @@
                     <i class="fa-solid fa-lightbulb"></i>
                     <span>Tip & Trick</span>
                 </button>
+                <button class="menu-item" data-tab="tab-gia-han">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Gia hạn bản quyền</span>
+                </button>
                 
                 <button class="menu-item btn-logout-sidebar" id="btn-logout" style="margin-top: auto; color: var(--danger-color); background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.15);">
                     <i class="fa-solid fa-right-from-bracket"></i>
@@ -837,6 +841,93 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-tips">0</span> - <span id="pag-end-tips">0</span> trên tổng số <span id="pag-total-tips">0</span> bản ghi
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. TAB GIA HẠN BẢN QUYỀN -->
+                <section id="tab-gia-han" class="tab-content">
+                    <!-- Warning Banner for Expiring/Expired Licenses -->
+                    <div id="license-alert-banner" class="card" style="display: none; background: #fff5f5; border: 1px solid #feb2b2; margin-bottom: 24px; padding: 16px 20px;">
+                        <h4 style="color: var(--danger-color); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; font-size: 15px;">
+                            <i class="fa-solid fa-circle-exclamation fa-bounce"></i> Cảnh Báo Bản Quyền Sắp Hết Hạn (Trong vòng 30 ngày)
+                        </h4>
+                        <ul id="license-alert-list" style="margin-left: 20px; font-size: 13px; color: #742a2a; line-height: 1.6;">
+                            <!-- Alert items populated by JS -->
+                        </ul>
+                    </div>
+
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-calendar-check"></i> Quản Lý Gia Hạn Bản Quyền</h3>
+                        
+                        <form id="form-gia-han" autocomplete="off">
+                            <input type="hidden" id="edit-index-gia-han" value="">
+                            
+                            <div class="grid grid-col-6">
+                                <div class="form-group col-span-3-lg">
+                                    <label for="license-name">Tên bản quyền (*)</label>
+                                    <input type="text" id="license-name" required placeholder="VD: Adobe Creative Cloud, Windows Server 2022...">
+                                </div>
+                                <div class="form-group col-span-3-lg">
+                                    <label for="license-expiry">Thời gian hết hạn (*)</label>
+                                    <input type="date" id="license-expiry" required>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-gia-han">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Gia Hạn
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-gia-han">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Gia Hạn -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-key"></i> Theo Dõi Thời Hạn Bản Quyền</h3>
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                <input type="text" id="search-gia-han" placeholder="Tìm kiếm tên bản quyền...">
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-gia-han">
+                                <thead>
+                                    <tr>
+                                        <th>Tên bản quyền</th>
+                                        <th style="width: 150px;">Ngày hết hạn</th>
+                                        <th style="width: 250px;">Thanh đếm ngược thời gian</th>
+                                        <th style="width: 160px;">Trạng thái</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-gia-han">
+                                    <tr class="empty-row">
+                                        <td colspan="5" class="text-center text-muted">Chưa có thông tin bản quyền nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Controls for License -->
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
+                            <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
+                                Đang hiển thị <span id="pag-start-gia-han">0</span> - <span id="pag-end-gia-han">0</span> trên tổng số <span id="pag-total-gia-han">0</span> bản ghi
+                            </div>
+                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-gia-han" style="padding: 6px 12px; font-size: 13px;">
+                                    <i class="fa-solid fa-angle-left"></i> Trang trước
+                                </button>
+                                <span id="pag-current-gia-han" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-gia-han" style="padding: 6px 12px; font-size: 13px;">
+                                    Trang sau <i class="fa-solid fa-angle-right"></i>
+                                </button>
                             </div>
                         </div>
                     </div>

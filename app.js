@@ -196,6 +196,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 issue: js.issue,
                 solution: js.solution
             })
+        },
+        giaHan: {
+            fromDB: (db) => ({
+                id: db.id,
+                name: db.name,
+                expiryDate: db.expiry_date
+            }),
+            toDB: (js) => ({
+                name: js.name,
+                expiry_date: js.expiryDate
+            })
         }
     };
 
@@ -2227,6 +2238,382 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 
     // =========================================================================
+    // 9.1. PHÂN HỆ 7: GIA HẠN BẢN QUYỀN
+    // =========================================================================
+    let giaHanList = [];
+    const formGiaHan = document.getElementById('form-gia-han');
+    const tbodyGiaHan = document.getElementById('tbody-gia-han');
+    const searchGiaHan = document.getElementById('search-gia-han');
+    const btnCancelGiaHan = document.getElementById('btn-cancel-gia-han');
+    const btnSaveGiaHan = document.getElementById('btn-save-gia-han');
+    const editIndexGiaHan = document.getElementById('edit-index-gia-han');
+    
+    let currentPageGiaHan = 1;
+    const itemsPerPageGiaHan = 10;
+
+    function loadGiaHanFromLocalStorage() {
+        try {
+            const stored = localStorage.getItem('gia_han_list');
+            if (stored) {
+                giaHanList = JSON.parse(stored);
+            } else {
+                giaHanList = [];
+            }
+        } catch (e) {
+            console.error("Error reading LocalStorage for gia_han:", e);
+            giaHanList = [];
+        }
+        renderGiaHan();
+    }
+
+    function saveGiaHanToLocalStorage() {
+        try {
+            localStorage.setItem('gia_han_list', JSON.stringify(giaHanList));
+        } catch (e) {
+            console.error("Error writing LocalStorage for gia_han:", e);
+        }
+    }
+
+    function calculateDaysRemaining(expiryStr) {
+        if (!expiryStr) return 0;
+        const expiry = new Date(expiryStr);
+        expiry.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const diffTime = expiry.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }
+
+    function getCountdownBarHTML(days) {
+        let percent = 0;
+        let colorClass = 'countdown-green';
+        let label = '';
+        
+        if (days > 30) {
+            percent = 100;
+            colorClass = 'countdown-green';
+            label = `Còn ${days} ngày`;
+        } else if (days > 0) {
+            // Shrinks from 100% to 0% as days go from 30 to 1
+            percent = Math.round((days / 30) * 100);
+            colorClass = 'countdown-orange';
+            label = `Còn ${days} ngày`;
+        } else if (days === 0) {
+            percent = 0;
+            colorClass = 'countdown-red';
+            label = `Hôm nay hết hạn!`;
+        } else {
+            percent = 100;
+            colorClass = 'countdown-red';
+            label = `Đã hết hạn ${Math.abs(days)} ngày`;
+        }
+        
+        return `
+            <div class="countdown-container">
+                <div class="countdown-text">
+                    <span>${label}</span>
+                </div>
+                <div class="countdown-bar">
+                    <div class="countdown-fill ${colorClass}" style="width: ${percent}%"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getLicenseStatusBadge(days) {
+        if (days > 30) {
+            return `<span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> An toàn</span>`;
+        } else if (days > 0) {
+            return `<span class="badge badge-yellow badge-pulse-yellow"><i class="fa-solid fa-triangle-exclamation"></i> Sắp hết hạn</span>`;
+        } else {
+            return `<span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Đã hết hạn</span>`;
+        }
+    }
+
+    function updateLicenseAlerts() {
+        const banner = document.getElementById('license-alert-banner');
+        const alertList = document.getElementById('license-alert-list');
+        if (!banner || !alertList) return;
+        
+        const urgentLicenses = giaHanList.filter(item => {
+            const days = calculateDaysRemaining(item.expiryDate);
+            return days <= 30;
+        });
+        
+        if (urgentLicenses.length > 0) {
+            alertList.innerHTML = urgentLicenses.map(item => {
+                const days = calculateDaysRemaining(item.expiryDate);
+                const dateStr = item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('vi-VN') : 'chưa rõ';
+                if (days > 0) {
+                    return `<li>Bản quyền <strong>${item.name}</strong> sắp hết hạn vào ngày <strong>${dateStr}</strong> (Còn <strong>${days} ngày</strong> nữa). Vui lòng lên phương án gia hạn!</li>`;
+                } else if (days === 0) {
+                    return `<li style="font-weight: bold; color: var(--danger-color);">Bản quyền <strong>${item.name}</strong> HẾT HẠN HÔM NAY!</li>`;
+                } else {
+                    return `<li style="font-weight: bold;">Bản quyền <strong>${item.name}</strong> đã HẾT HẠN vào ngày <strong>${dateStr}</strong> (Quá hạn <strong>${Math.abs(days)} ngày</strong>).</li>`;
+                }
+            }).join('');
+            banner.style.display = 'block';
+        } else {
+            banner.style.display = 'none';
+        }
+    }
+
+    function renderGiaHan(filterText = '') {
+        if (!tbodyGiaHan) return;
+        tbodyGiaHan.innerHTML = '';
+        
+        // Sort by expiry date (soonest expiry first)
+        const sortedList = [...giaHanList].sort((a, b) => {
+            const dateA = a.expiryDate ? new Date(a.expiryDate) : new Date(0);
+            const dateB = b.expiryDate ? new Date(b.expiryDate) : new Date(0);
+            return dateA - dateB;
+        });
+
+        const keyword = filterText.toLowerCase();
+        const filtered = sortedList.filter(item => {
+            return (item.name || '').toLowerCase().includes(keyword);
+        });
+
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageGiaHan) || 1;
+        if (currentPageGiaHan > totalPages) currentPageGiaHan = totalPages;
+        if (currentPageGiaHan < 1) currentPageGiaHan = 1;
+
+        const startIndex = (currentPageGiaHan - 1) * itemsPerPageGiaHan;
+        const endIndex = Math.min(startIndex + itemsPerPageGiaHan, totalItems);
+
+        const pagStart = document.getElementById('pag-start-gia-han');
+        const pagEnd = document.getElementById('pag-end-gia-han');
+        const pagTotal = document.getElementById('pag-total-gia-han');
+        const pagCurrent = document.getElementById('pag-current-gia-han');
+
+        if (pagStart) pagStart.innerText = totalItems > 0 ? startIndex + 1 : 0;
+        if (pagEnd) pagEnd.innerText = endIndex;
+        if (pagTotal) pagTotal.innerText = totalItems;
+        if (pagCurrent) pagCurrent.innerText = `Trang ${currentPageGiaHan} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-gia-han');
+        const btnNext = document.getElementById('btn-next-gia-han');
+        
+        if (btnPrev && btnNext) {
+            btnPrev.disabled = currentPageGiaHan === 1;
+            btnNext.disabled = currentPageGiaHan === totalPages;
+            btnPrev.style.opacity = currentPageGiaHan === 1 ? '0.5' : '1';
+            btnPrev.style.cursor = currentPageGiaHan === 1 ? 'not-allowed' : 'pointer';
+            btnNext.style.opacity = currentPageGiaHan === totalPages ? '0.5' : '1';
+            btnNext.style.cursor = currentPageGiaHan === totalPages ? 'not-allowed' : 'pointer';
+        }
+
+        updateLicenseAlerts();
+
+        if (totalItems === 0) {
+            tbodyGiaHan.innerHTML = `
+                <tr class="empty-row">
+                    <td colspan="5" class="text-center text-muted">Chưa có thông tin bản quyền nào!</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item) => {
+            const originalIndex = giaHanList.indexOf(item);
+            const tr = document.createElement('tr');
+            
+            const days = calculateDaysRemaining(item.expiryDate);
+            const dateFormatted = item.expiryDate ? new Date(item.expiryDate).toLocaleDateString('vi-VN') : '—';
+            const countdownBarHTML = getCountdownBarHTML(days);
+            const statusBadgeHTML = getLicenseStatusBadge(days);
+
+            tr.innerHTML = `
+                <td>
+                    <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
+                </td>
+                <td>
+                    <span style="font-family: monospace; font-size: 13px; font-weight: 600;">${dateFormatted}</span>
+                </td>
+                <td>
+                    ${countdownBarHTML}
+                </td>
+                <td>
+                    ${statusBadgeHTML}
+                </td>
+                <td>
+                    <div class="actions-cell">
+                        <button class="btn-icon-only edit btn-edit-giahan" data-index="${originalIndex}" title="Sửa">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn-icon-only delete btn-delete-giahan" data-index="${originalIndex}" title="Xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbodyGiaHan.appendChild(tr);
+        });
+
+        // Bind events
+        document.querySelectorAll('.btn-edit-giahan').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                editGiaHan(idx);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete-giahan').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                deleteGiaHan(idx);
+            });
+        });
+    }
+
+    if (formGiaHan) {
+        formGiaHan.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const indexStr = editIndexGiaHan.value;
+
+            const data = {
+                name: document.getElementById('license-name').value.trim(),
+                expiryDate: document.getElementById('license-expiry').value
+            };
+
+            if (indexStr === '') {
+                const newId = 'lh-' + Date.now();
+                const newItem = { id: newId, ...data };
+                
+                // Local save first for safety
+                giaHanList.push(newItem);
+                saveGiaHanToLocalStorage();
+                
+                // Sync with Supabase
+                if (supabaseClient) {
+                    const dbData = mappers.giaHan.toDB(newItem);
+                    supabaseClient.from('gia_han').insert([dbData]).then(({ error }) => {
+                        if (error) {
+                            console.warn("Supabase insert error for 'gia_han' (saved locally):", error);
+                        }
+                    }).catch(err => {
+                        console.warn("Supabase insert catch for 'gia_han' (saved locally):", err);
+                    });
+                }
+                showToast('Thành công', 'Đã thêm thông tin gia hạn mới!');
+            } else {
+                const idx = parseInt(indexStr);
+                const oldItem = giaHanList[idx];
+                const updatedItem = { ...oldItem, ...data };
+                
+                // Local save first for safety
+                giaHanList[idx] = updatedItem;
+                saveGiaHanToLocalStorage();
+
+                // Sync with Supabase
+                if (supabaseClient) {
+                    const dbData = mappers.giaHan.toDB(updatedItem);
+                    supabaseClient.from('gia_han').update(dbData).eq('id', oldItem.id).then(({ error }) => {
+                        if (error) {
+                            console.warn("Supabase update error for 'gia_han' (saved locally):", error);
+                        }
+                    }).catch(err => {
+                        console.warn("Supabase update catch for 'gia_han' (saved locally):", err);
+                    });
+                }
+                showToast('Thành công', 'Đã cập nhật thông tin gia hạn!');
+                resetFormGiaHan();
+            }
+
+            renderGiaHan();
+            formGiaHan.reset();
+        });
+    }
+
+    function editGiaHan(index) {
+        const item = giaHanList[index];
+        editIndexGiaHan.value = index;
+        
+        document.getElementById('license-name').value = item.name;
+        document.getElementById('license-expiry').value = item.expiryDate;
+
+        btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Bản Quyền';
+        btnCancelGiaHan.classList.remove('hidden');
+
+        document.querySelector('.tab-container').scrollTop = 0;
+    }
+
+    function deleteGiaHan(index) {
+        const item = giaHanList[index];
+        if (confirm(`Bạn có chắc chắn muốn xóa thông tin gia hạn bản quyền: "${item.name}"?`)) {
+            // Local delete first for safety
+            giaHanList.splice(index, 1);
+            saveGiaHanToLocalStorage();
+
+            // Sync with Supabase
+            if (supabaseClient) {
+                supabaseClient.from('gia_han').delete().eq('id', item.id).then(({ error }) => {
+                    if (error) {
+                        console.warn("Supabase delete error for 'gia_han' (deleted locally):", error);
+                    }
+                }).catch(err => {
+                    console.warn("Supabase delete catch for 'gia_han' (deleted locally):", err);
+                });
+            }
+            
+            renderGiaHan();
+            showToast('Đã xóa', 'Xóa thông tin gia hạn thành công!', 'warning');
+
+            if (editIndexGiaHan.value === index.toString()) {
+                resetFormGiaHan();
+            }
+        }
+    }
+
+    function resetFormGiaHan() {
+        if (editIndexGiaHan) editIndexGiaHan.value = '';
+        if (btnSaveGiaHan) btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Gia Hạn';
+        if (btnCancelGiaHan) btnCancelGiaHan.classList.add('hidden');
+        if (formGiaHan) formGiaHan.reset();
+    }
+
+    if (btnCancelGiaHan) btnCancelGiaHan.addEventListener('click', resetFormGiaHan);
+    
+    if (searchGiaHan) {
+        searchGiaHan.addEventListener('input', (e) => {
+            currentPageGiaHan = 1;
+            renderGiaHan(e.target.value.trim());
+        });
+    }
+
+    const btnPrevGiaHan = document.getElementById('btn-prev-gia-han');
+    const btnNextGiaHan = document.getElementById('btn-next-gia-han');
+
+    if (btnPrevGiaHan) {
+        btnPrevGiaHan.addEventListener('click', () => {
+            if (currentPageGiaHan > 1) {
+                currentPageGiaHan--;
+                renderGiaHan(searchGiaHan.value.trim());
+            }
+        });
+    }
+
+    if (btnNextGiaHan) {
+        btnNextGiaHan.addEventListener('click', () => {
+            const keyword = searchGiaHan.value.trim().toLowerCase();
+            const totalItems = giaHanList.filter(item => {
+                return (item.name || '').toLowerCase().includes(keyword);
+            }).length;
+            const totalPages = Math.ceil(totalItems / itemsPerPageGiaHan) || 1;
+            if (currentPageGiaHan < totalPages) {
+                currentPageGiaHan++;
+                renderGiaHan(searchGiaHan.value.trim());
+            }
+        });
+    }
+
+
+    // =========================================================================
     // 10. INITIALIZATION RUN (FETCH FROM SUPABASE)
     // =========================================================================
     async function initApp() {
@@ -2267,6 +2654,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (error) throw error;
                 tipsList = (data || []).map(mappers.tips.fromDB);
                 renderTips();
+            }),
+            supabaseClient.from('gia_han').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                giaHanList = (data || []).map(mappers.giaHan.fromDB);
+                renderGiaHan();
+            }).catch(err => {
+                console.warn("Table 'gia_han' fetch failed, using local storage fallback. Error:", err);
+                loadGiaHanFromLocalStorage();
             })
         ];
 
