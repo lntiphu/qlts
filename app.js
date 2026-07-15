@@ -202,11 +202,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 id: db.id,
                 name: db.name,
                 provider: db.provider || '',
+                notes: db.notes || '',
                 expiryDate: db.expiry_date
             }),
             toDB: (js) => ({
                 name: js.name,
                 provider: js.provider || null,
+                notes: js.notes || null,
                 expiry_date: js.expiryDate
             })
         }
@@ -2465,6 +2467,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
                 </td>
                 <td>
+                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic;">${item.notes || '—'}</span>
+                </td>
+                <td>
                     <span style="font-weight: 500; color: var(--text-secondary);">${item.provider || '—'}</span>
                 </td>
                 <td>
@@ -2548,6 +2553,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const data = {
                 name: document.getElementById('license-name').value.trim(),
                 provider: document.getElementById('license-provider').value.trim(),
+                notes: document.getElementById('license-notes').value.trim(),
                 expiryDate: expiryVal
             };
 
@@ -2606,6 +2612,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         document.getElementById('license-name').value = item.name;
         document.getElementById('license-provider').value = item.provider || '';
+        document.getElementById('license-notes').value = item.notes || '';
         document.getElementById('license-expiry').value = formatDateDMY(item.expiryDate);
 
         btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Bản Quyền';
