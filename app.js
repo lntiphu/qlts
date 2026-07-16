@@ -2885,18 +2885,329 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Handle Import database
+    // Helper to map CSV headers to JS keys
+    const headerToKeyMap = {
+        // Assets (Thiết bị)
+        "Phòng ban": "userDept",
+        "Họ và tên": "userName",
+        "Chức vụ": "userTitle",
+        "Model máy": "devMain",
+        "Cấu hình RAM": "devRam",
+        "Số khe RAM": "devRamSlots",
+        "Ổ cứng": "devSsd",
+        "Màn hình": "devMonitor",
+        "Dây cáp": "devCables",
+        "Key Windows": "keyWin",
+        "Key Office": "keyOffice",
+        "Key PDF": "keyPdf",
+        "Ghi chú thiết bị": "devNotes",
+        "Ghi chú": "notes",
+        "Ứng dụng": "devApps",
+        
+        // Companies (Chi nhánh)
+        "Mã công ty": "code",
+        "Tên chi nhánh/công ty": "name",
+        "Mã số thuế": "taxCode",
+        "Người đại diện": "rep",
+        "Chức vụ đại diện": "repRole",
+        "Địa chỉ": "address",
+        
+        // Accounts (Tài khoản)
+        "Hệ thống/Dịch vụ": "func",
+        "IP / Đường dẫn": "ip",
+        "User": "username",
+        "Pass": "password",
+        
+        // Support (Hỗ trợ)
+        "Đơn vị hỗ trợ": "unit",
+        "Nội dung hỗ trợ": "name",
+        "Số điện thoại": "phone",
+        "Nội dung/Phạm vi": "scope",
+        "Zalo": "hasZalo",
+        "Vai trò": "role",
+        
+        // Cameras (Camera)
+        "Dự án": "project",
+        "Thiết bị": "device",
+        "IP Wan": "ipWan",
+        "RTSP Port": "rtsp",
+        "TCP Port": "tcp",
+        "HTTP Port": "http",
+        "HTTPS Port": "https",
+        "User camera": "username",
+        "Pass camera": "password",
+        "User ONVIF": "onvifUser",
+        "Pass ONVIF": "onvifPass",
+        
+        // Tips
+        "Vấn đề / Lỗi": "issue",
+        "Cách khắc phục": "solution",
+        
+        // Gia han
+        "Dịch vụ": "name",
+        "Đơn vị thực hiện": "provider",
+        "Ngày hết hạn": "expiryDate"
+    };
+
+    // Helper to parse CSV string to 2D array
+    function parseCSV(csvText) {
+        if (csvText.startsWith('\ufeff')) {
+            csvText = csvText.substring(1);
+        }
+        
+        let lines = [];
+        let row = [];
+        let inQuotes = false;
+        let cell = '';
+        
+        for (let i = 0; i < csvText.length; i++) {
+            let char = csvText[i];
+            let nextChar = csvText[i + 1];
+            
+            if (inQuotes) {
+                if (char === '"') {
+                    if (nextChar === '"') {
+                        cell += '"';
+                        i++;
+                    } else {
+                        inQuotes = false;
+                    }
+                } else {
+                    cell += char;
+                }
+            } else {
+                if (char === '"') {
+                    inQuotes = true;
+                } else if (char === ',') {
+                    row.push(cell);
+                    cell = '';
+                } else if (char === '\r' || char === '\n') {
+                    row.push(cell);
+                    cell = '';
+                    if (row.length > 0 && row.some(c => c !== '')) {
+                        lines.push(row);
+                    }
+                    row = [];
+                    if (char === '\r' && nextChar === '\n') {
+                        i++;
+                    }
+                } else {
+                    cell += char;
+                }
+            }
+        }
+        if (cell || row.length > 0) {
+            row.push(cell);
+            if (row.some(c => c !== '')) {
+                lines.push(row);
+            }
+        }
+        return lines;
+    }
+
+    // Helper to convert CSV 2D array to JS objects list
+    function csvToObjects(csvLines, headerMap, tableName) {
+        if (csvLines.length < 2) return [];
+        const headers = csvLines[0];
+        const objects = [];
+        
+        for (let i = 1; i < csvLines.length; i++) {
+            const row = csvLines[i];
+            const obj = {};
+            for (let j = 0; j < headers.length; j++) {
+                const header = headers[j] ? headers[j].trim() : '';
+                const key = headerMap[header] || headerMap[header.replace(' (*)', '')];
+                if (key) {
+                    let val = row[j] ? row[j].trim() : '';
+                    if (key === 'hasZalo') {
+                        val = (val.toLowerCase() === 'true' || val === '1' || val.toLowerCase() === 'có' || val.toLowerCase() === 'yes');
+                    } else if (key === 'devRamSlots') {
+                        val = val ? parseInt(val) || '' : '';
+                    }
+                    obj[key] = val;
+                }
+            }
+            if (!obj.id) {
+                obj.id = 'import-' + Math.random().toString(36).substring(2, 9);
+            }
+            objects.push(obj);
+        }
+        return objects;
+    }
+
+    // Common restore database function
+    async function restoreDatabase(data) {
+        // 1. Assign restored lists to memory
+        if (data.assets) {
+            thietBiList.length = 0;
+            data.assets.forEach(item => {
+                if (!item.userId) item.userId = 'NV-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+                if (!item.devType) item.devType = 'Laptop';
+                if (!item.devStatus) item.devStatus = 'Đang sử dụng';
+                if (!item.history) item.history = [];
+            });
+            thietBiList.push(...data.assets);
+        }
+        if (data.companies) {
+            congTyList.length = 0;
+            congTyList.push(...data.companies);
+        }
+        if (data.accounts) {
+            accountList.length = 0;
+            accountList.push(...data.accounts);
+        }
+        if (data.support) {
+            hoTroList.length = 0;
+            hoTroList.push(...data.support);
+        }
+        if (data.cameras) {
+            cameraList.length = 0;
+            cameraList.push(...data.cameras);
+        }
+        if (data.tips) {
+            tipsList.length = 0;
+            tipsList.push(...data.tips);
+        }
+        if (data.giaHan) {
+            giaHanList.length = 0;
+            giaHanList.push(...data.giaHan);
+        }
+
+        // 2. Save local storage for fallback
+        saveGiaHanToLocalStorage();
+
+        // 3. Synchronize with Supabase database
+        if (supabaseClient) {
+            const restoreTable = async (tableName, list, mapper) => {
+                const { data: records, error: fetchErr } = await supabaseClient.from(tableName).select('id');
+                if (fetchErr) {
+                    console.error(`Error fetching IDs from ${tableName}:`, fetchErr);
+                    return;
+                }
+                
+                if (records && records.length > 0) {
+                    const ids = records.map(r => r.id);
+                    const { error: delErr } = await supabaseClient.from(tableName).delete().in('id', ids);
+                    if (delErr) {
+                        console.error(`Error deleting from ${tableName}:`, delErr);
+                        return;
+                    }
+                }
+                
+                if (list && list.length > 0) {
+                    const dbData = list.map(item => {
+                        const dbObj = mapper.toDB(item);
+                        if (item.id && !String(item.id).startsWith('import-')) {
+                            dbObj.id = item.id;
+                        }
+                        return dbObj;
+                    });
+                    const { error: insErr } = await supabaseClient.from(tableName).insert(dbData);
+                    if (insErr) {
+                        console.error(`Error inserting into ${tableName}:`, insErr);
+                    }
+                }
+            };
+
+            try {
+                await restoreTable('thiet_bi', thietBiList, mappers.thietBi);
+                await restoreTable('cong_ty', congTyList, mappers.congTy);
+                await restoreTable('account', accountList, mappers.account);
+                await restoreTable('ho_tro', hoTroList, mappers.hoTro);
+                await restoreTable('camera', cameraList, mappers.camera);
+                await restoreTable('tips', tipsList, mappers.tips);
+                await restoreTable('gia_han', giaHanList, mappers.giaHan);
+            } catch (supabaseErr) {
+                console.warn("Supabase restore warning:", supabaseErr);
+            }
+        }
+
+        // 4. Re-render UI
+        updateDeptFilterThietBi();
+        renderThietBi();
+        renderCongTy();
+        renderAccount();
+        renderHoTro();
+        renderCamera();
+        renderTips();
+        renderGiaHan();
+
+        showToast('Khôi phục thành công', 'Toàn bộ dữ liệu hệ thống đã được phục hồi!', 'success');
+        if (modalBackup) modalBackup.classList.add('hidden');
+    }
+
+    // Handle Import database (.json or .zip containing CSVs)
     if (importFileSelector) {
         importFileSelector.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
+            // Handle ZIP file import (Excel reports ZIP)
+            if (file.name.endsWith('.zip')) {
+                if (typeof JSZip === 'undefined') {
+                    showToast('Lỗi', 'Thư viện JSZip chưa được nạp. Không thể giải nén file ZIP!', 'error');
+                    return;
+                }
+
+                const confirmRestore = confirm("CẢNH BÁO: Việc khôi phục từ file ZIP chứa các báo cáo Excel (CSV) sẽ XÓA TOÀN BỘ dữ liệu hiện tại trên database để nạp dữ liệu từ file zip. Bạn có chắc chắn muốn thực hiện?");
+                if (!confirmRestore) {
+                    importFileSelector.value = '';
+                    return;
+                }
+
+                showToast('Đang khôi phục', 'Đang đọc và giải nén file ZIP...', 'info');
+
+                const reader = new FileReader();
+                reader.onload = async function (evt) {
+                    try {
+                        const zip = await JSZip.loadAsync(evt.target.result);
+                        
+                        const csvFiles = {
+                            "assets": "1_Danh_sach_cap_phat.csv",
+                            "companies": "2_Danh_sach_chi_nhanh.csv",
+                            "accounts": "3_Danh_sach_tai_khoan.csv",
+                            "support": "4_Danh_sach_ho_tro.csv",
+                            "cameras": "5_Danh_sach_camera.csv",
+                            "tips": "6_Danh_sach_tips.csv",
+                            "giaHan": "7_Danh_sach_gia_han.csv"
+                        };
+                        
+                        const parsePromises = Object.entries(csvFiles).map(async ([key, fileName]) => {
+                            const fileObj = zip.file(fileName);
+                            if (fileObj) {
+                                const text = await fileObj.async("string");
+                                const csvLines = parseCSV(text);
+                                return { key, data: csvToObjects(csvLines, headerToKeyMap, key) };
+                            }
+                            return { key, data: null };
+                        });
+                        
+                        const parsedResults = await Promise.all(parsePromises);
+                        const data = {};
+                        parsedResults.forEach(r => {
+                            if (r.data !== null) {
+                                data[r.key] = r.data;
+                            }
+                        });
+                        
+                        await restoreDatabase(data);
+                    } catch (zipErr) {
+                        showToast('Lỗi giải nén', 'Không thể giải nén hoặc phân tích file ZIP. Vui lòng kiểm tra lại!', 'error');
+                        console.error(zipErr);
+                    } finally {
+                        importFileSelector.value = '';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+                return;
+            }
+
+            // Handle JSON file import (System backup JSON)
             const reader = new FileReader();
             reader.onload = async function (evt) {
                 try {
                     const data = JSON.parse(evt.target.result);
 
-                    // Check if file is valid
                     if (!data.assets && !data.companies && !data.accounts && !data.cameras && !data.giaHan) {
                         showToast('Lỗi file', 'File sao lưu không đúng định dạng JSON hệ thống!', 'error');
                         return;
@@ -2909,100 +3220,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     showToast('Đang khôi phục', 'Đang xử lý khôi phục dữ liệu...', 'info');
-
-                    // 1. Assign restored lists to memory
-                    if (data.assets) {
-                        thietBiList.length = 0;
-                        thietBiList.push(...data.assets);
-                    }
-                    if (data.companies) {
-                        congTyList.length = 0;
-                        congTyList.push(...data.companies);
-                    }
-                    if (data.accounts) {
-                        accountList.length = 0;
-                        accountList.push(...data.accounts);
-                    }
-                    if (data.support) {
-                        hoTroList.length = 0;
-                        hoTroList.push(...data.support);
-                    }
-                    if (data.cameras) {
-                        cameraList.length = 0;
-                        cameraList.push(...data.cameras);
-                    }
-                    if (data.tips) {
-                        tipsList.length = 0;
-                        tipsList.push(...data.tips);
-                    }
-                    if (data.giaHan) {
-                        giaHanList.length = 0;
-                        giaHanList.push(...data.giaHan);
-                    }
-
-                    // 2. Save local storage for fallback
-                    saveGiaHanToLocalStorage();
-
-                    // 3. Synchronize with Supabase database
-                    if (supabaseClient) {
-                        const restoreTable = async (tableName, list, mapper) => {
-                            const { data: records, error: fetchErr } = await supabaseClient.from(tableName).select('id');
-                            if (fetchErr) {
-                                console.error(`Error fetching IDs from ${tableName}:`, fetchErr);
-                                return;
-                            }
-                            
-                            if (records && records.length > 0) {
-                                const ids = records.map(r => r.id);
-                                const { error: delErr } = await supabaseClient.from(tableName).delete().in('id', ids);
-                                if (delErr) {
-                                    console.error(`Error deleting from ${tableName}:`, delErr);
-                                    return;
-                                }
-                            }
-                            
-                            if (list && list.length > 0) {
-                                const dbData = list.map(item => {
-                                    const dbObj = mapper.toDB(item);
-                                    if (item.id) {
-                                        dbObj.id = item.id;
-                                    }
-                                    return dbObj;
-                                });
-                                const { error: insErr } = await supabaseClient.from(tableName).insert(dbData);
-                                if (insErr) {
-                                    console.error(`Error inserting into ${tableName}:`, insErr);
-                                }
-                            }
-                        };
-
-                        try {
-                            await restoreTable('thiet_bi', thietBiList, mappers.thietBi);
-                            await restoreTable('cong_ty', congTyList, mappers.congTy);
-                            await restoreTable('account', accountList, mappers.account);
-                            await restoreTable('ho_tro', hoTroList, mappers.hoTro);
-                            await restoreTable('camera', cameraList, mappers.camera);
-                            await restoreTable('tips', tipsList, mappers.tips);
-                            await restoreTable('gia_han', giaHanList, mappers.giaHan);
-                        } catch (supabaseErr) {
-                            console.warn("Supabase restore warning:", supabaseErr);
-                        }
-                    }
-
-                    // 4. Re-render UI
-                    updateDeptFilterThietBi();
-                    renderThietBi();
-                    renderCongTy();
-                    renderAccount();
-                    renderHoTro();
-                    renderCamera();
-                    renderTips();
-                    renderGiaHan();
-
-                    showToast('Khôi phục thành công', 'Toàn bộ dữ liệu hệ thống đã được phục hồi!', 'success');
-                    if (modalBackup) modalBackup.classList.add('hidden');
+                    await restoreDatabase(data);
                 } catch (parseErr) {
-                    showToast('Lỗi nạp file', 'Không thể đọc nội dung file sao lưu. Vui lòng kiểm tra lại!', 'error');
+                    showToast('Lỗi nạp file', 'Không thể đọc nội dung file sao lưu JSON. Vui lòng kiểm tra lại!', 'error');
                     console.error(parseErr);
                 } finally {
                     importFileSelector.value = '';
