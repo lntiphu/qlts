@@ -145,7 +145,10 @@
                             
                             <!-- Subsection 1: Thông tin người sử dụng -->
                             <div class="form-subsection">
-                                <h4 class="subsection-title">1. Thông tin người sử dụng</h4>
+                                <h4 class="subsection-title" id="title-user-info" style="cursor: pointer; color: var(--primary-color); display: inline-flex; align-items: center; gap: 8px;">
+                                    1. Thông tin người sử dụng 
+                                    <i class="fa-solid fa-up-right-from-square" style="font-size: 11px; opacity: 0.8;" title="Xem thẻ nhân viên"></i>
+                                </h4>
                                 <div class="grid grid-col-6">
                                     <div class="form-group col-span-2-lg">
                                         <label for="user-id">ID (*)</label>
@@ -305,6 +308,9 @@
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary" id="btn-save-thiet-bi">
                                     <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới
+                                </button>
+                                <button type="button" class="btn" id="btn-export-handover-png" style="background-color: var(--success-color); color: #fff; border: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-file-image"></i> Xuất hình ảnh bàn giao (PNG)
                                 </button>
                                 <button type="button" class="btn btn-secondary hidden" id="btn-cancel-thiet-bi">
                                     Hủy Chỉnh Sửa
@@ -1019,11 +1025,136 @@
         </div>
     </div>
 
+    <!-- User Info Preview & Export Modal -->
+    <div id="modal-user-preview" class="backup-modal hidden">
+        <div class="backup-modal-content" style="max-width: 440px;">
+            <div class="backup-modal-header">
+                <h3 class="backup-modal-title"><i class="fa-solid fa-user"></i> Thẻ Thông Tin Nhân Viên</h3>
+                <button type="button" class="backup-modal-close" id="btn-close-user-modal">&times;</button>
+            </div>
+            <div class="backup-modal-body" style="padding: 0;">
+                <!-- The card wrapper that will be exported to PNG -->
+                <div id="user-card-export-target" style="padding: 30px; background: linear-gradient(135deg, #1e293b, #0f172a); color: #f8fafc; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; font-family: inherit;">
+                    <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: var(--primary-color); font-weight: 700; margin-bottom: 20px;">
+                        ELODIES 1999 • MEMBER CARD
+                    </div>
+                    <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(249, 115, 22, 0.1); border: 2px solid var(--primary-color); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--primary-color); font-size: 36px;">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                    <h3 id="preview-user-name" style="font-size: 20px; font-weight: 700; margin: 0 0 6px 0; color: #fff;">Đồng Thụy Hoàng Kim</h3>
+                    <div id="preview-user-title" style="font-size: 14px; color: #94a3b8; margin-bottom: 24px;">CV Cung ứng</div>
+                    
+                    <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                            <span style="color: #94a3b8;">Mã nhân viên:</span>
+                            <span id="preview-user-id" style="font-weight: 600; color: #fff;">hoangkim</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                            <span style="color: #94a3b8;">Phòng ban:</span>
+                            <span id="preview-user-dept" style="font-weight: 600; color: #fff;">CQX</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13px;">
+                            <span style="color: #94a3b8;">Email:</span>
+                            <span id="preview-user-email" style="font-weight: 600; color: #fff; word-break: break-all;">—</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="color: #94a3b8;">Số điện thoại:</span>
+                            <span id="preview-user-phone" style="font-weight: 600; color: #fff;">—</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action button to export as image -->
+                <div style="padding: 20px; display: flex; justify-content: center; background-color: var(--bg-sidebar);">
+                    <button type="button" class="btn btn-primary" id="btn-export-user-card-png" style="width: 100%;">
+                        <i class="fa-solid fa-download"></i> Tải ảnh thẻ nhân viên (PNG)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Handover Receipt Container for PNG Export -->
+    <div id="handover-receipt-export-container" class="hidden" style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="handover-receipt-target" style="width: 800px; padding: 40px; background-color: #0f172a; color: #f8fafc; font-family: 'Inter', sans-serif; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <!-- Header -->
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary-color); padding-bottom: 20px; margin-bottom: 30px;">
+                <div>
+                    <h2 style="font-size: 24px; font-weight: 800; color: #fff; margin: 0; text-transform: uppercase; letter-spacing: 1px;">ELODIES 1999</h2>
+                    <span style="font-size: 11px; color: #94a3b8; letter-spacing: 3px;">TECHNOLOGY ID PORTAL</span>
+                </div>
+                <div style="text-align: right;">
+                    <h3 style="font-size: 16px; font-weight: 700; color: var(--primary-color); margin: 0 0 4px 0; text-transform: uppercase;">Biên Bản Bàn Giao Thiết Bị</h3>
+                    <span id="receipt-handover-date" style="font-size: 12px; color: #94a3b8;">Ngày bàn giao: —</span>
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px;">
+                <!-- Column 1: Người nhận -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;">
+                    <h4 style="font-size: 15px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">I. Thông Tin Người Nhận</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Họ và Tên:</span><span id="receipt-user-name" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Mã nhân viên:</span><span id="receipt-user-id" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Chức danh:</span><span id="receipt-user-title" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Phòng ban:</span><span id="receipt-user-dept" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Email:</span><span id="receipt-user-email" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Số điện thoại:</span><span id="receipt-user-phone" style="font-weight: 600; color: #fff;">—</span></div>
+                    </div>
+                </div>
+                
+                <!-- Column 2: Thiết bị -->
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 8px;">
+                    <h4 style="font-size: 15px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin: 0 0 16px 0; text-transform: uppercase; letter-spacing: 0.5px;">II. Thông Tin Thiết Bị</h4>
+                    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13px;">
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Mã thiết bị:</span><span id="receipt-dev-id" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Tên thiết bị:</span><span id="receipt-dev-name" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Cấu hình CPU:</span><span id="receipt-dev-cpu" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Dung lượng RAM:</span><span id="receipt-dev-ram" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Ổ cứng:</span><span id="receipt-dev-disk" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: #94a3b8;">Màn hình & Cáp:</span><span id="receipt-dev-screen" style="font-weight: 600; color: #fff;">—</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Details / Keys / Software -->
+            <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 40px; font-size: 13px;">
+                <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0;">III. Chi Tiết Bản Quyền & Phần Mềm</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div>
+                        <div style="margin-bottom: 8px;"><span style="color: #94a3b8;">Key Windows:</span> <span id="receipt-key-win" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div style="margin-bottom: 8px;"><span style="color: #94a3b8;">Key Office:</span> <span id="receipt-key-office" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div><span style="color: #94a3b8;">Key PDF:</span> <span id="receipt-key-pdf" style="font-weight: 600; color: #fff;">—</span></div>
+                    </div>
+                    <div>
+                        <div style="margin-bottom: 8px;"><span style="color: #94a3b8;">Ứng dụng bản quyền:</span> <span id="receipt-dev-apps" style="font-weight: 600; color: #fff;">—</span></div>
+                        <div><span style="color: #94a3b8;">Ghi chú:</span> <span id="receipt-dev-notes" style="font-weight: 600; color: #fff;">—</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Signatures -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; text-align: center; font-size: 14px;">
+                <div>
+                    <span style="font-weight: 700; color: #fff; display: block; margin-bottom: 60px;">NGƯỜI BÀN GIAO</span>
+                    <span style="color: #94a3b8; font-size: 12px;">(Ký và ghi rõ họ tên)</span>
+                </div>
+                <div>
+                    <span style="font-weight: 700; color: #fff; display: block; margin-bottom: 60px;">NGƯỜI NHẬN THIẾT BỊ</span>
+                    <span id="receipt-user-sign-name" style="font-weight: 700; color: #fff; display: block; text-decoration: underline; margin-bottom: 4px;">—</span>
+                    <span style="color: #94a3b8; font-size: 12px;">(Ký và ghi rõ họ tên)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Supabase JS Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- JSZip Library for CSV zipping -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- html2canvas Library for DOM to PNG conversion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=2.2"></script>
+    <script src="app.js?v=2.3"></script>
 </body>
 </html>

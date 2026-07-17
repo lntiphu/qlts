@@ -3422,6 +3422,183 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    // =========================================================================
+    // 9.3. XUẤT HÌNH ẢNH THẺ NHÂN VIÊN & BIÊN BẢN BÀN GIAO (PNG)
+    // =========================================================================
+    const titleUserInfo = document.getElementById('title-user-info');
+    const modalUserPreview = document.getElementById('modal-user-preview');
+    const btnCloseUserModal = document.getElementById('btn-close-user-modal');
+    const btnExportUserCardPng = document.getElementById('btn-export-user-card-png');
+    const btnExportHandoverPng = document.getElementById('btn-export-handover-png');
+
+    // 1. Click title to show User Info Card Preview popup
+    if (titleUserInfo) {
+        titleUserInfo.addEventListener('click', () => {
+            const userId = document.getElementById('user-id').value.trim();
+            const userName = document.getElementById('user-name').value.trim();
+            const userTitle = document.getElementById('user-title').value.trim();
+            const userDept = document.getElementById('user-dept').value.trim();
+            const userEmail = document.getElementById('user-email').value.trim();
+            const userPhone = document.getElementById('user-phone').value.trim();
+
+            if (!userId || !userName) {
+                showToast('Thông báo', 'Vui lòng nhập ít nhất ID và Họ và Tên của nhân viên để xem thẻ!', 'warning');
+                return;
+            }
+
+            document.getElementById('preview-user-id').innerText = userId;
+            document.getElementById('preview-user-name').innerText = userName;
+            document.getElementById('preview-user-title').innerText = userTitle || 'Chưa cập nhật chức danh';
+            document.getElementById('preview-user-dept').innerText = userDept || 'Chưa cập nhật phòng ban';
+            document.getElementById('preview-user-email').innerText = userEmail || '—';
+            document.getElementById('preview-user-phone').innerText = userPhone || '—';
+
+            if (modalUserPreview) {
+                modalUserPreview.classList.remove('hidden');
+            }
+        });
+    }
+
+    // Close preview modal
+    if (btnCloseUserModal) {
+        btnCloseUserModal.addEventListener('click', () => {
+            if (modalUserPreview) modalUserPreview.classList.add('hidden');
+        });
+    }
+
+    if (modalUserPreview) {
+        modalUserPreview.addEventListener('click', (e) => {
+            if (e.target === modalUserPreview) {
+                modalUserPreview.classList.add('hidden');
+            }
+        });
+    }
+
+    // 2. Export User Info Card as PNG
+    if (btnExportUserCardPng) {
+        btnExportUserCardPng.addEventListener('click', () => {
+            if (typeof html2canvas === 'undefined') {
+                showToast('Lỗi', 'Thư viện html2canvas chưa được nạp. Không thể tạo hình ảnh!', 'error');
+                return;
+            }
+
+            const target = document.getElementById('user-card-export-target');
+            const userId = document.getElementById('user-id').value.trim() || 'user';
+            
+            showToast('Đang tạo ảnh', 'Đang kết xuất hình ảnh thẻ nhân viên...', 'info');
+
+            html2canvas(target, {
+                useCORS: true,
+                scale: 2, // higher resolution
+                backgroundColor: '#0f172a'
+            }).then(canvas => {
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `The_nhan_vien_${userId}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast('Thành công', 'Đã tải xuống hình ảnh thẻ nhân viên!', 'success');
+                if (modalUserPreview) modalUserPreview.classList.add('hidden');
+            }).catch(err => {
+                showToast('Lỗi', 'Không thể tạo hình ảnh!', 'error');
+                console.error(err);
+            });
+        });
+    }
+
+    // 3. Export Handover Receipt (User + Device details) as PNG
+    if (btnExportHandoverPng) {
+        btnExportHandoverPng.addEventListener('click', () => {
+            if (typeof html2canvas === 'undefined') {
+                showToast('Lỗi', 'Thư viện html2canvas chưa được nạp. Không thể tạo hình ảnh!', 'error');
+                return;
+            }
+
+            const userId = document.getElementById('user-id').value.trim();
+            const userName = document.getElementById('user-name').value.trim();
+            
+            if (!userId || !userName) {
+                showToast('Thông báo', 'Vui lòng nhập ID và Họ tên người sử dụng trước khi xuất hình ảnh bàn giao!', 'warning');
+                return;
+            }
+
+            // Populate all fields on the receipt card template
+            document.getElementById('receipt-user-name').innerText = userName;
+            document.getElementById('receipt-user-id').innerText = userId;
+            document.getElementById('receipt-user-title').innerText = document.getElementById('user-title').value.trim() || '—';
+            document.getElementById('receipt-user-dept').innerText = document.getElementById('user-dept').value.trim() || '—';
+            document.getElementById('receipt-user-email').innerText = document.getElementById('user-email').value.trim() || '—';
+            document.getElementById('receipt-user-phone').innerText = document.getElementById('user-phone').value.trim() || '—';
+            
+            document.getElementById('receipt-dev-id').innerText = document.getElementById('dev-id').value.trim() || 'Chưa cấp';
+            document.getElementById('receipt-dev-name').innerText = document.getElementById('dev-type').value.trim() || '—';
+            document.getElementById('receipt-dev-cpu').innerText = document.getElementById('dev-cpu').value.trim() || '—';
+            
+            const ramVal = document.getElementById('dev-ram').value || '';
+            const ramSlotsVal = document.getElementById('dev-ram-slots').value || '';
+            document.getElementById('receipt-dev-ram').innerText = ramVal ? `${ramVal} ${ramSlotsVal ? `(${ramSlotsVal})` : ''}` : '—';
+            
+            const ssdVal = document.getElementById('dev-ssd').value.trim() || '';
+            const hddVal = document.getElementById('dev-hdd').value.trim() || '';
+            let diskStr = '';
+            if (ssdVal) diskStr += `SSD: ${ssdVal}`;
+            if (hddVal) diskStr += (diskStr ? ' / ' : '') + `HDD: ${hddVal}`;
+            document.getElementById('receipt-dev-disk').innerText = diskStr || '—';
+            
+            const monitorVal = document.getElementById('dev-monitor').value.trim() || '';
+            const cablesVal = document.getElementById('dev-cables').value || '';
+            let screenStr = '';
+            if (monitorVal) screenStr += monitorVal;
+            if (cablesVal) screenStr += (screenStr ? ' + ' : '') + `Dây cáp: ${cablesVal}`;
+            document.getElementById('receipt-dev-screen').innerText = screenStr || '—';
+            
+            document.getElementById('receipt-key-win').innerText = document.getElementById('key-win').value.trim() || '—';
+            document.getElementById('receipt-key-office').innerText = document.getElementById('key-office').value.trim() || '—';
+            document.getElementById('receipt-key-pdf').innerText = document.getElementById('key-pdf').value.trim() || '—';
+            
+            document.getElementById('receipt-dev-apps').innerText = document.getElementById('dev-apps').value.trim() || '—';
+            document.getElementById('receipt-dev-notes').innerText = document.getElementById('dev-notes').value.trim() || '—';
+            
+            document.getElementById('receipt-user-sign-name').innerText = userName;
+            
+            // Set current date in receipt
+            const today = new Date();
+            const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+            document.getElementById('receipt-handover-date').innerText = `Ngày bàn giao: ${dateStr}`;
+
+            const target = document.getElementById('handover-receipt-target');
+            const receiptContainer = document.getElementById('handover-receipt-export-container');
+            
+            // Temporarily unhide to let html2canvas compute layout correctly
+            receiptContainer.classList.remove('hidden');
+            
+            showToast('Đang kết xuất', 'Đang tạo biên bản bàn giao thiết bị dạng hình ảnh...', 'info');
+
+            html2canvas(target, {
+                useCORS: true,
+                scale: 2,
+                backgroundColor: '#0f172a'
+            }).then(canvas => {
+                const url = canvas.toDataURL('image/png');
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Bien_ban_ban_giao_${userId}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                receiptContainer.classList.add('hidden');
+                showToast('Thành công', 'Đã xuất và tải biên bản bàn giao dạng PNG!', 'success');
+            }).catch(err => {
+                receiptContainer.classList.add('hidden');
+                showToast('Lỗi', 'Không thể tạo hình ảnh biên bản bàn giao!', 'error');
+                console.error(err);
+            });
+        });
+    }
+
     // Check auth status on load
     if (supabaseClient) {
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
