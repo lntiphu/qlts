@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             tr.innerHTML = `
                 <td>
                     <div class="user-info-cell">
-                        <span class="name">${item.userName} <span class="badge badge-blue">${item.userId}</span></span>
+                        <span class="name"><span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> <span class="badge badge-blue">${item.userId}</span></span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
                     </div>
@@ -559,9 +559,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="actions-cell">
                         <button class="btn-icon-only history btn-history-thietbi" data-index="${originalIndex}" title="Xem ngày cập nhật">
                             <i class="fa-solid fa-clock-rotate-left"></i>
-                        </button>
-                        <button class="btn-icon-only edit btn-edit-thietbi" data-index="${originalIndex}" title="Sửa">
-                            <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                         <button class="btn-icon-only delete btn-delete-thietbi" data-index="${originalIndex}" title="Xóa">
                             <i class="fa-solid fa-trash"></i>
@@ -767,7 +764,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDeptFilterThietBi();
         renderThietBi();
         formCapPhat.reset();
-        resetFormThietBi();
+
+        if (indexStr !== '') {
+            resetFormThietBi();
+            menuItems.forEach(btn => {
+                if (btn.getAttribute('data-tab') === 'tab-cap-phat-list') {
+                    btn.click();
+                }
+            });
+        } else {
+            resetFormThietBi();
+        }
     });
 
     // Populate form with existing data to Edit
@@ -856,7 +863,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         devIdInput.style.borderColor = '';
     }
 
-    btnCancelThietBi.addEventListener('click', resetFormThietBi);
+    btnCancelThietBi.addEventListener('click', () => {
+        resetFormThietBi();
+        menuItems.forEach(btn => {
+            if (btn.getAttribute('data-tab') === 'tab-cap-phat-list') {
+                btn.click();
+            }
+        });
+    });
     
     // Realtime search and pagination triggers for Device List
     searchThietBi.addEventListener('input', (e) => {
