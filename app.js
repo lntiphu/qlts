@@ -3302,7 +3302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const appContainer = document.getElementById('app-container');
     const formLogin = document.getElementById('form-login');
     const btnToggleLoginPass = document.getElementById('btn-toggle-login-pass');
-    const btnLogout = document.getElementById('btn-logout');
+    const btnLogout = document.getElementById('btn-logout-header');
 
     // Toggle Password Visibility on Login Screen
     if (btnToggleLoginPass) {
@@ -3428,8 +3428,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const titleUserInfo = document.getElementById('title-user-info');
     const modalUserPreview = document.getElementById('modal-user-preview');
     const btnCloseUserModal = document.getElementById('btn-close-user-modal');
-    const btnExportUserCardPng = document.getElementById('btn-export-user-card-png');
-    const btnExportHandoverPng = document.getElementById('btn-export-handover-png');
+    const btnExportUserCardPngIcon = document.getElementById('btn-export-user-card-png-icon');
+
+    const btnShowHandoverModal = document.getElementById('btn-show-handover-modal');
+    const modalHandoverPreview = document.getElementById('modal-handover-preview');
+    const btnCloseHandoverModal = document.getElementById('btn-close-handover-modal');
+    const btnExportHandoverPngIcon = document.getElementById('btn-export-handover-png-icon');
 
     // 1. Click title to show User Info Card Preview popup
     if (titleUserInfo) {
@@ -3459,7 +3463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Close preview modal
+    // Close user preview modal
     if (btnCloseUserModal) {
         btnCloseUserModal.addEventListener('click', () => {
             if (modalUserPreview) modalUserPreview.classList.add('hidden');
@@ -3474,9 +3478,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 2. Export User Info Card as PNG
-    if (btnExportUserCardPng) {
-        btnExportUserCardPng.addEventListener('click', () => {
+    // 2. Export User Info Card as PNG (Print Icon)
+    if (btnExportUserCardPngIcon) {
+        btnExportUserCardPngIcon.addEventListener('click', () => {
             if (typeof html2canvas === 'undefined') {
                 showToast('Lỗi', 'Thư viện html2canvas chưa được nạp. Không thể tạo hình ảnh!', 'error');
                 return;
@@ -3489,8 +3493,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             html2canvas(target, {
                 useCORS: true,
-                scale: 2, // higher resolution
-                backgroundColor: '#0f172a'
+                scale: 2,
+                backgroundColor: null
             }).then(canvas => {
                 const url = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
@@ -3508,32 +3512,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // 3. Export Handover Receipt (User + Device details) as PNG
-    if (btnExportHandoverPng) {
-        btnExportHandoverPng.addEventListener('click', () => {
-            if (typeof html2canvas === 'undefined') {
-                showToast('Lỗi', 'Thư viện html2canvas chưa được nạp. Không thể tạo hình ảnh!', 'error');
-                return;
-            }
-
+    // 3. Show Handover Receipt Modal
+    if (btnShowHandoverModal) {
+        btnShowHandoverModal.addEventListener('click', () => {
             const userId = document.getElementById('user-id').value.trim();
             const userName = document.getElementById('user-name').value.trim();
             
             if (!userId || !userName) {
-                showToast('Thông báo', 'Vui lòng nhập ID và Họ tên người sử dụng trước khi xuất hình ảnh bàn giao!', 'warning');
+                showToast('Thông báo', 'Vui lòng nhập ID và Họ tên người sử dụng trước khi xem thông tin bàn giao!', 'warning');
                 return;
             }
 
-            // Populate all fields on the receipt card template
+            // Populate handover template
             document.getElementById('receipt-user-name').innerText = userName;
-            document.getElementById('receipt-user-id').innerText = userId;
             document.getElementById('receipt-user-title').innerText = document.getElementById('user-title').value.trim() || '—';
             document.getElementById('receipt-user-dept').innerText = document.getElementById('user-dept').value.trim() || '—';
             document.getElementById('receipt-user-email').innerText = document.getElementById('user-email').value.trim() || '—';
-            document.getElementById('receipt-user-phone').innerText = document.getElementById('user-phone').value.trim() || '—';
             
-            document.getElementById('receipt-dev-id').innerText = document.getElementById('dev-id').value.trim() || 'Chưa cấp';
             document.getElementById('receipt-dev-name').innerText = document.getElementById('dev-type').value.trim() || '—';
+            document.getElementById('receipt-dev-main').innerText = document.getElementById('dev-main').value.trim() || '—';
             document.getElementById('receipt-dev-cpu').innerText = document.getElementById('dev-cpu').value.trim() || '—';
             
             const ramVal = document.getElementById('dev-ram').value || '';
@@ -3547,12 +3544,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (hddVal) diskStr += (diskStr ? ' / ' : '') + `HDD: ${hddVal}`;
             document.getElementById('receipt-dev-disk').innerText = diskStr || '—';
             
-            const monitorVal = document.getElementById('dev-monitor').value.trim() || '';
-            const cablesVal = document.getElementById('dev-cables').value || '';
-            let screenStr = '';
-            if (monitorVal) screenStr += monitorVal;
-            if (cablesVal) screenStr += (screenStr ? ' + ' : '') + `Dây cáp: ${cablesVal}`;
-            document.getElementById('receipt-dev-screen').innerText = screenStr || '—';
+            document.getElementById('receipt-dev-monitor').innerText = document.getElementById('dev-monitor').value.trim() || '—';
             
             document.getElementById('receipt-key-win').innerText = document.getElementById('key-win').value.trim() || '—';
             document.getElementById('receipt-key-office').innerText = document.getElementById('key-office').value.trim() || '—';
@@ -3563,23 +3555,48 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             document.getElementById('receipt-user-sign-name').innerText = userName;
             
-            // Set current date in receipt
             const today = new Date();
             const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
             document.getElementById('receipt-handover-date').innerText = `Ngày bàn giao: ${dateStr}`;
 
+            if (modalHandoverPreview) {
+                modalHandoverPreview.classList.remove('hidden');
+            }
+        });
+    }
+
+    // Close handover modal
+    if (btnCloseHandoverModal) {
+        btnCloseHandoverModal.addEventListener('click', () => {
+            if (modalHandoverPreview) modalHandoverPreview.classList.add('hidden');
+        });
+    }
+
+    if (modalHandoverPreview) {
+        modalHandoverPreview.addEventListener('click', (e) => {
+            if (e.target === modalHandoverPreview) {
+                modalHandoverPreview.classList.add('hidden');
+            }
+        });
+    }
+
+    // 4. Export Handover Receipt as PNG (Print Icon)
+    if (btnExportHandoverPngIcon) {
+        btnExportHandoverPngIcon.addEventListener('click', () => {
+            if (typeof html2canvas === 'undefined') {
+                showToast('Lỗi', 'Thư viện html2canvas chưa được nạp. Không thể tạo hình ảnh!', 'error');
+                return;
+            }
+
             const target = document.getElementById('handover-receipt-target');
-            const receiptContainer = document.getElementById('handover-receipt-export-container');
-            
-            // Temporarily unhide to let html2canvas compute layout correctly
-            receiptContainer.classList.remove('hidden');
+            const userId = document.getElementById('user-id').value.trim() || 'user';
             
             showToast('Đang kết xuất', 'Đang tạo biên bản bàn giao thiết bị dạng hình ảnh...', 'info');
 
             html2canvas(target, {
                 useCORS: true,
                 scale: 2,
-                backgroundColor: '#0f172a'
+                backgroundColor: null
             }).then(canvas => {
                 const url = canvas.toDataURL('image/png');
                 const a = document.createElement('a');
@@ -3589,10 +3606,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 a.click();
                 document.body.removeChild(a);
                 
-                receiptContainer.classList.add('hidden');
                 showToast('Thành công', 'Đã xuất và tải biên bản bàn giao dạng PNG!', 'success');
+                if (modalHandoverPreview) modalHandoverPreview.classList.add('hidden');
             }).catch(err => {
-                receiptContainer.classList.add('hidden');
                 showToast('Lỗi', 'Không thể tạo hình ảnh biên bản bàn giao!', 'error');
                 console.error(err);
             });

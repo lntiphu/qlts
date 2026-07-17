@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chẩn đoán kết nối Supabase - ERG Asset</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            padding: 40px 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2563eb;
+            margin-bottom: 8px;
+        }
+        p.subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .test-item {
+            display: flex;
+            align-items: flex-start;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            gap: 16px;
+        }
+        .test-item:last-child {
+            border-bottom: none;
+        }
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-pending { background-color: #f1f5f9; color: #64748b; }
+        .status-success { background-color: #d1fae5; color: #065f46; }
+        .status-error { background-color: #fee2e2; color: #991b1b; }
+        .details {
+            flex: 1;
+        }
+        .details h3 {
+            margin: 0 0 4px 0;
+            font-size: 15px;
+        }
+        .details p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            word-break: break-all;
+        }
+        .error-message {
+            color: #ef4444;
+            font-family: monospace;
+            background: #fef2f2;
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 6px;
+            font-size: 12px;
+        }
+        .btn-run {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-run:hover {
+            background-color: #1d4ed8;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Chẩn đoán kết nối Supabase</h1>
+    <p class="subtitle">Công cụ tự động kiểm tra trạng thái kết nối và phân quyền của từng bảng trên Supabase.</p>
+
+    <div class="card">
+        <button class="btn-run" onclick="runDiagnostics()">Bắt đầu chẩn đoán</button>
+    </div>
+
+    <div class="card" id="results-card" style="display: none;">
+        <h2>Kết quả kiểm tra:</h2>
+        <div id="diagnostic-list">
+            <!-- Dynamic items -->
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://nmfeyrokdfjrsbmtxwts.supabase.co';
+        const supabaseKey = 'sb_publishable_xkNEdZfr-_zenINmII9zPg_VhaFkGOX';
+
+        const tests = [
+            { id: 'client', name: 'Khởi tạo Supabase Client', run: async (client) => {
+                if (!client) throw new Error("Không thể khởi tạo client. Hãy kiểm tra lại URL hoặc Key.");
+                return "Khởi tạo thành công.";
+            }},
+            { id: 'thiet_bi', name: 'Bảng thiet_bi', run: async (client) => {
+                const { data, error } = await client.from('thiet_bi').select('*').limit(1);
+                if (error) throw error;
+                return `Kết nối thành công. Tìm thấy ${data.length} bản ghi mẫu.`;
+            }},
+            { id: 'cong_ty', name: 'Bảng cong_ty', run: async (client) => {
+                const { data, error } = await client.from('cong_ty').select('*').limit(1);
+                if (error) throw error;
+                return `Kết nối thành công. Tìm thấy ${data.length} bản ghi mẫu.`;
+            }},
+            { id: 'account', name: 'Bảng account', run: async (client) => {
+                const { data, error } = await client.from('account').select('*').limit(1);
+                if (error) throw error;
+                return `Kết nối thành công. Tìm thấy ${data.length} bản ghi mẫu.`;
+            }},
+            { id: 'ho_tro', name: 'Bảng ho_tro', run: async (client) => {
+                const { data, error } = await client.from('ho_tro').select('*').limit(1);
+                if (error) throw error;
+                return `Kết nối thành công. Tìm thấy ${data.length} bản ghi mẫu.`;
+            }},
+            { id: 'camera', name: 'Bảng camera', run: async (client) => {
+                const { data, error } = await client.from('camera').select('*').limit(1);
+                if (error) throw error;
+                return `Kết nối thành công. Tìm thấy ${data.length} bản ghi mẫu.`;
+            }},
+            { id: 'tips', name: 'Bảng tips', run: async (client) => {
+                const { data, error } = await client.from('tips').select('*').limit(1);
+                if (error) throw error;
+                return `Kết nối thành công. Tìm thấy ${data.length} bản ghi mẫu.`;
+            }}
+        ];
+
+        function createTestUI(test) {
+            return `
+                <div class="test-item" id="test-${test.id}">
+                    <span class="status-badge status-pending" id="badge-${test.id}">Đang chờ</span>
+                    <div class="details">
+                        <h3>${test.name}</h3>
+                        <p id="desc-${test.id}">Chưa thực hiện kiểm tra.</p>
+                        <div class="error-message" id="err-${test.id}" style="display: none;"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function runDiagnostics() {
+            const resultsCard = document.getElementById('results-card');
+            const listContainer = document.getElementById('diagnostic-list');
+            
+            resultsCard.style.display = 'block';
+            listContainer.innerHTML = tests.map(createTestUI).join('');
+
+            let client = null;
+            try {
+                client = supabase.createClient(supabaseUrl, supabaseKey);
+            } catch (e) {
+                console.error(e);
+            }
+
+            for (const test of tests) {
+                const badge = document.getElementById(`badge-${test.id}`);
+                const desc = document.getElementById(`desc-${test.id}`);
+                const errBox = document.getElementById(`err-${test.id}`);
+
+                badge.className = 'status-badge status-pending';
+                badge.innerText = 'Đang chạy';
+
+                try {
+                    const res = await test.run(client);
+                    badge.className = 'status-badge status-success';
+                    badge.innerText = 'Thành công';
+                    desc.innerText = res;
+                    errBox.style.display = 'none';
+                } catch (err) {
+                    badge.className = 'status-badge status-error';
+                    badge.innerText = 'Thất bại';
+                    desc.innerText = 'Lỗi kết nối hoặc truy vấn dữ liệu.';
+                    
+                    const errStr = err.message || err.details || JSON.stringify(err);
+                    errBox.innerText = `Lỗi: ${errStr}`;
+                    errBox.style.display = 'block';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
