@@ -1025,7 +1025,7 @@ body {
 
 .login-header-corporate {
     background: transparent;
-    padding: 38px 24px 26px 24px;
+    padding: 38px 24px 38px 24px;
     text-align: center;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
@@ -1034,29 +1034,18 @@ body {
 }
 
 .login-header-corporate::before {
-    content: '• ELODIES 1999 • ID PORTAL';
+    content: 'ERG Asset';
     display: inline-block;
-    font-size: 10px;
-    font-weight: 700;
+    font-size: 26px;
+    font-weight: 800;
     color: #f97316;
-    background: rgba(249, 115, 22, 0.1);
-    border: 1px solid rgba(249, 115, 22, 0.4);
-    padding: 4px 12px;
-    border-radius: 100px;
-    margin-bottom: 12px;
-    letter-spacing: 1.5px;
-    text-shadow: 0 0 8px rgba(249, 115, 22, 0.3);
-    box-shadow: 0 0 12px rgba(249, 115, 22, 0.1);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
 }
 
 .login-header-corporate h2 {
-    font-size: 34px;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    margin: 0;
-    color: #ffffff;
-    text-transform: uppercase;
-    text-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+    display: none;
 }
 
 .login-body-corporate {
