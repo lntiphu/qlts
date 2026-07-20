@@ -417,7 +417,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             'dev-cpu',
             'dev-ssd',
             'dev-hdd',
-            'dev-monitor'
+            'dev-monitor',
+            'dev-vga'
         ];
 
         targetIds.forEach(id => {
@@ -444,6 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     else if (fieldId === 'dev-ssd') val = item.devSsd;
                     else if (fieldId === 'dev-hdd') val = item.devHdd;
                     else if (fieldId === 'dev-monitor') val = item.devMonitor;
+                    else if (fieldId === 'dev-vga') val = item.devVga;
 
                     if (val && val.trim() !== '') {
                         uniqueSet.add(val.trim());
