@@ -409,6 +409,158 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function initCustomAutocompletes() {
+        const targetIds = [
+            'user-dept',
+            'dev-type',
+            'dev-main',
+            'dev-cpu',
+            'dev-ssd',
+            'dev-hdd',
+            'dev-monitor'
+        ];
+
+        targetIds.forEach(id => {
+            const input = document.getElementById(id);
+            if (!input) return;
+
+            const parent = input.parentElement;
+            if (parent) {
+                parent.style.position = 'relative';
+            }
+
+            let activeIndex = -1;
+            let currentSuggestions = [];
+            let isSelectingSuggestion = false;
+
+            function getUniqueValuesFor(fieldId) {
+                const uniqueSet = new Set();
+                thietBiList.forEach(item => {
+                    let val = '';
+                    if (fieldId === 'user-dept') val = item.userDept;
+                    else if (fieldId === 'dev-type') val = item.devType;
+                    else if (fieldId === 'dev-main') val = item.devMain;
+                    else if (fieldId === 'dev-cpu') val = item.devCpu;
+                    else if (fieldId === 'dev-ssd') val = item.devSsd;
+                    else if (fieldId === 'dev-hdd') val = item.devHdd;
+                    else if (fieldId === 'dev-monitor') val = item.devMonitor;
+
+                    if (val && val.trim() !== '') {
+                        uniqueSet.add(val.trim());
+                    }
+                });
+                return Array.from(uniqueSet).sort((a, b) => a.localeCompare(b, 'vi', { sensitivity: 'base' }));
+            }
+
+            function closeAllDropdowns() {
+                const existing = document.querySelectorAll('.autocomplete-suggestions');
+                existing.forEach(el => el.remove());
+                activeIndex = -1;
+            }
+
+            function closeCurrentDropdown() {
+                const dropdown = parent.querySelector('.autocomplete-suggestions');
+                if (dropdown) {
+                    dropdown.remove();
+                }
+                activeIndex = -1;
+            }
+
+            function showDropdown(query = '') {
+                closeAllDropdowns();
+                const allValues = getUniqueValuesFor(id);
+                const filtered = allValues.filter(val => val.toLowerCase().includes(query.toLowerCase()));
+                
+                if (filtered.length === 0) return;
+
+                currentSuggestions = filtered;
+
+                const dropdown = document.createElement('div');
+                dropdown.className = 'autocomplete-suggestions';
+                dropdown.style.width = input.offsetWidth + 'px';
+
+                filtered.forEach((val, idx) => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-suggestion-item';
+                    item.innerText = val;
+                    // Sử dụng mousedown và e.preventDefault() để ngăn input bị blur trước khi dữ liệu được chọn
+                    item.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        isSelectingSuggestion = true;
+                        input.value = val;
+                        input.dispatchEvent(new Event('input'));
+                        input.dispatchEvent(new Event('change'));
+                        closeCurrentDropdown();
+                        isSelectingSuggestion = false;
+                    });
+                    dropdown.appendChild(item);
+                });
+
+                parent.appendChild(dropdown);
+            }
+
+            input.addEventListener('input', (e) => {
+                if (isSelectingSuggestion) return;
+                showDropdown(e.target.value);
+            });
+
+            input.addEventListener('keydown', (e) => {
+                const dropdown = parent.querySelector('.autocomplete-suggestions');
+                if (!dropdown) {
+                    if (e.key === 'ArrowDown') {
+                        showDropdown(input.value);
+                    }
+                    return;
+                }
+
+                const items = dropdown.querySelectorAll('.autocomplete-suggestion-item');
+                if (items.length === 0) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIndex++;
+                    if (activeIndex >= items.length) activeIndex = 0;
+                    updateActiveSuggestion(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIndex--;
+                    if (activeIndex < 0) activeIndex = items.length - 1;
+                    updateActiveSuggestion(items);
+                } else if (e.key === 'Enter') {
+                    if (activeIndex >= 0 && activeIndex < items.length) {
+                        e.preventDefault();
+                        isSelectingSuggestion = true;
+                        input.value = currentSuggestions[activeIndex];
+                        input.dispatchEvent(new Event('input'));
+                        input.dispatchEvent(new Event('change'));
+                        closeCurrentDropdown();
+                        isSelectingSuggestion = false;
+                    }
+                } else if (e.key === 'Escape') {
+                    closeCurrentDropdown();
+                }
+            });
+
+            function updateActiveSuggestion(items) {
+                items.forEach((item, idx) => {
+                    if (idx === activeIndex) {
+                        item.classList.add('active');
+                        item.scrollIntoView({ block: 'nearest' });
+                    } else {
+                        item.classList.remove('active');
+                    }
+                });
+            }
+
+            document.addEventListener('click', (e) => {
+                const isClickInsideDropdown = parent.querySelector('.autocomplete-suggestions')?.contains(e.target);
+                if (e.target !== input && !isClickInsideDropdown) {
+                    closeCurrentDropdown();
+                }
+            });
+        });
+    }
+
     function renderThietBi(filterText = '') {
         tbodyThietBi.innerHTML = '';
         
@@ -3302,6 +3454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             await Promise.all(fetchPromises);
             showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
+            initCustomAutocompletes();
         } catch (err) {
             console.error('Initial load failed:', err);
             const errorDetails = err.message || err.details || (typeof err === 'object' ? JSON.stringify(err) : err);
