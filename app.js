@@ -566,13 +566,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderThietBi(filterText = '') {
         tbodyThietBi.innerHTML = '';
         
-        // Prioritize by department (sort alphabetically by userDept)
+        // Sắp xếp mặc định A-Z theo Họ và Tên nhân viên
         const sortedList = [...thietBiList].sort((a, b) => {
-            const deptA = a.userDept ? a.userDept.trim() : "";
-            const deptB = b.userDept ? b.userDept.trim() : "";
-            if (deptA === "" && deptB !== "") return 1;
-            if (deptA !== "" && deptB === "") return -1;
-            return deptA.localeCompare(deptB, 'vi', { sensitivity: 'base' });
+            const nameA = a.userName ? a.userName.trim() : "";
+            const nameB = b.userName ? b.userName.trim() : "";
+            return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
         });
 
         const deptFilter = document.getElementById('filter-dept-thietbi') 
