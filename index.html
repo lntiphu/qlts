@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=2.4">
+    <link rel="stylesheet" href="style.css?v=2.5">
 </head>
 <body>
     <!-- Login Screen -->
@@ -406,15 +406,19 @@
                                     <label for="company-rep-role">Chức vụ người đại diện (*)</label>
                                     <input type="text" id="company-rep-role" required placeholder="VD: Giám đốc, Đại diện pháp luật">
                                 </div>
-                                <div class="form-group col-span-6">
+                                <div class="form-group col-span-4">
                                     <label for="company-address">Thông tin địa chỉ (*)</label>
                                     <input type="text" id="company-address" required placeholder="Nhập địa chỉ trụ sở chính">
+                                </div>
+                                <div class="form-group col-span-2">
+                                    <label for="company-gpkd-date">Ngày cập nhật GPKD</label>
+                                    <input type="date" id="company-gpkd-date">
                                 </div>
                             </div>
 
                             <div class="form-actions">
                                 <button type="submit" class="btn btn-primary" id="btn-save-cong-ty">
-                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Công Ty
+                                    <i class="fa-solid fa-floppy-disk"></i> LƯU
                                 </button>
                                 <button type="button" class="btn btn-secondary hidden" id="btn-cancel-cong-ty">
                                     Hủy Chỉnh Sửa
@@ -453,12 +457,13 @@
                                         <th style="width: 150px;">Mã số thuế</th>
                                         <th>Đại diện hồ sơ</th>
                                         <th>Địa chỉ</th>
+                                        <th>Ngày cập nhật GPKD</th>
                                         <th class="text-center" style="width: 100px;">Thao tác</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-cong-ty">
                                     <tr class="empty-row">
-                                        <td colspan="6" class="text-center text-muted">Chưa có dữ liệu công ty nào!</td>
+                                        <td colspan="7" class="text-center text-muted">Chưa có dữ liệu công ty nào!</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -1182,6 +1187,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=2.4"></script>
+    <script src="app.js?v=2.5"></script>
 </body>
 </html>

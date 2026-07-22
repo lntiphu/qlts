@@ -53,6 +53,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    function formatDateDisplay(dateStr) {
+        if (!dateStr) return '—';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
     // Keep saveState empty mock for backward compatibility
     const saveState = {
         thietBi: () => {},
@@ -130,7 +139,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 taxCode: db.tax_code || '',
                 rep: db.rep || '',
                 repRole: db.rep_role || '',
-                address: db.address || ''
+                address: db.address || '',
+                gpkdDate: db.gpkd_date || ''
             }),
             toDB: (js) => ({
                 code: js.code,
@@ -138,7 +148,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 tax_code: js.taxCode,
                 rep: js.rep,
                 rep_role: js.repRole,
-                address: js.address
+                address: js.address,
+                gpkd_date: js.gpkdDate
             })
         },
         account: {
@@ -1241,7 +1252,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (totalItems === 0) {
             tbodyCongTy.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="6" class="text-center text-muted">Chưa có dữ liệu công ty nào!</td>
+                    <td colspan="7" class="text-center text-muted">Chưa có dữ liệu công ty nào!</td>
                 </tr>
             `;
             return;
@@ -1266,6 +1277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </td>
                 <td style="font-size: 13px; max-width: 250px;">${item.address}</td>
+                <td style="font-size: 13px;">${formatDateDisplay(item.gpkdDate)}</td>
                 <td>
                     <div class="actions-cell">
                         <button class="btn-icon-only edit btn-edit-congty" data-index="${originalIndex}" title="Sửa">
@@ -1306,7 +1318,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             taxCode: document.getElementById('company-tax-code').value.trim(), // string type to hold leading 0
             rep: document.getElementById('company-rep').value.trim(),
             repRole: document.getElementById('company-rep-role').value.trim(),
-            address: document.getElementById('company-address').value.trim()
+            address: document.getElementById('company-address').value.trim(),
+            gpkdDate: document.getElementById('company-gpkd-date').value
         };
 
         if (indexStr === '') {
@@ -1318,11 +1331,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .select();
                 if (error) throw error;
                 congTyList.push(mappers.congTy.fromDB(insertedData[0]));
+                saveToLocalStorageFallback('cong_ty', congTyList);
                 showToast('Thành công', 'Đã lưu thông tin công ty mới!');
             } catch (err) {
                 console.error(err);
-                showToast('Lỗi', 'Không thể lưu dữ liệu công ty lên Supabase!', 'error');
-                return;
+                // Lưu offline dự phòng
+                data.id = 'local-' + Date.now();
+                congTyList.push(data);
+                saveToLocalStorageFallback('cong_ty', congTyList);
+                showToast('Lưu Offline', 'Không kết nối được Supabase. Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
@@ -1336,12 +1353,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .select();
                 if (error) throw error;
                 congTyList[idx] = mappers.congTy.fromDB(updatedData[0]);
+                saveToLocalStorageFallback('cong_ty', congTyList);
                 showToast('Thành công', 'Đã cập nhật thông tin công ty!');
                 resetFormCongTy();
             } catch (err) {
                 console.error(err);
-                showToast('Lỗi', 'Không thể cập nhật dữ liệu công ty lên Supabase!', 'error');
-                return;
+                // Cập nhật offline dự phòng
+                data.id = oldItem.id;
+                congTyList[idx] = data;
+                saveToLocalStorageFallback('cong_ty', congTyList);
+                showToast('Lưu Offline', 'Không kết nối được Supabase. Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                resetFormCongTy();
             }
         }
 
@@ -1360,8 +1382,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('company-rep').value = item.rep;
         document.getElementById('company-rep-role').value = item.repRole;
         document.getElementById('company-address').value = item.address;
+        document.getElementById('company-gpkd-date').value = item.gpkdDate || '';
 
-        btnSaveCongTy.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Công Ty';
+        btnSaveCongTy.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
         btnCancelCongTy.classList.remove('hidden');
 
         document.querySelector('.tab-container').scrollTop = 0;
@@ -1377,6 +1400,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .eq('id', item.id);
                 if (error) throw error;
                 congTyList.splice(index, 1);
+                saveToLocalStorageFallback('cong_ty', congTyList);
                 renderCongTy();
                 showToast('Đã xóa', 'Xóa thông tin công ty thành công!', 'warning');
 
@@ -1385,14 +1409,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (err) {
                 console.error(err);
-                showToast('Lỗi', 'Không thể xóa dữ liệu công ty trên Supabase!', 'error');
+                // Xóa offline dự phòng
+                congTyList.splice(index, 1);
+                saveToLocalStorageFallback('cong_ty', congTyList);
+                renderCongTy();
+                showToast('Xóa Offline', 'Không kết nối được Supabase. Đã xóa tạm thời trên trình duyệt!', 'warning');
+
+                if (editIndexCongTy.value === index.toString()) {
+                    resetFormCongTy();
+                }
             }
         }
     }
 
     function resetFormCongTy() {
         editIndexCongTy.value = '';
-        btnSaveCongTy.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Công Ty';
+        btnSaveCongTy.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
         btnCancelCongTy.classList.add('hidden');
         formCongTy.reset();
     }
