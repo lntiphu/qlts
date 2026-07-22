@@ -53,15 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function formatDateDisplay(dateStr) {
-        if (!dateStr) return '—';
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        return dateStr;
-    }
-
     // Keep saveState empty mock for backward compatibility
     const saveState = {
         thietBi: () => {},
@@ -1277,7 +1268,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </td>
                 <td style="font-size: 13px; max-width: 250px;">${item.address}</td>
-                <td style="font-size: 13px;">${formatDateDisplay(item.gpkdDate)}</td>
+                <td style="font-size: 13px;">${formatDateDMY(item.gpkdDate)}</td>
                 <td>
                     <div class="actions-cell">
                         <button class="btn-icon-only edit btn-edit-congty" data-index="${originalIndex}" title="Sửa">
