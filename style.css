@@ -1418,3 +1418,67 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* Autocomplete suggestions container */
+.autocomplete-suggestions {
+    position: absolute;
+    background: rgba(30, 41, 59, 0.98);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(249, 115, 22, 0.25);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    margin-top: 4px;
+    animation: fadeInDropdown 0.15s ease-out;
+}
+
+/* Scrollbar styling for suggestions */
+.autocomplete-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+.autocomplete-suggestions::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+}
+.autocomplete-suggestions::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 8px;
+}
+.autocomplete-suggestions::-webkit-scrollbar-thumb:hover {
+    background: rgba(148, 163, 184, 0.5);
+}
+
+.autocomplete-suggestion-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    color: #cbd5e1;
+    font-size: 13px;
+    transition: all 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    text-align: left;
+}
+
+.autocomplete-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-suggestion-item:hover, 
+.autocomplete-suggestion-item.active {
+    background: rgba(249, 115, 22, 0.15);
+    color: #fff;
+    padding-left: 18px; /* micro-animation: slide right slightly on hover */
+}
+
+@keyframes fadeInDropdown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
