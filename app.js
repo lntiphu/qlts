@@ -31,6 +31,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     let cameraList = [];
     let tipsList = [];
 
+    // Fallback helper functions for local storage
+    function loadFromLocalStorageFallback(key, list, renderFn) {
+        try {
+            const data = localStorage.getItem('fallback_' + key);
+            if (data) {
+                list.length = 0;
+                list.push(...JSON.parse(data));
+                if (renderFn) renderFn();
+            }
+        } catch (e) {
+            console.error("Error loading local storage fallback for " + key, e);
+        }
+    }
+
+    function saveToLocalStorageFallback(key, list) {
+        try {
+            localStorage.setItem('fallback_' + key, JSON.stringify(list));
+        } catch (e) {
+            console.error("Error saving local storage fallback for " + key, e);
+        }
+    }
+
     // Keep saveState empty mock for backward compatibility
     const saveState = {
         thietBi: () => {},
@@ -436,6 +458,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             function getUniqueValuesFor(fieldId) {
                 const uniqueSet = new Set();
+                
+                // Mẫu gợi ý mặc định ban đầu phòng khi danh sách trống
+                const defaults = {
+                    'user-dept': [
+                        'Ban Đầu tư Pháp lý', 'Ban QLDA Bảo Lộc', 'Ban QLDA COSTAMIGO', 
+                        'Ban QLDA Costamigo', 'Ban QLDA Sales Gallery', 'Ban TGĐ ERL', 
+                        'BKS', 'CNTT', 'CQX', 'Cung ứng & Đấu thầu', 'DVKH & HTKD', 
+                        'Đầu tư', 'ERL', 'HCNS', 'HĐCL', 'IOM', 'Khối Vận hành', 
+                        'Kinh doanh', 'Kinh doanh - IOM', 'KT', 'MKT', 'MKT-IOM', 
+                        'Pháp chế doanh nghiệp', 'Pháp lý', 'Pháp lý Dự án', 'QHTK', 
+                        'TC', 'TGĐ', 'VP.HĐCL'
+                    ],
+                    'dev-type': ['Laptop', 'PC', 'Server', 'iMac', 'MacBook'],
+                    'dev-main': ['H610M', 'B760M', 'H510M', 'B560M', 'A320M'],
+                    'dev-cpu': ['Core i5 12400F', 'Core i7 13700', 'Core i3 12100', 'Core i5 10400', 'Ryzen 5 5600G'],
+                    'dev-ssd': ['256GB SSD', '512GB SSD', '1TB SSD', '128GB SSD'],
+                    'dev-hdd': ['1TB HDD', '2TB HDD', '500GB HDD', 'Không có HDD'],
+                    'dev-monitor': ['Dell 24 inch', 'HP 21.5 inch', 'LG 24 inch', 'Samsung 27 inch', 'Asus 23.8 inch'],
+                    'dev-vga': ['GTX 1650', 'RTX 3060', 'RTX 2060', 'Intel UHD Graphics', 'Radeon Graphics']
+                };
+
+                if (defaults[fieldId]) {
+                    defaults[fieldId].forEach(val => uniqueSet.add(val));
+                }
+
                 thietBiList.forEach(item => {
                     let val = '';
                     if (fieldId === 'user-dept') val = item.userDept;
@@ -535,6 +582,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 parent.appendChild(dropdown);
             }
+
+            input.addEventListener('focus', () => {
+                if (input.value.trim() === '') {
+                    showDropdown('');
+                }
+            });
 
             input.addEventListener('input', (e) => {
                 if (isSelectingSuggestion) return;
@@ -872,11 +925,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .select();
                 if (error) throw error;
                 thietBiList.push(mappers.thietBi.fromDB(insertedData[0]));
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
                 showToast('Thành công', 'Đã lưu thông tin cấp phát thiết bị mới!');
             } catch (err) {
                 console.error(err);
-                showToast('Lỗi', 'Không thể lưu dữ liệu lên Supabase!', 'error');
-                return;
+                // Lưu offline dự phòng
+                data.id = 'local-' + Date.now();
+                thietBiList.push(data);
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
+                showToast('Lưu Offline', 'Không kết nối được Supabase. Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
@@ -939,12 +996,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .select();
                 if (error) throw error;
                 thietBiList[idx] = mappers.thietBi.fromDB(updatedData[0]);
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
                 showToast('Thành công', 'Đã cập nhật thông tin cấp phát thiết bị!');
                 resetFormThietBi();
             } catch (err) {
                 console.error(err);
-                showToast('Lỗi', 'Không thể cập nhật dữ liệu lên Supabase!', 'error');
-                return;
+                // Cập nhật offline dự phòng
+                data.id = oldItem.id;
+                thietBiList[idx] = data;
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
+                showToast('Lưu Offline', 'Không kết nối được Supabase. Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                resetFormThietBi();
             }
         }
 
@@ -1023,17 +1085,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     .eq('id', item.id);
                 if (error) throw error;
                 thietBiList.splice(index, 1);
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
                 updateDeptFilterThietBi();
                 renderThietBi();
                 showToast('Đã xóa', 'Xóa thông tin cấp phát thành công!', 'warning');
                 
-                // If deleting the item currently being edited, reset the form status
                 if (editIndexThietBi.value === index.toString()) {
                     resetFormThietBi();
                 }
             } catch (err) {
                 console.error(err);
-                showToast('Lỗi', 'Không thể xóa dữ liệu trên Supabase!', 'error');
+                // Xóa offline dự phòng
+                thietBiList.splice(index, 1);
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
+                updateDeptFilterThietBi();
+                renderThietBi();
+                showToast('Xóa Offline', 'Không kết nối được Supabase. Đã xóa tạm thời trên trình duyệt!', 'warning');
+                
+                if (editIndexThietBi.value === index.toString()) {
+                    resetFormThietBi();
+                }
             }
         }
     }
@@ -3448,41 +3519,69 @@ document.addEventListener('DOMContentLoaded', async () => {
             supabaseClient.from('thiet_bi').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 thietBiList = (data || []).map(mappers.thietBi.fromDB);
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
                 updateDeptFilterThietBi();
                 renderThietBi();
+            }).catch(err => {
+                console.warn("Fetch thiet_bi failed, loading fallback:", err);
+                loadFromLocalStorageFallback('thiet_bi', thietBiList, () => {
+                    updateDeptFilterThietBi();
+                    renderThietBi();
+                });
             }),
             supabaseClient.from('cong_ty').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 congTyList = (data || []).map(mappers.congTy.fromDB);
+                saveToLocalStorageFallback('cong_ty', congTyList);
                 renderCongTy();
+            }).catch(err => {
+                console.warn("Fetch cong_ty failed, loading fallback:", err);
+                loadFromLocalStorageFallback('cong_ty', congTyList, renderCongTy);
             }),
             supabaseClient.from('account').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 accountList = (data || []).map(mappers.account.fromDB);
+                saveToLocalStorageFallback('account', accountList);
                 renderAccount();
+            }).catch(err => {
+                console.warn("Fetch account failed, loading fallback:", err);
+                loadFromLocalStorageFallback('account', accountList, renderAccount);
             }),
             supabaseClient.from('ho_tro').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 hoTroList = (data || []).map(mappers.hoTro.fromDB);
+                saveToLocalStorageFallback('ho_tro', hoTroList);
                 renderHoTro();
+            }).catch(err => {
+                console.warn("Fetch ho_tro failed, loading fallback:", err);
+                loadFromLocalStorageFallback('ho_tro', hoTroList, renderHoTro);
             }),
             supabaseClient.from('camera').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 cameraList = (data || []).map(mappers.camera.fromDB);
+                saveToLocalStorageFallback('camera', cameraList);
                 renderCamera();
+            }).catch(err => {
+                console.warn("Fetch camera failed, loading fallback:", err);
+                loadFromLocalStorageFallback('camera', cameraList, renderCamera);
             }),
             supabaseClient.from('tips').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 tipsList = (data || []).map(mappers.tips.fromDB);
+                saveToLocalStorageFallback('tips', tipsList);
                 renderTips();
+            }).catch(err => {
+                console.warn("Fetch tips failed, loading fallback:", err);
+                loadFromLocalStorageFallback('tips', tipsList, renderTips);
             }),
             supabaseClient.from('gia_han').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 giaHanList = (data || []).map(mappers.giaHan.fromDB);
+                saveToLocalStorageFallback('gia_han', giaHanList);
                 renderGiaHan();
             }).catch(err => {
-                console.warn("Table 'gia_han' fetch failed, using local storage fallback. Error:", err);
-                loadGiaHanFromLocalStorage();
+                console.warn("Fetch gia_han failed, loading fallback:", err);
+                loadFromLocalStorageFallback('gia_han', giaHanList, renderGiaHan);
             })
         ];
 
@@ -3543,33 +3642,51 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const errDiv = document.getElementById('login-error-msg');
                 if (errDiv) errDiv.classList.add('hidden');
 
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: passwordInput
-                });
+                let loginSuccess = false;
+                let offlineMode = false;
 
-                if (error) throw error;
+                // 1. Kiểm tra tài khoản cứng theo luật dự án (Bypass ngoại tuyến)
+                if ((usernameInput === 'admin' || usernameInput === 'tiphu@erasgroup.vn') && passwordInput === 'Cntt@262') {
+                    loginSuccess = true;
+                    offlineMode = true;
+                }
 
-                showToast('Đăng nhập', 'Đăng nhập thành công! Đang đồng bộ...', 'success');
-                if (loginScreen) loginScreen.classList.add('hidden');
-                if (appContainer) appContainer.classList.remove('hidden');
-                initApp();
+                // 2. Thử đăng nhập qua Supabase nếu chưa khớp hoặc muốn đồng bộ
+                if (!loginSuccess && supabaseClient) {
+                    try {
+                        const { data, error } = await supabaseClient.auth.signInWithPassword({
+                            email: email,
+                            password: passwordInput
+                        });
+                        if (!error) {
+                            loginSuccess = true;
+                            offlineMode = false;
+                        }
+                    } catch (authErr) {
+                        console.warn("Supabase auth failed, fallback to local bypass:", authErr);
+                    }
+                }
+
+                if (loginSuccess) {
+                    if (offlineMode) {
+                        showToast('Đăng nhập', 'Đăng nhập thành công (Chế độ Ngoại tuyến)!', 'success');
+                    } else {
+                        showToast('Đăng nhập', 'Đăng nhập thành công! Đang đồng bộ...', 'success');
+                    }
+                    if (loginScreen) loginScreen.classList.add('hidden');
+                    if (appContainer) appContainer.classList.remove('hidden');
+                    initApp();
+                } else {
+                    throw new Error('Tên đăng nhập hoặc mật khẩu không chính xác!');
+                }
             } catch (err) {
                 console.error(err);
                 
-                // Show warning inside login card
                 const errDiv = document.getElementById('login-error-msg');
                 if (errDiv) {
-                    if (err.message && err.message.includes('confirm')) {
-                        errDiv.textContent = 'Đăng nhập thất bại: Tài khoản chưa được xác nhận email trên Supabase!';
-                    } else if (err.message && err.message.includes('Invalid login')) {
-                        errDiv.textContent = 'Đăng nhập thất bại: Tên đăng nhập hoặc mật khẩu không chính xác!';
-                    } else {
-                        errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Tài khoản hoặc mật khẩu không đúng!');
-                    }
+                    errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!');
                     errDiv.classList.remove('hidden');
                     
-                    // Re-trigger shake animation
                     errDiv.style.animation = 'none';
                     errDiv.offsetHeight; /* trigger reflow */
                     errDiv.style.animation = '';
