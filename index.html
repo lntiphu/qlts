@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=2.7">
+    <link rel="stylesheet" href="style.css?v=2.8">
 </head>
 <body>
     <!-- Login Screen -->
@@ -262,12 +262,16 @@
                                         <input type="text" id="dev-vga" placeholder="VD: GTX 1650">
                                     </div>
 
-                                    <!-- Màn hình & Dây kết nối -->
-                                    <div class="form-group col-span-3-lg">
+                                    <!-- Màn hình, S/N & Dây kết nối -->
+                                    <div class="form-group col-span-2-lg">
                                         <label for="dev-monitor">Thông tin màn hình</label>
                                         <input type="text" id="dev-monitor" placeholder="VD: Dell 24 inch, HP 21.5 inch...">
                                     </div>
-                                    <div class="form-group col-span-3-lg">
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-sn">Serial (S/N) thiết bị</label>
+                                        <input type="text" id="dev-sn" placeholder="Nhập Serial Number của thiết bị">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
                                         <label for="dev-cables">Dây kết nối</label>
                                         <select id="dev-cables">
                                             <option value="">-- Chọn dây kết nối --</option>
@@ -1143,6 +1147,7 @@
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 15px;">Dung lượng RAM:</span><span id="receipt-dev-ram" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 15px;">Ổ cứng:</span><span id="receipt-dev-disk" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 15px;">Màn hình:</span><span id="receipt-dev-monitor" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 15px;">Serial (S/N):</span><span id="receipt-dev-sn" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
                             </div>
                         </div>
                     </div>
@@ -1187,6 +1192,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=2.7"></script>
+    <script src="app.js?v=2.8"></script>
 </body>
 </html>

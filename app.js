@@ -84,6 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 devHdd: db.dev_hdd || '',
                 devVga: db.dev_vga || '',
                 devMonitor: db.dev_monitor || '',
+                devSn: db.dev_sn || '',
                 devCables: db.dev_cables || '',
                 keyWin: db.key_win || '',
                 keyOffice: db.key_office || '',
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 dev_hdd: js.devHdd,
                 dev_vga: js.devVga,
                 dev_monitor: js.devMonitor,
+                dev_sn: js.devSn,
                 dev_cables: js.devCables,
                 key_win: js.keyWin,
                 key_office: js.keyOffice,
@@ -754,6 +756,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (item.devHdd) configArr.push(`HDD: ${item.devHdd}`);
             if (item.devVga) configArr.push(`VGA: ${item.devVga}`);
             if (item.devMonitor) configArr.push(`Màn hình: ${item.devMonitor}`);
+            if (item.devSn) configArr.push(`S/N: ${item.devSn}`);
             if (item.devCables) configArr.push(`Dây kết nối: ${item.devCables}`);
             const configText = configArr.length > 0 ? configArr.join('<br>') : 'Chưa nhập cấu hình';
 
@@ -909,6 +912,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             devApps: document.getElementById('dev-apps').value.trim(),
             devStatus: document.getElementById('dev-status').value,
             devMonitor: document.getElementById('dev-monitor').value.trim(),
+            devSn: document.getElementById('dev-sn').value.trim(),
             devCables: document.getElementById('dev-cables').value,
             updatedAt: formattedDate
         };
@@ -966,6 +970,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 devApps: "Các app bản quyền",
                 devStatus: "Tình trạng thiết bị",
                 devMonitor: "Thông tin màn hình",
+                devSn: "Serial (S/N) thiết bị",
                 devCables: "Dây kết nối"
             };
 
@@ -1055,6 +1060,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('dev-apps').value = item.devApps || '';
         document.getElementById('dev-status').value = item.devStatus || '';
         document.getElementById('dev-monitor').value = item.devMonitor || '';
+        document.getElementById('dev-sn').value = item.devSn || '';
         document.getElementById('dev-cables').value = item.devCables || '';
 
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Cấp Phát';
@@ -3887,6 +3893,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('receipt-dev-disk').innerText = diskStr || '—';
             
             document.getElementById('receipt-dev-monitor').innerText = document.getElementById('dev-monitor').value.trim() || '—';
+            document.getElementById('receipt-dev-sn').innerText = document.getElementById('dev-sn').value.trim() || '—';
             
             document.getElementById('receipt-key-win').innerText = document.getElementById('key-win').value.trim() || '—';
             document.getElementById('receipt-key-office').innerText = document.getElementById('key-office').value.trim() || '—';
