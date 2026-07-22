@@ -479,12 +479,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const dropdown = document.createElement('div');
                 dropdown.className = 'autocomplete-suggestions';
+                
+                // Thiết lập CSS inline trực tiếp để chống cache CSS của trình duyệt
+                dropdown.style.position = 'absolute';
+                dropdown.style.background = '#1a2230'; // Màu tối Slate 900
+                dropdown.style.border = '1px solid rgba(249, 115, 22, 0.4)'; // Viền cam thương hiệu
+                dropdown.style.borderRadius = '8px';
+                dropdown.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)';
+                dropdown.style.maxHeight = '200px';
+                dropdown.style.overflowY = 'auto';
+                dropdown.style.zIndex = '1000';
+                dropdown.style.marginTop = '4px';
                 dropdown.style.width = input.offsetWidth + 'px';
+                dropdown.style.left = input.offsetLeft + 'px';
+                dropdown.style.top = (input.offsetTop + input.offsetHeight) + 'px';
 
                 filtered.forEach((val, idx) => {
                     const item = document.createElement('div');
                     item.className = 'autocomplete-suggestion-item';
                     item.innerText = val;
+                    
+                    // Thiết lập CSS inline cho từng dòng gợi ý
+                    item.style.padding = '10px 14px';
+                    item.style.cursor = 'pointer';
+                    item.style.color = '#cbd5e1';
+                    item.style.fontSize = '13px';
+                    item.style.transition = 'all 0.15s ease';
+                    item.style.borderBottom = '1px solid rgba(255, 255, 255, 0.03)';
+                    item.style.textAlign = 'left';
+
+                    // Hiệu ứng hover giả lập bằng JS để chống lỗi cache CSS
+                    item.addEventListener('mouseenter', () => {
+                        item.style.background = 'rgba(249, 115, 22, 0.15)';
+                        item.style.color = '#fff';
+                        item.style.paddingLeft = '18px';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        item.style.background = 'transparent';
+                        item.style.color = '#cbd5e1';
+                        item.style.paddingLeft = '14px';
+                    });
+
                     // Sử dụng mousedown và e.preventDefault() để ngăn input bị blur trước khi dữ liệu được chọn
                     item.addEventListener('mousedown', (e) => {
                         e.preventDefault();
