@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let hoTroList = [];
     let cameraList = [];
     let tipsList = [];
+    let giaHanList = [];
+    let khoList = [];
 
     // Fallback helper functions for local storage
     function loadFromLocalStorageFallback(key, list, renderFn) {
@@ -236,6 +238,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 provider: js.provider || null,
                 notes: js.notes || null,
                 expiry_date: js.expiryDate
+            })
+        },
+        khoThietBi: {
+            fromDB: (db) => ({
+                id: db.id,
+                code: db.code || '',
+                name: db.name || '',
+                reason: db.reason || '',
+                dateStored: db.date_stored || '',
+                notes: db.notes || ''
+            }),
+            toDB: (js) => ({
+                code: js.code,
+                name: js.name,
+                reason: js.reason,
+                date_stored: js.dateStored,
+                notes: js.notes
             })
         }
     };
@@ -3011,6 +3030,273 @@ document.addEventListener('DOMContentLoaded', async () => {
             e.target.value = formatted;
         });
     }
+    // =========================================================================
+    // PHÂN HỆ MỚI: THIẾT BỊ LƯU KHO
+    // =========================================================================
+    const formKho = document.getElementById('form-kho-thiet-bi');
+    const tbodyKho = document.getElementById('tbody-kho');
+    const searchKho = document.getElementById('search-kho');
+    const btnCancelKho = document.getElementById('btn-cancel-kho');
+    const btnSaveKho = document.getElementById('btn-save-kho');
+    const editIndexKho = document.getElementById('edit-index-kho');
+
+    let currentPageKho = 1;
+    const itemsPerPageKho = 10;
+
+    function renderKho(filterText = '') {
+        if (!tbodyKho) return;
+        tbodyKho.innerHTML = '';
+
+        const sortedList = [...khoList].sort((a, b) => {
+            const nameA = a.name ? a.name.trim() : "";
+            const nameB = b.name ? b.name.trim() : "";
+            return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+        });
+
+        const filtered = sortedList.filter(item => {
+            const keyword = filterText.toLowerCase();
+            return (
+                (item.code || '').toLowerCase().includes(keyword) ||
+                (item.name || '').toLowerCase().includes(keyword) ||
+                (item.reason || '').toLowerCase().includes(keyword)
+            );
+        });
+
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageKho) || 1;
+        if (currentPageKho > totalPages) currentPageKho = totalPages;
+        if (currentPageKho < 1) currentPageKho = 1;
+
+        const startIndex = (currentPageKho - 1) * itemsPerPageKho;
+        const endIndex = Math.min(startIndex + itemsPerPageKho, totalItems);
+
+        const elStart = document.getElementById('pag-start-kho');
+        const elEnd = document.getElementById('pag-end-kho');
+        const elTotal = document.getElementById('pag-total-kho');
+        const elCurrent = document.getElementById('pag-current-kho');
+
+        if (elStart) elStart.innerText = totalItems > 0 ? startIndex + 1 : 0;
+        if (elEnd) elEnd.innerText = endIndex;
+        if (elTotal) elTotal.innerText = totalItems;
+        if (elCurrent) elCurrent.innerText = `Trang ${currentPageKho} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-page-kho');
+        const btnNext = document.getElementById('btn-next-page-kho');
+
+        if (btnPrev) {
+            btnPrev.disabled = currentPageKho === 1;
+            btnPrev.style.opacity = currentPageKho === 1 ? '0.5' : '1';
+            btnPrev.style.cursor = currentPageKho === 1 ? 'not-allowed' : 'pointer';
+        }
+        if (btnNext) {
+            btnNext.disabled = currentPageKho === totalPages;
+            btnNext.style.opacity = currentPageKho === totalPages ? '0.5' : '1';
+            btnNext.style.cursor = currentPageKho === totalPages ? 'not-allowed' : 'pointer';
+        }
+
+        if (totalItems === 0) {
+            tbodyKho.innerHTML = `
+                <tr class="empty-row">
+                    <td colspan="5" class="text-center text-muted">Chưa có thiết bị nào trong kho!</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const pageItems = filtered.slice(startIndex, endIndex);
+
+        pageItems.forEach((item, index) => {
+            const originalIndex = khoList.indexOf(item);
+            const tr = document.createElement('tr');
+
+            tr.innerHTML = `
+                <td><span class="badge badge-blue">${item.code}</span></td>
+                <td><strong>${item.name}</strong></td>
+                <td style="font-size: 13px; color: var(--text-secondary);">${item.reason}</td>
+                <td style="font-size: 13px;">${formatDateDMY(item.dateStored)}</td>
+                <td>
+                    <div class="actions-cell">
+                        <button class="btn-icon-only edit btn-edit-kho" data-index="${originalIndex}" title="Sửa">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button class="btn-icon-only delete btn-delete-kho" data-index="${originalIndex}" title="Xóa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbodyKho.appendChild(tr);
+        });
+
+        document.querySelectorAll('.btn-edit-kho').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                editKho(idx);
+            });
+        });
+
+        document.querySelectorAll('.btn-delete-kho').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                deleteKho(idx);
+            });
+        });
+    }
+
+    if (formKho) {
+        formKho.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const indexStr = editIndexKho ? editIndexKho.value : '';
+
+            const data = {
+                code: document.getElementById('kho-code').value.trim(),
+                name: document.getElementById('kho-name').value.trim(),
+                reason: document.getElementById('kho-reason').value.trim(),
+                dateStored: document.getElementById('kho-date-stored').value || new Date().toISOString().split('T')[0]
+            };
+
+            if (indexStr === '') {
+                try {
+                    const dbData = mappers.khoThietBi.toDB(data);
+                    const { data: insertedData, error } = await supabaseClient
+                        .from('kho_thiet_bi')
+                        .insert([dbData])
+                        .select();
+                    if (error) throw error;
+                    khoList.push(mappers.khoThietBi.fromDB(insertedData[0]));
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    showToast('Thành công', 'Đã lưu thiết bị lưu kho mới!');
+                } catch (err) {
+                    console.error(err);
+                    data.id = 'local-' + Date.now();
+                    khoList.push(data);
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    showToast('Lưu Offline', 'Không kết nối được Supabase. Đã lưu tạm thời trên trình duyệt!', 'warning');
+                }
+            } else {
+                const idx = parseInt(indexStr);
+                const oldItem = khoList[idx];
+                try {
+                    const dbData = mappers.khoThietBi.toDB(data);
+                    const { data: updatedData, error } = await supabaseClient
+                        .from('kho_thiet_bi')
+                        .update(dbData)
+                        .eq('id', oldItem.id)
+                        .select();
+                    if (error) throw error;
+                    khoList[idx] = mappers.khoThietBi.fromDB(updatedData[0]);
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    showToast('Thành công', 'Đã cập nhật thông tin thiết bị lưu kho!');
+                    resetFormKho();
+                } catch (err) {
+                    console.error(err);
+                    data.id = oldItem.id;
+                    khoList[idx] = data;
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    showToast('Lưu Offline', 'Không kết nối được Supabase. Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                    resetFormKho();
+                }
+            }
+
+            renderKho();
+            formKho.reset();
+            resetFormKho();
+        });
+    }
+
+    function editKho(index) {
+        const item = khoList[index];
+        if (!item) return;
+        if (editIndexKho) editIndexKho.value = index;
+
+        document.getElementById('kho-code').value = item.code || '';
+        document.getElementById('kho-name').value = item.name || '';
+        document.getElementById('kho-reason').value = item.reason || '';
+        document.getElementById('kho-date-stored').value = item.dateStored || '';
+
+        if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
+        if (btnCancelKho) btnCancelKho.classList.remove('hidden');
+
+        document.querySelector('.tab-container').scrollTop = 0;
+    }
+
+    async function deleteKho(index) {
+        const item = khoList[index];
+        if (!item) return;
+        if (confirm(`Bạn có chắc chắn muốn xóa thiết bị lưu kho: "${item.name}"?`)) {
+            try {
+                const { error } = await supabaseClient
+                    .from('kho_thiet_bi')
+                    .delete()
+                    .eq('id', item.id);
+                if (error) throw error;
+                khoList.splice(index, 1);
+                saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                renderKho();
+                showToast('Đã xóa', 'Xóa thiết bị lưu kho thành công!', 'warning');
+
+                if (editIndexKho && editIndexKho.value === index.toString()) {
+                    resetFormKho();
+                }
+            } catch (err) {
+                console.error(err);
+                khoList.splice(index, 1);
+                saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                renderKho();
+                showToast('Xóa Offline', 'Không kết nối được Supabase. Đã xóa tạm thời trên trình duyệt!', 'warning');
+
+                if (editIndexKho && editIndexKho.value === index.toString()) {
+                    resetFormKho();
+                }
+            }
+        }
+    }
+
+    function resetFormKho() {
+        if (editIndexKho) editIndexKho.value = '';
+        if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
+        if (btnCancelKho) btnCancelKho.classList.add('hidden');
+        if (formKho) formKho.reset();
+    }
+
+    if (btnCancelKho) btnCancelKho.addEventListener('click', resetFormKho);
+
+    if (searchKho) {
+        searchKho.addEventListener('input', (e) => {
+            currentPageKho = 1;
+            renderKho(e.target.value.trim());
+        });
+    }
+
+    const btnPrevKho = document.getElementById('btn-prev-page-kho');
+    const btnNextKho = document.getElementById('btn-next-page-kho');
+
+    if (btnPrevKho) {
+        btnPrevKho.addEventListener('click', () => {
+            if (currentPageKho > 1) {
+                currentPageKho--;
+                renderKho(searchKho ? searchKho.value.trim() : '');
+            }
+        });
+    }
+
+    if (btnNextKho) {
+        btnNextKho.addEventListener('click', () => {
+            const keyword = searchKho ? searchKho.value.trim().toLowerCase() : '';
+            const totalItems = khoList.filter(item => {
+                return (
+                    (item.code || '').toLowerCase().includes(keyword) ||
+                    (item.name || '').toLowerCase().includes(keyword) ||
+                    (item.reason || '').toLowerCase().includes(keyword)
+                );
+            }).length;
+            const totalPages = Math.ceil(totalItems / itemsPerPageKho) || 1;
+            if (currentPageKho < totalPages) {
+                currentPageKho++;
+                renderKho(searchKho ? searchKho.value.trim() : '');
+            }
+        });
+    }
 
 
     // =========================================================================
@@ -3104,7 +3390,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 support: hoTroList || [],
                 cameras: cameraList || [],
                 tips: tipsList || [],
-                giaHan: giaHanList || []
+                giaHan: giaHanList || [],
+                khoThietBi: khoList || []
             };
 
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -3165,6 +3452,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             const giaHanHeaders = ["Dịch vụ", "Ghi chú", "Đơn vị thực hiện", "Ngày hết hạn"];
             const giaHanKeys = ["name", "notes", "provider", "expiryDate"];
             zip.file("7_Danh_sach_gia_han.csv", convertToCSV(giaHanList, giaHanHeaders, giaHanKeys));
+
+            // 8. Kho Thiet Bi
+            const khoHeaders = ["Mã thiết bị", "Tên thiết bị", "Lý do lưu kho", "Ngày lưu kho"];
+            const khoKeys = ["code", "name", "reason", "dateStored"];
+            zip.file("8_Danh_sach_kho_thiet_bi.csv", convertToCSV(khoList, khoHeaders, khoKeys));
 
             showToast('Đang xử lý', 'Đang tạo file ZIP chứa các báo cáo...', 'info');
 
@@ -3247,7 +3539,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Gia han
         "Dịch vụ": "name",
         "Đơn vị thực hiện": "provider",
-        "Ngày hết hạn": "expiryDate"
+        "Ngày hết hạn": "expiryDate",
+
+        // Kho thiet bi
+        "Mã thiết bị": "code",
+        "Tên thiết bị": "name",
+        "Lý do lưu kho": "reason",
+        "Ngày lưu kho": "dateStored"
     };
 
     // Helper to parse CSV string to 2D array
@@ -3373,9 +3671,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             giaHanList.length = 0;
             giaHanList.push(...data.giaHan);
         }
+        if (data.khoThietBi) {
+            khoList.length = 0;
+            khoList.push(...data.khoThietBi);
+        }
 
         // 2. Save local storage for fallback
         saveGiaHanToLocalStorage();
+        saveToLocalStorageFallback('kho_thiet_bi', khoList);
 
         // 3. Synchronize with Supabase database
         if (supabaseClient) {
@@ -3418,10 +3721,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await restoreTable('camera', cameraList, mappers.camera);
                 await restoreTable('tips', tipsList, mappers.tips);
                 await restoreTable('gia_han', giaHanList, mappers.giaHan);
+                await restoreTable('kho_thiet_bi', khoList, mappers.khoThietBi);
             } catch (supabaseErr) {
                 console.warn("Supabase restore warning:", supabaseErr);
             }
         }
+
+        updateDeptFilterThietBi();
+        renderThietBi();
+        renderCongTy();
+        renderAccount();
+        renderHoTro();
+        renderCamera();
+        renderTips();
+        renderGiaHan();
+        renderKho();
 
         // 4. Re-render UI
         updateDeptFilterThietBi();
@@ -3611,6 +3925,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             }).catch(err => {
                 console.warn("Fetch gia_han failed, loading fallback:", err);
                 loadFromLocalStorageFallback('gia_han', giaHanList, renderGiaHan);
+            }),
+            supabaseClient.from('kho_thiet_bi').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                khoList = (data || []).map(mappers.khoThietBi.fromDB);
+                saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                renderKho();
+            }).catch(err => {
+                console.warn("Fetch kho_thiet_bi failed, loading fallback:", err);
+                loadFromLocalStorageFallback('kho_thiet_bi', khoList, renderKho);
             })
         ];
 

@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=2.8">
+    <link rel="stylesheet" href="style.css?v=2.9">
 </head>
 <body>
     <!-- Login Screen -->
@@ -61,6 +61,10 @@
                 <button class="menu-item" data-tab="tab-cap-phat-list">
                     <i class="fa-solid fa-list-check"></i>
                     <span>Danh sách đã cấp phát</span>
+                </button>
+                <button class="menu-item" data-tab="tab-kho-thiet-bi">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                    <span>Thiết bị lưu kho</span>
                 </button>
                 <button class="menu-item" data-tab="tab-cong-ty">
                     <i class="fa-solid fa-building"></i>
@@ -476,6 +480,92 @@
                         <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
                             <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
                                 Đang hiển thị <span id="pag-start-congty">0</span> - <span id="pag-end-congty">0</span> trên tổng số <span id="pag-total-congty">0</span> bản ghi
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB THIẾT BỊ LƯU KHO -->
+                <section id="tab-kho-thiet-bi" class="tab-content">
+                    <div class="card form-card">
+                        <h3 class="section-title text-primary"><i class="fa-solid fa-boxes-stacked"></i> Quản Lý Thiết Bị Lưu Kho</h3>
+                        
+                        <form id="form-kho-thiet-bi" autocomplete="off">
+                            <input type="hidden" id="edit-index-kho" value="">
+                            
+                            <div class="grid grid-col-6">
+                                <div class="form-group col-span-2-lg">
+                                    <label for="kho-code">Mã thiết bị (*)</label>
+                                    <input type="text" id="kho-code" required placeholder="VD: KHO-PC-01, KHO-LAP-02">
+                                </div>
+                                <div class="form-group col-span-4-lg">
+                                    <label for="kho-name">Tên thiết bị (*)</label>
+                                    <input type="text" id="kho-name" required placeholder="Nhập tên thiết bị (VD: Laptop Dell Vostro 3510, PC Văn Phòng i5...)">
+                                </div>
+                                <div class="form-group col-span-4-lg">
+                                    <label for="kho-reason">Lý do lưu kho (*)</label>
+                                    <input type="text" id="kho-reason" required placeholder="VD: Nhân sự nghỉ việc thu hồi, Chờ thanh lý, Đang hư hỏng chờ sửa...">
+                                </div>
+                                <div class="form-group col-span-2-lg">
+                                    <label for="kho-date-stored">Ngày lưu kho</label>
+                                    <input type="date" id="kho-date-stored" lang="vi" placeholder="dd/mm/yyyy">
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary" id="btn-save-kho">
+                                    <i class="fa-solid fa-floppy-disk"></i> LƯU
+                                </button>
+                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-kho">
+                                    Hủy Chỉnh Sửa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách Thiết Bị Lưu Kho -->
+                    <div class="card table-card">
+                        <div class="table-header">
+                            <h3 class="table-title"><i class="fa-solid fa-boxes-packing"></i> Danh Sách Thiết Bị Lưu Kho</h3>
+                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page-kho" style="padding: 6px 12px; font-size: 13px;">
+                                        <i class="fa-solid fa-angle-left"></i> Trang trước
+                                    </button>
+                                    <span id="pag-current-kho" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page-kho" style="padding: 6px 12px; font-size: 13px;">
+                                        Trang sau <i class="fa-solid fa-angle-right"></i>
+                                    </button>
+                                </div>
+                                <div class="search-box">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-kho" placeholder="Tìm kiếm theo Tên, Mã, Lý do...">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-kho">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 130px;">Mã thiết bị</th>
+                                        <th>Tên thiết bị</th>
+                                        <th>Lý do lưu kho</th>
+                                        <th style="width: 140px;">Ngày lưu kho</th>
+                                        <th class="text-center" style="width: 100px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-kho">
+                                    <tr class="empty-row">
+                                        <td colspan="5" class="text-center text-muted">Chưa có thiết bị nào trong kho!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- Pagination Controls for Kho -->
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
+                            <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
+                                Đang hiển thị <span id="pag-start-kho">0</span> - <span id="pag-end-kho">0</span> trên tổng số <span id="pag-total-kho">0</span> bản ghi
                             </div>
                         </div>
                     </div>
@@ -1192,6 +1282,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=2.8"></script>
+    <script src="app.js?v=2.9"></script>
 </body>
 </html>
