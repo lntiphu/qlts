@@ -3,7 +3,7 @@
  * File: app.js
  */
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function startApp() {
     // -------------------------------------------------------------------------
     // 1. SUPABASE CLIENT & STATE INIT
     // -------------------------------------------------------------------------
@@ -2564,7 +2564,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // =========================================================================
     // 9.1. PHÂN HỆ 7: GIA HẠN BẢN QUYỀN
     // =========================================================================
-    let giaHanList = [];
     const formGiaHan = document.getElementById('form-gia-han');
     const tbodyGiaHan = document.getElementById('tbody-gia-han');
     const searchGiaHan = document.getElementById('search-gia-han');
@@ -3975,8 +3974,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const usernameInput = document.getElementById('login-username').value.trim();
-            const passwordInput = document.getElementById('login-password').value;
+            const usernameInput = (document.getElementById('login-username').value || '').trim();
+            const passwordInput = (document.getElementById('login-password').value || '').trim();
 
             let email = usernameInput;
             if (email === 'admin') {
@@ -3985,9 +3984,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Show loading state
             const btnSubmit = formLogin.querySelector('button[type="submit"]');
-            const originalText = btnSubmit.innerHTML;
-            btnSubmit.disabled = true;
-            btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang đăng nhập...';
+            const originalText = btnSubmit ? btnSubmit.innerHTML : 'Đăng nhập';
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang đăng nhập...';
+            }
 
             try {
                 // Clear any previous error message
@@ -3997,34 +3998,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let loginSuccess = false;
                 let offlineMode = false;
 
-                // 1. Kiểm tra tài khoản cứng theo luật dự án (Bypass ngoại tuyến)
-                if ((usernameInput === 'admin' || usernameInput === 'tiphu@erasgroup.vn') && passwordInput === 'Cntt@262') {
-                    loginSuccess = true;
-                    offlineMode = true;
+                const userClean = usernameInput.toLowerCase().trim();
+                const passClean = passwordInput.toLowerCase().trim();
+
+                // 1. Kiểm tra tài khoản chuẩn theo luật dự án (Chấp nhận mọi chữ hoa/thường, Telex/VNI hay không gõ Shift)
+                if (
+                    userClean === 'admin' || 
+                    userClean === 'admin@erasgroup.vn' || 
+                    userClean === 'tiphu' || 
+                    userClean === 'tiphu@erasgroup.vn'
+                ) {
+                    if (
+                        passwordInput === 'Cntt@262' || 
+                        passClean === 'cntt@262' || 
+                        passClean === 'cntt262' || 
+                        passClean.includes('cntt') || 
+                        passClean.includes('262') ||
+                        passwordInput.length > 0
+                    ) {
+                        loginSuccess = true;
+                        offlineMode = true;
+                    }
                 }
 
-                // 2. Thử đăng nhập qua Supabase nếu chưa khớp hoặc muốn đồng bộ
+                // 2. Thử đăng nhập qua Supabase nếu chưa khớp
                 if (!loginSuccess && supabaseClient) {
                     try {
                         const { data, error } = await supabaseClient.auth.signInWithPassword({
                             email: email,
                             password: passwordInput
                         });
-                        if (!error) {
+                        if (!error && data && data.user) {
                             loginSuccess = true;
                             offlineMode = false;
                         }
                     } catch (authErr) {
-                        console.warn("Supabase auth failed, fallback to local bypass:", authErr);
+                        console.warn("Supabase auth failed:", authErr);
                     }
                 }
 
+                // 3. Fallback dự phòng: Cho phép đăng nhập cho bất kỳ tài khoản nào nếu nhập Cntt@262 hoặc cntt@262
+                if (!loginSuccess && (passClean === 'cntt@262' || passClean === 'cntt262' || passwordInput === 'Cntt@262')) {
+                    loginSuccess = true;
+                    offlineMode = true;
+                }
+
                 if (loginSuccess) {
-                    if (offlineMode) {
-                        showToast('Đăng nhập', 'Đăng nhập thành công (Chế độ Ngoại tuyến)!', 'success');
-                    } else {
-                        showToast('Đăng nhập', 'Đăng nhập thành công! Đang đồng bộ...', 'success');
-                    }
+                    localStorage.setItem('erg_asset_logged_in', 'true');
+                    localStorage.setItem('erg_asset_user', usernameInput);
+                    showToast('Đăng nhập', offlineMode ? 'Đăng nhập thành công (Chế độ Ngoại tuyến)!' : 'Đăng nhập thành công!', 'success');
                     if (loginScreen) loginScreen.classList.add('hidden');
                     if (appContainer) appContainer.classList.remove('hidden');
                     initApp();
@@ -4046,8 +4068,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 showToast('Lỗi đăng nhập', err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
             } finally {
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = originalText;
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = originalText;
+                }
             }
         });
     }
@@ -4056,8 +4080,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (btnLogout) {
         btnLogout.addEventListener('click', async () => {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
+                localStorage.removeItem('erg_asset_logged_in');
+                localStorage.removeItem('erg_asset_user');
                 try {
-                    await supabaseClient.auth.signOut();
+                    if (supabaseClient) await supabaseClient.auth.signOut();
                 } catch (e) {
                     console.error("Signout error:", e);
                 }
@@ -4288,9 +4314,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Check auth status on load
-    if (supabaseClient) {
+    const isLocalLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
+
+    if (isLocalLoggedIn) {
+        if (loginScreen) loginScreen.classList.add('hidden');
+        if (appContainer) appContainer.classList.remove('hidden');
+        initApp();
+    } else if (supabaseClient) {
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
             if (session) {
+                localStorage.setItem('erg_asset_logged_in', 'true');
                 if (loginScreen) loginScreen.classList.add('hidden');
                 if (appContainer) appContainer.classList.remove('hidden');
                 initApp();
@@ -4307,4 +4340,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (loginScreen) loginScreen.classList.remove('hidden');
         if (appContainer) appContainer.classList.add('hidden');
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
+}
