@@ -1,7 +1,0 @@
-1. Trang thông tin thiết bị sẽ chia thành 2 trang nhỏ ở dướu
-1.1 Thông Tin Quản Lý Cấp Phát => mục đích để add thêm thông tin
-1.2 Danh Sách Thiết Bị Đã Cấp Phát => mục đích để show ra thông tin và khi chỉnh sửa thì sẽ nhảy về 1.1 để chỉnh sửa
-Trong 1.2 này thì hiện danh sách 2 là 10 người. Dữ liệu show sẽ ưu tiên theo từng phòng ban
-Hiện tại ở mục tìm kiếm thì khi gõ 1 trong các thông tin thì không tìm kiếm được user
-
-Sẵn kiểm tra giúp tôi luôn các mục tìm kiếm ở các trang còn lại xem đã tìm được chưa
