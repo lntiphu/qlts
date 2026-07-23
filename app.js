@@ -273,22 +273,41 @@ async function startApp() {
     const pageTitle = document.getElementById('page-title');
 
     // Tab Navigation Logic
+    function switchToTab(targetTabId) {
+        if (!targetTabId) return;
+        const targetItem = document.querySelector(`.menu-item[data-tab="${targetTabId}"]`);
+        const targetContent = document.getElementById(targetTabId);
+        if (!targetItem || !targetContent) return;
+
+        menuItems.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+
+        targetItem.classList.add('active');
+        targetContent.classList.add('active');
+
+        const tabName = targetItem.querySelector('span')?.innerText || '';
+        if (pageTitle) {
+            pageTitle.innerHTML = `ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản <small style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 10px;">/ ${tabName}</small>`;
+        }
+
+        // Persist active tab so F5 stays on the same page
+        localStorage.setItem('erg_asset_active_tab', targetTabId);
+    }
+
     menuItems.forEach(item => {
         item.addEventListener('click', () => {
-            // Remove active classes
-            menuItems.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-
-            // Add active class to clicked button & target tab content
-            item.classList.add('active');
             const targetTab = item.getAttribute('data-tab');
-            document.getElementById(targetTab).classList.add('active');
-
-            // Update page header title according to selected tab
-            const tabName = item.querySelector('span').innerText;
-            pageTitle.innerHTML = `ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản <small style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 10px;">/ ${tabName}</small>`;
+            if (targetTab) {
+                switchToTab(targetTab);
+            }
         });
     });
+
+    // Restore last active tab after F5
+    const savedTab = localStorage.getItem('erg_asset_active_tab');
+    if (savedTab && document.getElementById(savedTab)) {
+        switchToTab(savedTab);
+    }
 
     // -------------------------------------------------------------------------
     // 3. TOAST NOTIFICATION SYSTEM
@@ -4108,6 +4127,7 @@ async function startApp() {
             if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
                 localStorage.removeItem('erg_asset_logged_in');
                 localStorage.removeItem('erg_asset_user');
+                localStorage.removeItem('erg_asset_active_tab');
                 try {
                     if (supabaseClient) await supabaseClient.auth.signOut();
                 } catch (e) {
@@ -4357,6 +4377,10 @@ async function startApp() {
     if (isLocalLoggedIn) {
         if (loginScreen) loginScreen.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
+        const activeTabToRestore = localStorage.getItem('erg_asset_active_tab');
+        if (activeTabToRestore && document.getElementById(activeTabToRestore)) {
+            switchToTab(activeTabToRestore);
+        }
         initApp();
     } else if (supabaseClient) {
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
@@ -4364,6 +4388,10 @@ async function startApp() {
                 localStorage.setItem('erg_asset_logged_in', 'true');
                 if (loginScreen) loginScreen.classList.add('hidden');
                 if (appContainer) appContainer.classList.remove('hidden');
+                const activeTabToRestore = localStorage.getItem('erg_asset_active_tab');
+                if (activeTabToRestore && document.getElementById(activeTabToRestore)) {
+                    switchToTab(activeTabToRestore);
+                }
                 initApp();
             } else {
                 if (loginScreen) loginScreen.classList.remove('hidden');
