@@ -86,7 +86,10 @@ async function startApp() {
                 devHdd: db.dev_hdd || '',
                 devVga: db.dev_vga || '',
                 devMonitor: db.dev_monitor || '',
+                devMonitorSn: db.dev_monitor_sn || '',
                 devSn: db.dev_sn || '',
+                devKeyboard: !!db.dev_keyboard,
+                devMouse: db.dev_mouse || '',
                 devCables: db.dev_cables || '',
                 keyWin: db.key_win || '',
                 keyOffice: db.key_office || '',
@@ -114,7 +117,10 @@ async function startApp() {
                 dev_hdd: js.devHdd,
                 dev_vga: js.devVga,
                 dev_monitor: js.devMonitor,
+                dev_monitor_sn: js.devMonitorSn,
                 dev_sn: js.devSn,
+                dev_keyboard: js.devKeyboard,
+                dev_mouse: js.devMouse,
                 dev_cables: js.devCables,
                 key_win: js.keyWin,
                 key_office: js.keyOffice,
@@ -775,7 +781,10 @@ async function startApp() {
             if (item.devHdd) configArr.push(`HDD: ${item.devHdd}`);
             if (item.devVga) configArr.push(`VGA: ${item.devVga}`);
             if (item.devMonitor) configArr.push(`Màn hình: ${item.devMonitor}`);
-            if (item.devSn) configArr.push(`S/N: ${item.devSn}`);
+            if (item.devMonitorSn) configArr.push(`S/N Màn hình: ${item.devMonitorSn}`);
+            if (item.devSn) configArr.push(`S/N Thiết bị: ${item.devSn}`);
+            if (item.devKeyboard) configArr.push(`Bàn phím: Có`);
+            if (item.devMouse) configArr.push(`Chuột: ${item.devMouse}`);
             if (item.devCables) configArr.push(`Dây kết nối: ${item.devCables}`);
             const configText = configArr.length > 0 ? configArr.join('<br>') : 'Chưa nhập cấu hình';
 
@@ -931,7 +940,10 @@ async function startApp() {
             devApps: document.getElementById('dev-apps').value.trim(),
             devStatus: document.getElementById('dev-status').value,
             devMonitor: document.getElementById('dev-monitor').value.trim(),
+            devMonitorSn: document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '',
             devSn: document.getElementById('dev-sn').value.trim(),
+            devKeyboard: document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').checked : false,
+            devMouse: document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '',
             devCables: document.getElementById('dev-cables').value,
             updatedAt: formattedDate
         };
@@ -988,8 +1000,11 @@ async function startApp() {
                 devNotes: "Ghi chú thiết bị",
                 devApps: "Các app bản quyền",
                 devStatus: "Tình trạng thiết bị",
-                devMonitor: "Thông tin màn hình",
-                devSn: "Serial (S/N) thiết bị",
+                devMonitor: "Tên màn hình",
+                devMonitorSn: "Serial màn hình",
+                devSn: "Serial thiết bị",
+                devKeyboard: "Bàn phím",
+                devMouse: "Chuột",
                 devCables: "Dây kết nối"
             };
 
@@ -1079,7 +1094,10 @@ async function startApp() {
         document.getElementById('dev-apps').value = item.devApps || '';
         document.getElementById('dev-status').value = item.devStatus || '';
         document.getElementById('dev-monitor').value = item.devMonitor || '';
+        if (document.getElementById('dev-monitor-sn')) document.getElementById('dev-monitor-sn').value = item.devMonitorSn || '';
         document.getElementById('dev-sn').value = item.devSn || '';
+        if (document.getElementById('dev-keyboard')) document.getElementById('dev-keyboard').checked = !!item.devKeyboard;
+        if (document.getElementById('dev-mouse')) document.getElementById('dev-mouse').value = item.devMouse || '';
         document.getElementById('dev-cables').value = item.devCables || '';
 
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Cấp Phát';
@@ -3418,8 +3436,8 @@ async function startApp() {
             const zip = new JSZip();
 
             // 1. Assets
-            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Màn hình", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
-            const assetsKeys = ["userDept", "userName", "userTitle", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
+            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Tên màn hình", "Serial màn hình", "Serial thiết bị", "Bàn phím", "Chuột", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
+            const assetsKeys = ["userDept", "userName", "userTitle", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devMonitorSn", "devSn", "devKeyboard", "devMouse", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
             zip.file("1_Danh_sach_cap_phat.csv", convertToCSV(thietBiList, assetsHeaders, assetsKeys));
 
             // 2. Companies
@@ -3488,6 +3506,14 @@ async function startApp() {
         "Số khe RAM": "devRamSlots",
         "Ổ cứng": "devSsd",
         "Màn hình": "devMonitor",
+        "Tên màn hình": "devMonitor",
+        "Serial màn hình": "devMonitorSn",
+        "Serial thiết bị": "devSn",
+        "Serial (S/N) thiết bị": "devSn",
+        "Serial (S/N)": "devSn",
+        "Bàn phím": "devKeyboard",
+        "Chuột": "devMouse",
+        "Cấp chuột": "devMouse",
         "Dây cáp": "devCables",
         "Key Windows": "keyWin",
         "Key Office": "keyOffice",
@@ -4242,7 +4268,19 @@ async function startApp() {
             document.getElementById('receipt-dev-disk').innerText = diskStr || '—';
             
             document.getElementById('receipt-dev-monitor').innerText = document.getElementById('dev-monitor').value.trim() || '—';
+            if (document.getElementById('receipt-dev-monitor-sn')) {
+                document.getElementById('receipt-dev-monitor-sn').innerText = document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() || '—' : '—';
+            }
             document.getElementById('receipt-dev-sn').innerText = document.getElementById('dev-sn').value.trim() || '—';
+            
+            const hasKb = document.getElementById('dev-keyboard') && document.getElementById('dev-keyboard').checked;
+            const mouseVal = document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '';
+            if (document.getElementById('receipt-dev-keyboard')) {
+                document.getElementById('receipt-dev-keyboard').innerText = hasKb ? 'Có' : '—';
+            }
+            if (document.getElementById('receipt-dev-mouse')) {
+                document.getElementById('receipt-dev-mouse').innerText = mouseVal || '—';
+            }
             
             document.getElementById('receipt-key-win').innerText = document.getElementById('key-win').value.trim() || '—';
             document.getElementById('receipt-key-office').innerText = document.getElementById('key-office').value.trim() || '—';
