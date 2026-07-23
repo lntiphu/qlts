@@ -1365,6 +1365,16 @@ async function startApp() {
         e.preventDefault();
         const indexStr = editIndexCongTy.value;
 
+        let gpkdInputVal = document.getElementById('company-gpkd-date').value.trim();
+        let gpkdVal = '';
+        if (gpkdInputVal) {
+            if (!validateDateDMY(gpkdInputVal, true)) {
+                showToast('Lỗi nhập liệu', 'Vui lòng nhập Ngày GPKD đúng định dạng dd/mm/yyyy (ví dụ: 15/08/2025)!', 'error');
+                return;
+            }
+            gpkdVal = formatDateDMY(gpkdInputVal);
+        }
+
         const data = {
             code: document.getElementById('company-code').value.trim(),
             name: document.getElementById('company-name').value.trim(),
@@ -1372,7 +1382,7 @@ async function startApp() {
             rep: document.getElementById('company-rep').value.trim(),
             repRole: document.getElementById('company-rep-role').value.trim(),
             address: document.getElementById('company-address').value.trim(),
-            gpkdDate: document.getElementById('company-gpkd-date').value
+            gpkdDate: gpkdVal
         };
 
         if (indexStr === '') {
@@ -2634,43 +2644,84 @@ async function startApp() {
         }
     }
 
-    function formatDateDMY(dateStr) {
-        if (!dateStr) return '—';
-        let date = new Date(dateStr);
-        if (isNaN(date.getTime())) return '—';
-        
-        let year = date.getFullYear();
-        if (year < 100) {
-            year += 2000;
-        } else if (year < 1000) {
-            year = (year % 100) + 2000;
+    function formatDateDMY(dateInput) {
+        if (!dateInput) return '—';
+        if (typeof dateInput === 'string') {
+            const str = dateInput.trim();
+            if (!str) return '—';
+            if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+                return str;
+            }
+            const ymdMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (ymdMatch) {
+                return `${ymdMatch[3]}/${ymdMatch[2]}/${ymdMatch[1]}`;
+            }
         }
+        let date = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+        if (isNaN(date.getTime())) return typeof dateInput === 'string' ? dateInput : '—';
         
         let day = date.getDate().toString().padStart(2, '0');
         let month = (date.getMonth() + 1).toString().padStart(2, '0');
+        let year = date.getFullYear();
         
         return `${day}/${month}/${year}`;
     }
 
+    function parseDateDMY(dateInput) {
+        if (!dateInput) return null;
+        if (dateInput instanceof Date) return isNaN(dateInput.getTime()) ? null : dateInput;
+        
+        const str = dateInput.toString().trim();
+        if (!str) return null;
+
+        const dmyMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (dmyMatch) {
+            const day = parseInt(dmyMatch[1], 10);
+            const month = parseInt(dmyMatch[2], 10) - 1;
+            const year = parseInt(dmyMatch[3], 10);
+            const d = new Date(year, month, day);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        const ymdMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (ymdMatch) {
+            const year = parseInt(ymdMatch[1], 10);
+            const month = parseInt(ymdMatch[2], 10) - 1;
+            const day = parseInt(ymdMatch[3], 10);
+            const d = new Date(year, month, day);
+            return isNaN(d.getTime()) ? null : d;
+        }
+
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+    }
+
+    function validateDateDMY(dateStr, allowEmpty = true) {
+        if (!dateStr || dateStr.trim() === '') return allowEmpty;
+        const match = dateStr.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+        if (!match) return false;
+
+        const day = parseInt(match[1], 10);
+        const month = parseInt(match[2], 10);
+        const year = parseInt(match[3], 10);
+
+        if (month < 1 || month > 12) return false;
+        if (day < 1 || day > 31) return false;
+        if (year < 1900 || year > 2100) return false;
+
+        return true;
+    }
+
     function calculateDaysRemaining(expiryStr) {
         if (!expiryStr) return 0;
-        let expiry = new Date(expiryStr);
-        if (isNaN(expiry.getTime())) return 0;
-        
-        let year = expiry.getFullYear();
-        if (year < 100) {
-            expiry.setFullYear(year + 2000);
-        } else if (year < 1000) {
-            expiry.setFullYear((year % 100) + 2000);
-        }
+        const expiry = parseDateDMY(expiryStr);
+        if (!expiry) return 0;
         
         expiry.setHours(0, 0, 0, 0);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
         const diffTime = expiry.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     }
 
     function getCountdownBarHTML(days) {
@@ -2875,36 +2926,12 @@ async function startApp() {
             let expiryInputVal = document.getElementById('license-expiry').value.trim();
             let expiryVal = '';
             
-            const dateRegex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-            const match = expiryInputVal.match(dateRegex);
-            if (!match) {
-                showToast('Lỗi nhập liệu', 'Vui lòng nhập ngày đúng định dạng dd/mm/yyyy!', 'error');
+            if (!validateDateDMY(expiryInputVal, false)) {
+                showToast('Lỗi nhập liệu', 'Vui lòng nhập ngày đúng định dạng dd/mm/yyyy (ví dụ: 25/12/2026)!', 'error');
                 return;
             }
             
-            const day = match[1];
-            const month = match[2];
-            let year = parseInt(match[3]);
-            
-            const dayNum = parseInt(day);
-            const monthNum = parseInt(month);
-            
-            if (monthNum < 1 || monthNum > 12) {
-                showToast('Lỗi nhập liệu', 'Tháng không hợp lệ (01 - 12)!', 'error');
-                return;
-            }
-            if (dayNum < 1 || dayNum > 31) {
-                showToast('Lỗi nhập liệu', 'Ngày không hợp lệ (01 - 31)!', 'error');
-                return;
-            }
-            
-            if (year < 100) {
-                year += 2000;
-            } else if (year < 1000) {
-                year = (year % 100) + 2000;
-            }
-            
-            expiryVal = `${year}-${month}-${day}`;
+            expiryVal = formatDateDMY(expiryInputVal);
 
             const data = {
                 name: document.getElementById('license-name').value.trim(),
@@ -3046,9 +3073,9 @@ async function startApp() {
         });
     }
 
-    const expiryInput = document.getElementById('license-expiry');
-    if (expiryInput) {
-        expiryInput.addEventListener('input', function(e) {
+    function attachDateMask(inputElement) {
+        if (!inputElement) return;
+        inputElement.addEventListener('input', function(e) {
             let value = e.target.value.replace(/\D/g, ''); // Keep only numbers
             if (value.length > 8) {
                 value = value.substring(0, 8);
@@ -3066,6 +3093,10 @@ async function startApp() {
             e.target.value = formatted;
         });
     }
+
+    attachDateMask(document.getElementById('company-gpkd-date'));
+    attachDateMask(document.getElementById('kho-date-stored'));
+    attachDateMask(document.getElementById('license-expiry'));
     // =========================================================================
     // PHÂN HỆ MỚI: THIẾT BỊ LƯU KHO
     // =========================================================================
@@ -3184,11 +3215,23 @@ async function startApp() {
             e.preventDefault();
             const indexStr = editIndexKho ? editIndexKho.value : '';
 
+            let dateStoredInputVal = document.getElementById('kho-date-stored').value.trim();
+            let dateStoredVal = '';
+            if (!dateStoredInputVal) {
+                dateStoredVal = formatDateDMY(new Date());
+            } else {
+                if (!validateDateDMY(dateStoredInputVal, true)) {
+                    showToast('Lỗi nhập liệu', 'Vui lòng nhập Ngày lưu kho đúng định dạng dd/mm/yyyy (ví dụ: 23/07/2026)!', 'error');
+                    return;
+                }
+                dateStoredVal = formatDateDMY(dateStoredInputVal);
+            }
+
             const data = {
                 code: document.getElementById('kho-code').value.trim(),
                 name: document.getElementById('kho-name').value.trim(),
                 reason: document.getElementById('kho-reason').value.trim(),
-                dateStored: document.getElementById('kho-date-stored').value || new Date().toISOString().split('T')[0]
+                dateStored: dateStoredVal
             };
 
             if (indexStr === '') {
@@ -3248,7 +3291,7 @@ async function startApp() {
         document.getElementById('kho-code').value = item.code || '';
         document.getElementById('kho-name').value = item.name || '';
         document.getElementById('kho-reason').value = item.reason || '';
-        document.getElementById('kho-date-stored').value = item.dateStored || '';
+        document.getElementById('kho-date-stored').value = item.dateStored ? formatDateDMY(item.dateStored) : '';
 
         if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
         if (btnCancelKho) btnCancelKho.classList.remove('hidden');
@@ -3293,6 +3336,8 @@ async function startApp() {
         if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
         if (btnCancelKho) btnCancelKho.classList.add('hidden');
         if (formKho) formKho.reset();
+        const khoDateInput = document.getElementById('kho-date-stored');
+        if (khoDateInput) khoDateInput.value = formatDateDMY(new Date());
     }
 
     if (btnCancelKho) btnCancelKho.addEventListener('click', resetFormKho);
