@@ -141,7 +141,7 @@ async function startApp() {
                 rep: db.rep || '',
                 repRole: db.rep_role || '',
                 address: db.address || '',
-                gpkdDate: db.gpkd_date || ''
+                gpkdDate: db.gpkd_date ? formatDateDMY(db.gpkd_date) : ''
             }),
             toDB: (js) => ({
                 code: js.code,
@@ -150,7 +150,7 @@ async function startApp() {
                 rep: js.rep,
                 rep_role: js.repRole,
                 address: js.address,
-                gpkd_date: js.gpkdDate
+                gpkd_date: dateToISO(js.gpkdDate)
             })
         },
         account: {
@@ -237,13 +237,13 @@ async function startApp() {
                 name: db.name,
                 provider: db.provider || '',
                 notes: db.notes || '',
-                expiryDate: db.expiry_date
+                expiryDate: db.expiry_date ? formatDateDMY(db.expiry_date) : ''
             }),
             toDB: (js) => ({
                 name: js.name,
                 provider: js.provider || null,
                 notes: js.notes || null,
-                expiry_date: js.expiryDate
+                expiry_date: dateToISO(js.expiryDate)
             })
         },
         khoThietBi: {
@@ -252,14 +252,14 @@ async function startApp() {
                 code: db.code || '',
                 name: db.name || '',
                 reason: db.reason || '',
-                dateStored: db.date_stored || '',
+                dateStored: db.date_stored ? formatDateDMY(db.date_stored) : '',
                 notes: db.notes || ''
             }),
             toDB: (js) => ({
                 code: js.code,
                 name: js.name,
                 reason: js.reason,
-                date_stored: js.dateStored,
+                date_stored: dateToISO(js.dateStored),
                 notes: js.notes
             })
         }
@@ -1393,12 +1393,16 @@ async function startApp() {
                     .insert([dbData])
                     .select();
                 if (error) throw error;
-                congTyList.push(mappers.congTy.fromDB(insertedData[0]));
+                if (insertedData && insertedData.length > 0) {
+                    congTyList.push(mappers.congTy.fromDB(insertedData[0]));
+                } else {
+                    data.id = 'supa-' + Date.now();
+                    congTyList.push(data);
+                }
                 saveToLocalStorageFallback('cong_ty', congTyList);
                 showToast('Thành công', 'Đã lưu thông tin công ty mới!');
             } catch (err) {
-                console.error(err);
-                // Lưu offline dự phòng
+                console.error("Lỗi thêm công ty:", err);
                 data.id = 'local-' + Date.now();
                 congTyList.push(data);
                 saveToLocalStorageFallback('cong_ty', congTyList);
@@ -1408,6 +1412,7 @@ async function startApp() {
             const idx = parseInt(indexStr);
             const oldItem = congTyList[idx];
             try {
+                data.id = oldItem.id;
                 const dbData = mappers.congTy.toDB(data);
                 const { data: updatedData, error } = await supabaseClient
                     .from('cong_ty')
@@ -1415,13 +1420,16 @@ async function startApp() {
                     .eq('id', oldItem.id)
                     .select();
                 if (error) throw error;
-                congTyList[idx] = mappers.congTy.fromDB(updatedData[0]);
+                if (updatedData && updatedData.length > 0) {
+                    congTyList[idx] = mappers.congTy.fromDB(updatedData[0]);
+                } else {
+                    congTyList[idx] = data;
+                }
                 saveToLocalStorageFallback('cong_ty', congTyList);
                 showToast('Thành công', 'Đã cập nhật thông tin công ty!');
                 resetFormCongTy();
             } catch (err) {
-                console.error(err);
-                // Cập nhật offline dự phòng
+                console.error("Lỗi cập nhật công ty:", err);
                 data.id = oldItem.id;
                 congTyList[idx] = data;
                 saveToLocalStorageFallback('cong_ty', congTyList);
@@ -2644,11 +2652,39 @@ async function startApp() {
         }
     }
 
+    function dateToISO(dmyStr) {
+        if (!dmyStr || typeof dmyStr !== 'string') return null;
+        const str = dmyStr.trim();
+        if (!str || str === '—') return null;
+
+        const match = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (match) {
+            const day = match[1].padStart(2, '0');
+            const month = match[2].padStart(2, '0');
+            const year = match[3];
+            return `${year}-${month}-${day}`;
+        }
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+            return str;
+        }
+
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            const day = d.getDate().toString().padStart(2, '0');
+            const month = (d.getMonth() + 1).toString().padStart(2, '0');
+            const year = d.getFullYear();
+            return `${year}-${month}-${day}`;
+        }
+
+        return null;
+    }
+
     function formatDateDMY(dateInput) {
         if (!dateInput) return '—';
         if (typeof dateInput === 'string') {
             const str = dateInput.trim();
-            if (!str) return '—';
+            if (!str || str === '—') return '—';
             if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
                 return str;
             }
