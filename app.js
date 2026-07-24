@@ -2811,14 +2811,13 @@ async function startApp() {
         const alertList = document.getElementById('license-alert-list');
         if (!banner || !alertList) return;
         
-        const urgentLicenses = giaHanList.filter(item => {
-            const days = calculateDaysRemaining(item.expiryDate);
-            return days <= 30;
-        });
+        const urgentLicenses = giaHanList
+            .map(item => ({ item, days: calculateDaysRemaining(item.expiryDate) }))
+            .filter(obj => obj.days <= 30)
+            .sort((a, b) => a.days - b.days);
         
         if (urgentLicenses.length > 0) {
-            alertList.innerHTML = urgentLicenses.map(item => {
-                const days = calculateDaysRemaining(item.expiryDate);
+            alertList.innerHTML = urgentLicenses.map(({ item, days }) => {
                 const dateStr = formatDateDMY(item.expiryDate);
                 if (days > 0) {
                     return `<li>Bản quyền <strong>${item.name}</strong> sắp hết hạn vào ngày <strong>${dateStr}</strong> (Còn <strong>${days} ngày</strong> nữa). Vui lòng lên phương án gia hạn!</li>`;
@@ -2840,8 +2839,8 @@ async function startApp() {
         
         // Sort by expiry date (soonest expiry first)
         const sortedList = [...giaHanList].sort((a, b) => {
-            const dateA = a.expiryDate ? new Date(a.expiryDate) : new Date(0);
-            const dateB = b.expiryDate ? new Date(b.expiryDate) : new Date(0);
+            const dateA = parseDateDMY(a.expiryDate) || new Date(8640000000000000);
+            const dateB = parseDateDMY(b.expiryDate) || new Date(8640000000000000);
             return dateA - dateB;
         });
 
