@@ -97,6 +97,8 @@ async function startApp() {
                 devNotes: db.dev_notes || '',
                 devApps: db.dev_apps || '',
                 devStatus: db.dev_status || '',
+                hasDevice: db.has_device !== false && db.dev_status !== 'Không cấp',
+                userDisabled: !!db.user_disabled,
                 updatedAt: db.updated_at || '',
                 history: db.history || []
             }),
@@ -107,6 +109,8 @@ async function startApp() {
                 user_dept: js.userDept,
                 user_email: js.userEmail,
                 user_phone: js.userPhone,
+                user_disabled: !!js.userDisabled,
+                has_device: js.hasDevice !== false,
                 dev_id: js.devId || null,
                 dev_type: js.devType,
                 dev_main: js.devMain,
@@ -127,7 +131,7 @@ async function startApp() {
                 key_pdf: js.keyPdf,
                 dev_notes: js.devNotes,
                 dev_apps: js.devApps,
-                dev_status: js.devStatus,
+                dev_status: js.hasDevice !== false ? js.devStatus : 'Không cấp',
                 updated_at: new Date().toISOString(),
                 history: js.history
             })
@@ -405,14 +409,15 @@ async function startApp() {
             return true;
         }
 
-        // Check duplicate
-        const duplicate = thietBiList.some((item, index) => {
+        // Check duplicate across ALL records including disabled users
+        const duplicateItem = thietBiList.find((item, index) => {
             if (excludeIndex !== "" && index === parseInt(excludeIndex)) return false;
-            return item.userId.toLowerCase() === val;
+            return (item.userId || '').toLowerCase() === val;
         });
 
-        if (duplicate) {
-            errSpan.innerText = 'Trùng ID người sử dụng!';
+        if (duplicateItem) {
+            const statusSuffix = duplicateItem.userDisabled ? ' (Tài khoản đã Disable User)' : '';
+            errSpan.innerText = `Trùng ID người sử dụng!${statusSuffix}`;
             errSpan.style.display = 'block';
             userIdInput.style.borderColor = 'var(--danger-color)';
             return false;
@@ -424,6 +429,14 @@ async function startApp() {
     }
 
     function validateDuplicateDevice(excludeIndex = "") {
+        const devAllocNo = document.getElementById('dev-alloc-no');
+        if (devAllocNo && devAllocNo.checked) {
+            const errDevId = document.getElementById('err-dev-id');
+            if (errDevId) errDevId.style.display = 'none';
+            if (devIdInput) devIdInput.style.borderColor = '';
+            return true;
+        }
+
         const devIdVal = devIdInput.value.trim().toLowerCase();
         const errDevId = document.getElementById('err-dev-id');
         
@@ -433,7 +446,7 @@ async function startApp() {
         if (devIdVal) {
             const dupId = thietBiList.some((item, index) => {
                 if (excludeIndex !== "" && index === parseInt(excludeIndex)) return false;
-                return item.devId.toLowerCase() === devIdVal;
+                return (item.devId || '').toLowerCase() === devIdVal;
             });
             if (dupId) {
                 errDevId.innerText = 'Trùng ID Thiết bị!';
@@ -818,21 +831,25 @@ async function startApp() {
             tr.innerHTML = `
                 <td>
                     <div class="user-info-cell">
-                        <span class="name"><span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> <span class="badge badge-blue">${item.userId}</span></span>
+                        <span class="name">
+                            <span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> 
+                            <span class="badge badge-blue">${item.userId}</span>
+                            ${item.userDisabled ? `<span class="badge badge-danger" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-user-slash"></i> Disable User</span>` : ''}
+                        </span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
                     </div>
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${(item.devId || item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus) ? `
+                        ${(item.hasDevice !== false && item.devStatus !== 'Không cấp' && (item.devId || item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus)) ? `
                             <span class="name">
                                 ${item.devId ? `<span class="badge badge-green">${item.devId}</span>` : ''}
                                 ${item.devStatus ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}
                             </span>
                             <span class="details">Loại: ${item.devType || 'Chưa phân loại'}</span>
                         ` : `
-                            <span class="text-muted" style="font-style: italic;">Chưa cấp thiết bị</span>
+                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
                         `}
                     </div>
                 </td>
@@ -936,34 +953,38 @@ async function startApp() {
         const now = new Date();
         const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
+        const hasDevice = document.getElementById('dev-alloc-yes') ? document.getElementById('dev-alloc-yes').checked : true;
+
         const data = {
+            hasDevice: hasDevice,
+            userDisabled: document.getElementById('user-disabled') ? document.getElementById('user-disabled').checked : false,
             userId: userIdInput.value.trim(),
             userName: document.getElementById('user-name').value.trim(),
             userTitle: document.getElementById('user-title').value.trim(),
             userDept: document.getElementById('user-dept').value.trim(),
             userEmail: document.getElementById('user-email').value.trim(),
             userPhone: document.getElementById('user-phone').value.trim(),
-            devId: devIdInput.value.trim(),
-            devType: document.getElementById('dev-type').value.trim(),
-            devMain: document.getElementById('dev-main').value.trim(),
-            devCpu: document.getElementById('dev-cpu').value.trim(),
-            devRam: document.getElementById('dev-ram').value,
-            devRamSlots: document.getElementById('dev-ram-slots').value,
-            devSsd: document.getElementById('dev-ssd').value.trim(),
-            devHdd: document.getElementById('dev-hdd').value.trim(),
-            devVga: document.getElementById('dev-vga').value.trim(),
-            keyWin: document.getElementById('key-win').value.trim(),
-            keyOffice: document.getElementById('key-office').value.trim(),
-            keyPdf: document.getElementById('key-pdf').value.trim(),
-            devNotes: document.getElementById('dev-notes').value.trim(),
-            devApps: document.getElementById('dev-apps').value.trim(),
-            devStatus: document.getElementById('dev-status').value,
-            devMonitor: document.getElementById('dev-monitor').value.trim(),
-            devMonitorSn: document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '',
-            devSn: document.getElementById('dev-sn').value.trim(),
-            devKeyboard: document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').checked : false,
-            devMouse: document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '',
-            devCables: document.getElementById('dev-cables').value,
+            devId: hasDevice ? devIdInput.value.trim() : '',
+            devType: hasDevice ? document.getElementById('dev-type').value.trim() : '',
+            devMain: hasDevice ? document.getElementById('dev-main').value.trim() : '',
+            devCpu: hasDevice ? document.getElementById('dev-cpu').value.trim() : '',
+            devRam: hasDevice ? document.getElementById('dev-ram').value : '',
+            devRamSlots: hasDevice ? document.getElementById('dev-ram-slots').value : '',
+            devSsd: hasDevice ? document.getElementById('dev-ssd').value.trim() : '',
+            devHdd: hasDevice ? document.getElementById('dev-hdd').value.trim() : '',
+            devVga: hasDevice ? document.getElementById('dev-vga').value.trim() : '',
+            keyWin: hasDevice ? document.getElementById('key-win').value.trim() : '',
+            keyOffice: hasDevice ? document.getElementById('key-office').value.trim() : '',
+            keyPdf: hasDevice ? document.getElementById('key-pdf').value.trim() : '',
+            devNotes: hasDevice ? document.getElementById('dev-notes').value.trim() : '',
+            devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
+            devStatus: hasDevice ? document.getElementById('dev-status').value : 'Không cấp',
+            devMonitor: hasDevice ? document.getElementById('dev-monitor').value.trim() : '',
+            devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
+            devSn: hasDevice ? document.getElementById('dev-sn').value.trim() : '',
+            devKeyboard: (hasDevice && document.getElementById('dev-keyboard')) ? document.getElementById('dev-keyboard').checked : false,
+            devMouse: (hasDevice && document.getElementById('dev-mouse')) ? document.getElementById('dev-mouse').value : '',
+            devCables: hasDevice ? document.getElementById('dev-cables').value : '',
             updatedAt: formattedDate
         };
 
@@ -998,6 +1019,8 @@ async function startApp() {
             // Compare fields
             let changes = [];
             const fieldsToCompare = {
+                hasDevice: "Cấp phát thiết bị",
+                userDisabled: "Disable User",
                 userId: "ID Nhân viên",
                 userName: "Họ và Tên",
                 userTitle: "Chức danh",
@@ -1028,9 +1051,22 @@ async function startApp() {
             };
 
             for (const key in fieldsToCompare) {
-                if ((oldItem[key] || '') !== (data[key] || '')) {
-                    const oldVal = oldItem[key] || "Trống";
-                    const newVal = data[key] || "Trống";
+                let oldVal = oldItem[key];
+                let newVal = data[key];
+                if (key === 'hasDevice') {
+                    oldVal = oldItem.hasDevice !== false && oldItem.devStatus !== 'Không cấp' ? "Có cấp" : "Không cấp";
+                    newVal = data.hasDevice ? "Có cấp" : "Không cấp";
+                } else if (key === 'userDisabled') {
+                    oldVal = oldItem.userDisabled ? "Đã Disable User" : "Đang hoạt động";
+                    newVal = data.userDisabled ? "Đã Disable User" : "Đang hoạt động";
+                } else if (typeof oldVal === 'boolean' || typeof newVal === 'boolean') {
+                    oldVal = oldVal ? "Có" : "Không";
+                    newVal = newVal ? "Có" : "Không";
+                } else {
+                    oldVal = (oldVal || '').toString().trim() || "Trống";
+                    newVal = (newVal || '').toString().trim() || "Trống";
+                }
+                if (oldVal !== newVal) {
                     changes.push(`• Thay đổi <strong>${fieldsToCompare[key]}</strong>: "${oldVal}" ➔ "${newVal}"`);
                 }
             }
@@ -1097,7 +1133,27 @@ async function startApp() {
         document.getElementById('user-dept').value = item.userDept;
         document.getElementById('user-email').value = item.userEmail;
         document.getElementById('user-phone').value = item.userPhone;
-        devIdInput.value = item.devId || '';
+        const userDisabledCb = document.getElementById('user-disabled');
+        if (userDisabledCb) {
+            userDisabledCb.checked = !!item.userDisabled;
+            const container = document.getElementById('user-info-subsection');
+            if (container) {
+                container.style.background = item.userDisabled ? 'rgba(239, 68, 68, 0.05)' : '';
+                container.style.borderColor = item.userDisabled ? 'rgba(239, 68, 68, 0.3)' : '';
+            }
+        }
+        const hasDev = item.hasDevice !== false && item.devStatus !== 'Không cấp';
+        const devAllocYes = document.getElementById('dev-alloc-yes');
+        const devAllocNo = document.getElementById('dev-alloc-no');
+        if (devAllocYes && devAllocNo) {
+            if (hasDev) {
+                devAllocYes.checked = true;
+                toggleDeviceFields(true);
+            } else {
+                devAllocNo.checked = true;
+                toggleDeviceFields(false);
+            }
+        }
         document.getElementById('dev-type').value = item.devType || '';
         document.getElementById('dev-main').value = item.devMain;
         document.getElementById('dev-cpu').value = item.devCpu;
@@ -1178,6 +1234,20 @@ async function startApp() {
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới';
         btnCancelThietBi.classList.add('hidden');
         formCapPhat.reset();
+        const devAllocYes = document.getElementById('dev-alloc-yes');
+        if (devAllocYes) {
+            devAllocYes.checked = true;
+            toggleDeviceFields(true);
+        }
+        const userDisabledCb = document.getElementById('user-disabled');
+        if (userDisabledCb) {
+            userDisabledCb.checked = false;
+            const container = document.getElementById('user-info-subsection');
+            if (container) {
+                container.style.background = '';
+                container.style.borderColor = '';
+            }
+        }
 
         document.getElementById('err-user-id').style.display = 'none';
         document.getElementById('err-dev-id').style.display = 'none';
@@ -1193,6 +1263,37 @@ async function startApp() {
             }
         });
     });
+
+    function toggleDeviceFields(hasDevice) {
+        const deviceFieldsWrapper = document.getElementById('device-fields-wrapper');
+        if (!deviceFieldsWrapper) return;
+        if (hasDevice) {
+            deviceFieldsWrapper.style.display = 'block';
+        } else {
+            deviceFieldsWrapper.style.display = 'none';
+            const errDevId = document.getElementById('err-dev-id');
+            if (errDevId) errDevId.style.display = 'none';
+            if (devIdInput) devIdInput.style.borderColor = '';
+        }
+    }
+
+    const devAllocYes = document.getElementById('dev-alloc-yes');
+    const devAllocNo = document.getElementById('dev-alloc-no');
+    if (devAllocYes && devAllocNo) {
+        devAllocYes.addEventListener('change', () => toggleDeviceFields(true));
+        devAllocNo.addEventListener('change', () => toggleDeviceFields(false));
+    }
+
+    const userDisabledCheckbox = document.getElementById('user-disabled');
+    if (userDisabledCheckbox) {
+        userDisabledCheckbox.addEventListener('change', (e) => {
+            const container = document.getElementById('user-info-subsection');
+            if (container) {
+                container.style.background = e.target.checked ? 'rgba(239, 68, 68, 0.05)' : '';
+                container.style.borderColor = e.target.checked ? 'rgba(239, 68, 68, 0.3)' : '';
+            }
+        });
+    }
     
     // Realtime search and pagination triggers for Device List
     searchThietBi.addEventListener('input', (e) => {
