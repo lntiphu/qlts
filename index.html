@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=5.2">
+    <link rel="stylesheet" href="style.css?v=5.7">
 </head>
 <body>
     <!-- Login Screen -->
@@ -153,7 +153,7 @@
                                         1. Thông tin người sử dụng 
                                         <i class="fa-solid fa-up-right-from-square" style="font-size: 11px; opacity: 0.8;" title="Xem thẻ nhân viên"></i>
                                     </h4>
-                                    <label for="user-disabled" class="disable-user-box" style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 14px; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 13px; font-weight: 600; transition: all 0.2s ease; user-select: none;">
+                                    <label for="user-disabled" id="user-disabled-box" class="disable-user-box" style="display: none; align-items: center; gap: 8px; cursor: pointer; padding: 6px 14px; border-radius: 6px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444; font-size: 13px; font-weight: 600; transition: all 0.2s ease; user-select: none;">
                                         <input type="checkbox" id="user-disabled" style="width: 16px; height: 16px; accent-color: #ef4444; cursor: pointer;">
                                         <span><i class="fa-solid fa-user-slash"></i> Disable User</span>
                                     </label>
@@ -191,7 +191,7 @@
                             <div class="form-subsection">
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
                                     <h4 class="subsection-title" style="margin-bottom: 0;">2. Thông tin thiết bị</h4>
-                                    <div class="device-allocation-toggle" style="display: flex; align-items: center; gap: 16px; background: rgba(255, 255, 255, 0.05); padding: 5px 14px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); user-select: none;">
+                                    <div class="device-allocation-toggle" style="display: flex; align-items: center; gap: 16px; background: rgba(255, 255, 255, 0.05); padding: 5px 14px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); user-select: none; flex-wrap: wrap;">
                                         <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--success-color);">
                                             <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked style="width: 15px; height: 15px; accent-color: #22c55e; cursor: pointer;">
                                             <span><i class="fa-solid fa-circle-check"></i> Có cấp</span>
@@ -199,6 +199,10 @@
                                         <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary);">
                                             <input type="radio" name="dev-allocation" id="dev-alloc-no" value="no" style="width: 15px; height: 15px; accent-color: #ef4444; cursor: pointer;">
                                             <span><i class="fa-solid fa-ban"></i> Không cấp</span>
+                                        </label>
+                                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #c084fc;">
+                                            <input type="radio" name="dev-allocation" id="dev-alloc-personal" value="personal" style="width: 15px; height: 15px; accent-color: #a855f7; cursor: pointer;">
+                                            <span><i class="fa-solid fa-laptop-code"></i> Sử dụng thiết bị cá nhân</span>
                                         </label>
                                     </div>
                                 </div>
@@ -365,14 +369,19 @@
                                         Trang sau <i class="fa-solid fa-angle-right"></i>
                                     </button>
                                 </div>
-                                <div class="filter-box">
+                                <div class="filter-box" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                                     <select id="filter-dept-thietbi" class="filter-select">
                                         <option value="">-- Tất cả phòng ban --</option>
+                                    </select>
+                                    <select id="filter-status-thietbi" class="filter-select" style="min-width: 160px;">
+                                        <option value="">-- Tất cả trạng thái --</option>
+                                        <option value="active">🟢 Online</option>
+                                        <option value="disabled">🔴 Offline</option>
                                     </select>
                                 </div>
                                 <div class="search-box">
                                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                    <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm theo ID, Tên NV, ID Thiết bị, Phòng ban...">
+                                    <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm theo ID, Tên NV, ID Thiết bị, Phòng ban, Disable User...">
                                 </div>
                             </div>
                         </div>
@@ -1308,6 +1317,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=5.2"></script>
+    <script src="app.js?v=5.7"></script>
 </body>
 </html>

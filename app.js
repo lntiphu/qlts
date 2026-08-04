@@ -97,7 +97,8 @@ async function startApp() {
                 devNotes: db.dev_notes || '',
                 devApps: db.dev_apps || '',
                 devStatus: db.dev_status || '',
-                hasDevice: db.has_device !== false && db.dev_status !== 'Không cấp',
+                devAllocation: db.dev_allocation || (db.dev_status === 'Không cấp' ? 'no' : (db.dev_status === 'Thiết bị cá nhân' ? 'personal' : 'yes')),
+                hasDevice: db.has_device !== false && db.dev_status !== 'Không cấp' && db.dev_status !== 'Thiết bị cá nhân',
                 userDisabled: !!db.user_disabled,
                 updatedAt: db.updated_at || '',
                 history: db.history || []
@@ -110,7 +111,8 @@ async function startApp() {
                 user_email: js.userEmail,
                 user_phone: js.userPhone,
                 user_disabled: !!js.userDisabled,
-                has_device: js.hasDevice !== false,
+                has_device: js.devAllocation === 'yes',
+                dev_allocation: js.devAllocation || 'yes',
                 dev_id: js.devId || null,
                 dev_type: js.devType,
                 dev_main: js.devMain,
@@ -131,7 +133,7 @@ async function startApp() {
                 key_pdf: js.keyPdf,
                 dev_notes: js.devNotes,
                 dev_apps: js.devApps,
-                dev_status: js.hasDevice !== false ? js.devStatus : 'Không cấp',
+                dev_status: js.devAllocation === 'no' ? 'Không cấp' : (js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : js.devStatus),
                 updated_at: new Date().toISOString(),
                 history: js.history
             })
@@ -429,8 +431,8 @@ async function startApp() {
     }
 
     function validateDuplicateDevice(excludeIndex = "") {
-        const devAllocNo = document.getElementById('dev-alloc-no');
-        if (devAllocNo && devAllocNo.checked) {
+        const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
+        if (allocSelected && (allocSelected.value === 'no' || allocSelected.value === 'personal')) {
             const errDevId = document.getElementById('err-dev-id');
             if (errDevId) errDevId.style.display = 'none';
             if (devIdInput) devIdInput.style.borderColor = '';
@@ -725,6 +727,9 @@ async function startApp() {
         const deptFilter = document.getElementById('filter-dept-thietbi') 
             ? document.getElementById('filter-dept-thietbi').value 
             : '';
+        const userStatusFilter = document.getElementById('filter-status-thietbi')
+            ? document.getElementById('filter-status-thietbi').value
+            : '';
 
         // Safe filter matching keyword
         const keywords = filterText.toLowerCase().split(/\s+/).filter(Boolean);
@@ -732,18 +737,29 @@ async function startApp() {
             if (deptFilter && (item.userDept || '').trim() !== deptFilter) {
                 return false;
             }
+            if (userStatusFilter === 'disabled' && !item.userDisabled) {
+                return false;
+            }
+            if (userStatusFilter === 'active' && item.userDisabled) {
+                return false;
+            }
+
             if (keywords.length === 0) return true;
             
+            const disabledTag = item.userDisabled ? 'offline disable user nghỉ việc đã vô hiệu hóa' : 'online đang hoạt động';
             const itemText = `
                 ${item.userId || ''} 
                 ${item.userName || ''} 
                 ${item.devId || ''} 
                 ${item.userDept || ''}
+                ${item.userEmail || ''}
+                ${item.userPhone || ''}
                 ${item.devType || ''}
                 ${item.devMain || ''}
                 ${item.devCpu || ''}
                 ${item.devRam || ''}
                 ${item.devNotes || ''}
+                ${disabledTag}
             `.toLowerCase();
             
             return keywords.every(kw => itemText.includes(kw));
@@ -834,7 +850,9 @@ async function startApp() {
                         <span class="name">
                             <span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> 
                             <span class="badge badge-blue">${item.userId}</span>
-                            ${item.userDisabled ? `<span class="badge badge-danger" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);"><i class="fa-solid fa-user-slash"></i> Disable User</span>` : ''}
+                            ${item.userDisabled 
+                                ? `<span class="badge badge-danger" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #ef4444;"></i> Offline</span>` 
+                                : `<span class="badge badge-success" style="margin-left: 4px; font-size: 11px; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Online</span>`}
                         </span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
@@ -842,15 +860,19 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${(item.hasDevice !== false && item.devStatus !== 'Không cấp' && (item.devId || item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus)) ? `
+                        ${(item.devAllocation === 'no' || item.devStatus === 'Không cấp') ? `
+                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
+                        ` : ((item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân') ? `
+                            <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);"><i class="fa-solid fa-laptop-code"></i> Sử dụng thiết bị cá nhân</span>
+                        ` : ((item.devId || item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || (item.devStatus && item.devStatus !== 'Không cấp' && item.devStatus !== 'Thiết bị cá nhân')) ? `
                             <span class="name">
                                 ${item.devId ? `<span class="badge badge-green">${item.devId}</span>` : ''}
                                 ${item.devStatus ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}
                             </span>
                             <span class="details">Loại: ${item.devType || 'Chưa phân loại'}</span>
                         ` : `
-                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
-                        `}
+                            <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
+                        `))}
                     </div>
                 </td>
                 <td style="max-width: 250px; font-size: 13px;">
@@ -953,9 +975,13 @@ async function startApp() {
         const now = new Date();
         const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-        const hasDevice = document.getElementById('dev-alloc-yes') ? document.getElementById('dev-alloc-yes').checked : true;
+        let devAllocVal = 'yes';
+        const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
+        if (allocSelected) devAllocVal = allocSelected.value;
+        const hasDevice = devAllocVal === 'yes';
 
         const data = {
+            devAllocation: devAllocVal,
             hasDevice: hasDevice,
             userDisabled: document.getElementById('user-disabled') ? document.getElementById('user-disabled').checked : false,
             userId: userIdInput.value.trim(),
@@ -978,7 +1004,7 @@ async function startApp() {
             keyPdf: hasDevice ? document.getElementById('key-pdf').value.trim() : '',
             devNotes: hasDevice ? document.getElementById('dev-notes').value.trim() : '',
             devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
-            devStatus: hasDevice ? document.getElementById('dev-status').value : 'Không cấp',
+            devStatus: devAllocVal === 'no' ? 'Không cấp' : (devAllocVal === 'personal' ? 'Thiết bị cá nhân' : document.getElementById('dev-status').value),
             devMonitor: hasDevice ? document.getElementById('dev-monitor').value.trim() : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
             devSn: hasDevice ? document.getElementById('dev-sn').value.trim() : '',
@@ -1133,6 +1159,10 @@ async function startApp() {
         document.getElementById('user-dept').value = item.userDept;
         document.getElementById('user-email').value = item.userEmail;
         document.getElementById('user-phone').value = item.userPhone;
+        const userDisabledBox = document.getElementById('user-disabled-box');
+        if (userDisabledBox) {
+            userDisabledBox.style.display = 'inline-flex';
+        }
         const userDisabledCb = document.getElementById('user-disabled');
         if (userDisabledCb) {
             userDisabledCb.checked = !!item.userDisabled;
@@ -1142,17 +1172,11 @@ async function startApp() {
                 container.style.borderColor = item.userDisabled ? 'rgba(239, 68, 68, 0.3)' : '';
             }
         }
-        const hasDev = item.hasDevice !== false && item.devStatus !== 'Không cấp';
-        const devAllocYes = document.getElementById('dev-alloc-yes');
-        const devAllocNo = document.getElementById('dev-alloc-no');
-        if (devAllocYes && devAllocNo) {
-            if (hasDev) {
-                devAllocYes.checked = true;
-                toggleDeviceFields(true);
-            } else {
-                devAllocNo.checked = true;
-                toggleDeviceFields(false);
-            }
+        const alloc = item.devAllocation || (item.devStatus === 'Không cấp' ? 'no' : (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : 'yes'));
+        const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`);
+        if (radioTarget) {
+            radioTarget.checked = true;
+            toggleDeviceFields(alloc === 'yes');
         }
         document.getElementById('dev-type').value = item.devType || '';
         document.getElementById('dev-main').value = item.devMain;
@@ -1239,6 +1263,10 @@ async function startApp() {
             devAllocYes.checked = true;
             toggleDeviceFields(true);
         }
+        const userDisabledBox = document.getElementById('user-disabled-box');
+        if (userDisabledBox) {
+            userDisabledBox.style.display = 'none';
+        }
         const userDisabledCb = document.getElementById('user-disabled');
         if (userDisabledCb) {
             userDisabledCb.checked = false;
@@ -1277,12 +1305,12 @@ async function startApp() {
         }
     }
 
-    const devAllocYes = document.getElementById('dev-alloc-yes');
-    const devAllocNo = document.getElementById('dev-alloc-no');
-    if (devAllocYes && devAllocNo) {
-        devAllocYes.addEventListener('change', () => toggleDeviceFields(true));
-        devAllocNo.addEventListener('change', () => toggleDeviceFields(false));
-    }
+    const devAllocRadios = document.querySelectorAll('input[name="dev-allocation"]');
+    devAllocRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            toggleDeviceFields(e.target.value === 'yes');
+        });
+    });
 
     const userDisabledCheckbox = document.getElementById('user-disabled');
     if (userDisabledCheckbox) {
@@ -1304,6 +1332,14 @@ async function startApp() {
     const filterDeptThietBi = document.getElementById('filter-dept-thietbi');
     if (filterDeptThietBi) {
         filterDeptThietBi.addEventListener('change', () => {
+            currentPageThietBi = 1;
+            renderThietBi(searchThietBi.value.trim());
+        });
+    }
+
+    const filterStatusThietBi = document.getElementById('filter-status-thietbi');
+    if (filterStatusThietBi) {
+        filterStatusThietBi.addEventListener('change', () => {
             currentPageThietBi = 1;
             renderThietBi(searchThietBi.value.trim());
         });
