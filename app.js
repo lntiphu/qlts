@@ -8,8 +8,8 @@ async function startApp() {
     // 1. SUPABASE CLIENT & STATE INIT
     // -------------------------------------------------------------------------
     
-    const supabaseUrl = 'https://nmfeyrokdfjrsbmtxwts.supabase.co';
-    const supabaseKey = 'sb_publishable_xkNEdZfr-_zenINmII9zPg_VhaFkGOX';
+    const supabaseUrl = 'http://172.16.20.21:8000';
+    const supabaseKey = 'sb_publishable_nonpHrymDEEjJ9MFcDQajq_Nho7Bijj';
     let supabaseClient = null;
     try {
         if (typeof supabase !== 'undefined') {
@@ -4752,6 +4752,9 @@ async function startApp() {
         }
         showToast('Đang kết nối', 'Đang đồng bộ dữ liệu với Supabase...', 'warning');
         
+        let hasConnectionError = false;
+        let lastErrorMsg = '';
+
         const fetchPromises = [
             supabaseClient.from('thiet_bi').select('*').then(({ data, error }) => {
                 if (error) throw error;
@@ -4760,6 +4763,8 @@ async function startApp() {
                 updateDeptFilterThietBi();
                 renderThietBi();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch thiet_bi failed, loading fallback:", err);
                 loadFromLocalStorageFallback('thiet_bi', thietBiList, () => {
                     updateDeptFilterThietBi();
@@ -4772,6 +4777,8 @@ async function startApp() {
                 saveToLocalStorageFallback('cong_ty', congTyList);
                 renderCongTy();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch cong_ty failed, loading fallback:", err);
                 loadFromLocalStorageFallback('cong_ty', congTyList, renderCongTy);
             }),
@@ -4781,6 +4788,8 @@ async function startApp() {
                 saveToLocalStorageFallback('account', accountList);
                 renderAccount();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch account failed, loading fallback:", err);
                 loadFromLocalStorageFallback('account', accountList, renderAccount);
             }),
@@ -4790,6 +4799,8 @@ async function startApp() {
                 saveToLocalStorageFallback('ho_tro', hoTroList);
                 renderHoTro();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch ho_tro failed, loading fallback:", err);
                 loadFromLocalStorageFallback('ho_tro', hoTroList, renderHoTro);
             }),
@@ -4799,6 +4810,8 @@ async function startApp() {
                 saveToLocalStorageFallback('camera', cameraList);
                 renderCamera();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch camera failed, loading fallback:", err);
                 loadFromLocalStorageFallback('camera', cameraList, renderCamera);
             }),
@@ -4808,6 +4821,8 @@ async function startApp() {
                 saveToLocalStorageFallback('tips', tipsList);
                 renderTips();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch tips failed, loading fallback:", err);
                 loadFromLocalStorageFallback('tips', tipsList, renderTips);
             }),
@@ -4817,6 +4832,8 @@ async function startApp() {
                 saveToLocalStorageFallback('gia_han', giaHanList);
                 renderGiaHan();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch gia_han failed, loading fallback:", err);
                 loadFromLocalStorageFallback('gia_han', giaHanList, renderGiaHan);
             }),
@@ -4826,6 +4843,8 @@ async function startApp() {
                 saveToLocalStorageFallback('kho_thiet_bi', khoList);
                 renderKho();
             }).catch(err => {
+                hasConnectionError = true;
+                lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch kho_thiet_bi failed, loading fallback:", err);
                 loadFromLocalStorageFallback('kho_thiet_bi', khoList, renderKho);
             })
@@ -4833,7 +4852,11 @@ async function startApp() {
 
         try {
             await Promise.all(fetchPromises);
-            showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
+            if (hasConnectionError) {
+                showToast('Chế độ Offline', `Không thể kết nối đến Supabase (Tên miền không tồn tại hoặc lỗi mạng). Đã nạp dữ liệu từ bộ nhớ trình duyệt!`, 'warning');
+            } else {
+                showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
+            }
             initCustomAutocompletes();
             renderDashboard();
         } catch (err) {
