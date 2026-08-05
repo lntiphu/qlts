@@ -1395,16 +1395,25 @@ async function startApp() {
             }];
             try {
                 const dbData = mappers.thietBi.toDB(data);
-                const { data: insertedData, error } = await supabaseClient
-                    .from('thiet_bi')
-                    .insert([dbData])
-                    .select();
-                if (error) throw error;
-                thietBiList.push(mappers.thietBi.fromDB(insertedData[0]));
+                let isDbSuccess = false;
+                if (supabaseClient) {
+                    const { data: insertedData, error } = await supabaseClient
+                        .from('thiet_bi')
+                        .insert([dbData])
+                        .select();
+                    if (!error && insertedData && insertedData.length > 0) {
+                        thietBiList.push(mappers.thietBi.fromDB(insertedData[0]));
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = 'local-' + Date.now();
+                    thietBiList.push(data);
+                }
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
-                showToast('Thành công', 'Đã lưu thông tin cấp phát thiết bị mới!');
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu thông tin cấp phát thiết bị mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
             } catch (err) {
-                console.error(err);
+                console.error("Lỗi thêm thiết bị:", err);
                 // Lưu offline dự phòng
                 data.id = 'local-' + Date.now();
                 thietBiList.push(data);
@@ -1484,19 +1493,28 @@ async function startApp() {
             
             try {
                 const dbData = mappers.thietBi.toDB(data);
-                const { data: updatedData, error } = await supabaseClient
-                    .from('thiet_bi')
-                    .update(dbData)
-                    .eq('id', oldItem.id)
-                    .select();
-                if (error) throw error;
-                thietBiList[idx] = mappers.thietBi.fromDB(updatedData[0]);
+                let isDbSuccess = false;
+                const isLocalId = oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
+                if (supabaseClient && !isLocalId) {
+                    const { data: updatedData, error } = await supabaseClient
+                        .from('thiet_bi')
+                        .update(dbData)
+                        .eq('id', oldItem.id)
+                        .select();
+                    if (!error && updatedData && updatedData.length > 0) {
+                        thietBiList[idx] = mappers.thietBi.fromDB(updatedData[0]);
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = oldItem.id;
+                    thietBiList[idx] = data;
+                }
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
-                showToast('Thành công', 'Đã cập nhật thông tin cấp phát thiết bị!');
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin cấp phát thiết bị!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 resetFormThietBi();
             } catch (err) {
-                console.error(err);
-                // Cập nhật offline dự phòng
+                console.error("Lỗi cập nhật thiết bị:", err);
                 data.id = oldItem.id;
                 thietBiList[idx] = data;
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
@@ -2279,36 +2297,62 @@ async function startApp() {
         if (indexStr === '') {
             try {
                 const dbData = mappers.account.toDB(data);
-                const { data: insertedData, error } = await supabaseClient
-                    .from('account')
-                    .insert([dbData])
-                    .select();
-                if (error) throw error;
-                accountList.push(mappers.account.fromDB(insertedData[0]));
-                showToast('Thành công', 'Đã lưu tài khoản mới!');
+                let isDbSuccess = false;
+                if (supabaseClient) {
+                    const { data: insertedData, error } = await supabaseClient
+                        .from('account')
+                        .insert([dbData])
+                        .select();
+                    if (!error && insertedData && insertedData.length > 0) {
+                        accountList.push(mappers.account.fromDB(insertedData[0]));
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = 'local-' + Date.now();
+                    accountList.push(data);
+                }
+                saveToLocalStorageFallback('account', accountList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu tài khoản mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể lưu tài khoản lên Supabase!', 'error');
-                return;
+                console.error("Lỗi thêm tài khoản:", err);
+                data.id = 'local-' + Date.now();
+                accountList.push(data);
+                saveToLocalStorageFallback('account', accountList);
+                showToast('Lưu Offline', 'Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
             const oldItem = accountList[idx];
             try {
                 const dbData = mappers.account.toDB(data);
-                const { data: updatedData, error } = await supabaseClient
-                    .from('account')
-                    .update(dbData)
-                    .eq('id', oldItem.id)
-                    .select();
-                if (error) throw error;
-                accountList[idx] = mappers.account.fromDB(updatedData[0]);
-                showToast('Thành công', 'Đã cập nhật thông tin tài khoản!');
+                let isDbSuccess = false;
+                const isLocalId = oldItem && oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
+                if (supabaseClient && !isLocalId) {
+                    const { data: updatedData, error } = await supabaseClient
+                        .from('account')
+                        .update(dbData)
+                        .eq('id', oldItem.id)
+                        .select();
+                    if (!error && updatedData && updatedData.length > 0) {
+                        accountList[idx] = mappers.account.fromDB(updatedData[0]);
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                    accountList[idx] = data;
+                }
+                saveToLocalStorageFallback('account', accountList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin tài khoản!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 resetFormAccount();
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể cập nhật tài khoản lên Supabase!', 'error');
-                return;
+                console.error("Lỗi cập nhật tài khoản:", err);
+                data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                accountList[idx] = data;
+                saveToLocalStorageFallback('account', accountList);
+                showToast('Lưu Offline', 'Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                resetFormAccount();
             }
         }
 
@@ -2545,36 +2589,62 @@ async function startApp() {
         if (indexStr === '') {
             try {
                 const dbData = mappers.hoTro.toDB(data);
-                const { data: insertedData, error } = await supabaseClient
-                    .from('ho_tro')
-                    .insert([dbData])
-                    .select();
-                if (error) throw error;
-                hoTroList.push(mappers.hoTro.fromDB(insertedData[0]));
-                showToast('Thành công', 'Đã thêm thông tin hỗ trợ mới!');
+                let isDbSuccess = false;
+                if (supabaseClient) {
+                    const { data: insertedData, error } = await supabaseClient
+                        .from('ho_tro')
+                        .insert([dbData])
+                        .select();
+                    if (!error && insertedData && insertedData.length > 0) {
+                        hoTroList.push(mappers.hoTro.fromDB(insertedData[0]));
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = 'local-' + Date.now();
+                    hoTroList.push(data);
+                }
+                saveToLocalStorageFallback('ho_tro', hoTroList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã thêm thông tin hỗ trợ mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể lưu thông tin hỗ trợ lên Supabase!', 'error');
-                return;
+                console.error("Lỗi thêm hỗ trợ:", err);
+                data.id = 'local-' + Date.now();
+                hoTroList.push(data);
+                saveToLocalStorageFallback('ho_tro', hoTroList);
+                showToast('Lưu Offline', 'Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
             const oldItem = hoTroList[idx];
             try {
                 const dbData = mappers.hoTro.toDB(data);
-                const { data: updatedData, error } = await supabaseClient
-                    .from('ho_tro')
-                    .update(dbData)
-                    .eq('id', oldItem.id)
-                    .select();
-                if (error) throw error;
-                hoTroList[idx] = mappers.hoTro.fromDB(updatedData[0]);
-                showToast('Thành công', 'Đã cập nhật thông tin hỗ trợ!');
+                let isDbSuccess = false;
+                const isLocalId = oldItem && oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
+                if (supabaseClient && !isLocalId) {
+                    const { data: updatedData, error } = await supabaseClient
+                        .from('ho_tro')
+                        .update(dbData)
+                        .eq('id', oldItem.id)
+                        .select();
+                    if (!error && updatedData && updatedData.length > 0) {
+                        hoTroList[idx] = mappers.hoTro.fromDB(updatedData[0]);
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                    hoTroList[idx] = data;
+                }
+                saveToLocalStorageFallback('ho_tro', hoTroList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin hỗ trợ!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 resetFormHoTro();
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể cập nhật thông tin hỗ trợ lên Supabase!', 'error');
-                return;
+                console.error("Lỗi cập nhật hỗ trợ:", err);
+                data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                hoTroList[idx] = data;
+                saveToLocalStorageFallback('ho_tro', hoTroList);
+                showToast('Lưu Offline', 'Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                resetFormHoTro();
             }
         }
 
@@ -2867,36 +2937,62 @@ async function startApp() {
         if (indexStr === '') {
             try {
                 const dbData = mappers.camera.toDB(data);
-                const { data: insertedData, error } = await supabaseClient
-                    .from('camera')
-                    .insert([dbData])
-                    .select();
-                if (error) throw error;
-                cameraList.push(mappers.camera.fromDB(insertedData[0]));
-                showToast('Thành công', 'Đã lưu thông tin camera mới!');
+                let isDbSuccess = false;
+                if (supabaseClient) {
+                    const { data: insertedData, error } = await supabaseClient
+                        .from('camera')
+                        .insert([dbData])
+                        .select();
+                    if (!error && insertedData && insertedData.length > 0) {
+                        cameraList.push(mappers.camera.fromDB(insertedData[0]));
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = 'local-' + Date.now();
+                    cameraList.push(data);
+                }
+                saveToLocalStorageFallback('camera', cameraList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu thông tin camera mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể lưu camera lên Supabase!', 'error');
-                return;
+                console.error("Lỗi thêm camera:", err);
+                data.id = 'local-' + Date.now();
+                cameraList.push(data);
+                saveToLocalStorageFallback('camera', cameraList);
+                showToast('Lưu Offline', 'Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
             const oldItem = cameraList[idx];
             try {
                 const dbData = mappers.camera.toDB(data);
-                const { data: updatedData, error } = await supabaseClient
-                    .from('camera')
-                    .update(dbData)
-                    .eq('id', oldItem.id)
-                    .select();
-                if (error) throw error;
-                cameraList[idx] = mappers.camera.fromDB(updatedData[0]);
-                showToast('Thành công', 'Đã cập nhật thông tin camera!');
+                let isDbSuccess = false;
+                const isLocalId = oldItem && oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
+                if (supabaseClient && !isLocalId) {
+                    const { data: updatedData, error } = await supabaseClient
+                        .from('camera')
+                        .update(dbData)
+                        .eq('id', oldItem.id)
+                        .select();
+                    if (!error && updatedData && updatedData.length > 0) {
+                        cameraList[idx] = mappers.camera.fromDB(updatedData[0]);
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                    cameraList[idx] = data;
+                }
+                saveToLocalStorageFallback('camera', cameraList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin camera!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 resetFormCamera();
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể cập nhật camera lên Supabase!', 'error');
-                return;
+                console.error("Lỗi cập nhật camera:", err);
+                data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                cameraList[idx] = data;
+                saveToLocalStorageFallback('camera', cameraList);
+                showToast('Lưu Offline', 'Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                resetFormCamera();
             }
         }
 
@@ -3116,36 +3212,62 @@ async function startApp() {
         if (indexStr === '') {
             try {
                 const dbData = mappers.tips.toDB(data);
-                const { data: insertedData, error } = await supabaseClient
-                    .from('tips')
-                    .insert([dbData])
-                    .select();
-                if (error) throw error;
-                tipsList.push(mappers.tips.fromDB(insertedData[0]));
-                showToast('Thành công', 'Đã lưu Tip & Trick mới!');
+                let isDbSuccess = false;
+                if (supabaseClient) {
+                    const { data: insertedData, error } = await supabaseClient
+                        .from('tips')
+                        .insert([dbData])
+                        .select();
+                    if (!error && insertedData && insertedData.length > 0) {
+                        tipsList.push(mappers.tips.fromDB(insertedData[0]));
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = 'local-' + Date.now();
+                    tipsList.push(data);
+                }
+                saveToLocalStorageFallback('tips', tipsList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu Tip & Trick mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể lưu bài viết lên Supabase!', 'error');
-                return;
+                console.error("Lỗi thêm tips:", err);
+                data.id = 'local-' + Date.now();
+                tipsList.push(data);
+                saveToLocalStorageFallback('tips', tipsList);
+                showToast('Lưu Offline', 'Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
             const oldItem = tipsList[idx];
             try {
                 const dbData = mappers.tips.toDB(data);
-                const { data: updatedData, error } = await supabaseClient
-                    .from('tips')
-                    .update(dbData)
-                    .eq('id', oldItem.id)
-                    .select();
-                if (error) throw error;
-                tipsList[idx] = mappers.tips.fromDB(updatedData[0]);
-                showToast('Thành công', 'Đã cập nhật bài viết Tip & Trick!');
+                let isDbSuccess = false;
+                const isLocalId = oldItem && oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
+                if (supabaseClient && !isLocalId) {
+                    const { data: updatedData, error } = await supabaseClient
+                        .from('tips')
+                        .update(dbData)
+                        .eq('id', oldItem.id)
+                        .select();
+                    if (!error && updatedData && updatedData.length > 0) {
+                        tipsList[idx] = mappers.tips.fromDB(updatedData[0]);
+                        isDbSuccess = true;
+                    }
+                }
+                if (!isDbSuccess) {
+                    data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                    tipsList[idx] = data;
+                }
+                saveToLocalStorageFallback('tips', tipsList);
+                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật bài viết Tip & Trick!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 resetFormTips();
             } catch (err) {
-                console.error(err);
-                showToast('Lỗi', 'Không thể cập nhật bài viết lên Supabase!', 'error');
-                return;
+                console.error("Lỗi cập nhật tips:", err);
+                data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                tipsList[idx] = data;
+                saveToLocalStorageFallback('tips', tipsList);
+                showToast('Lưu Offline', 'Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                resetFormTips();
             }
         }
 
@@ -3347,18 +3469,24 @@ async function startApp() {
 
     function validateDateDMY(dateStr, allowEmpty = true) {
         if (!dateStr || dateStr.trim() === '') return allowEmpty;
-        const match = dateStr.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-        if (!match) return false;
+        const str = dateStr.trim();
+        const match = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (match) {
+            const day = parseInt(match[1], 10);
+            const month = parseInt(match[2], 10);
+            const year = parseInt(match[3], 10);
 
-        const day = parseInt(match[1], 10);
-        const month = parseInt(match[2], 10);
-        const year = parseInt(match[3], 10);
+            if (month < 1 || month > 12) return false;
+            if (day < 1 || day > 31) return false;
+            if (year < 1900 || year > 2100) return false;
 
-        if (month < 1 || month > 12) return false;
-        if (day < 1 || day > 31) return false;
-        if (year < 1900 || year > 2100) return false;
-
-        return true;
+            return true;
+        }
+        if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+            return true;
+        }
+        const parsed = parseDateDMY(str);
+        return parsed !== null;
     }
 
     function calculateDaysRemaining(expiryStr) {
@@ -3891,42 +4019,61 @@ async function startApp() {
             if (indexStr === '') {
                 try {
                     const dbData = mappers.khoThietBi.toDB(data);
-                    const { data: insertedData, error } = await supabaseClient
-                        .from('kho_thiet_bi')
-                        .insert([dbData])
-                        .select();
-                    if (error) throw error;
-                    khoList.push(mappers.khoThietBi.fromDB(insertedData[0]));
+                    let isDbSuccess = false;
+                    if (supabaseClient) {
+                        const { data: insertedData, error } = await supabaseClient
+                            .from('kho_thiet_bi')
+                            .insert([dbData])
+                            .select();
+                        if (!error && insertedData && insertedData.length > 0) {
+                            khoList.push(mappers.khoThietBi.fromDB(insertedData[0]));
+                            isDbSuccess = true;
+                        }
+                    }
+                    if (!isDbSuccess) {
+                        data.id = 'local-' + Date.now();
+                        khoList.push(data);
+                    }
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                    showToast('Thành công', 'Đã lưu thiết bị lưu kho mới!');
+                    showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu thiết bị lưu kho mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 } catch (err) {
-                    console.error(err);
+                    console.error("Lỗi thêm kho:", err);
                     data.id = 'local-' + Date.now();
                     khoList.push(data);
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                    showToast('Lưu Offline', 'Không kết nối được Supabase. Đã lưu tạm thời trên trình duyệt!', 'warning');
+                    showToast('Lưu Offline', 'Đã lưu tạm thời trên trình duyệt!', 'warning');
                 }
             } else {
                 const idx = parseInt(indexStr);
                 const oldItem = khoList[idx];
                 try {
                     const dbData = mappers.khoThietBi.toDB(data);
-                    const { data: updatedData, error } = await supabaseClient
-                        .from('kho_thiet_bi')
-                        .update(dbData)
-                        .eq('id', oldItem.id)
-                        .select();
-                    if (error) throw error;
-                    khoList[idx] = mappers.khoThietBi.fromDB(updatedData[0]);
+                    let isDbSuccess = false;
+                    const isLocalId = oldItem && oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
+                    if (supabaseClient && !isLocalId) {
+                        const { data: updatedData, error } = await supabaseClient
+                            .from('kho_thiet_bi')
+                            .update(dbData)
+                            .eq('id', oldItem.id)
+                            .select();
+                        if (!error && updatedData && updatedData.length > 0) {
+                            khoList[idx] = mappers.khoThietBi.fromDB(updatedData[0]);
+                            isDbSuccess = true;
+                        }
+                    }
+                    if (!isDbSuccess) {
+                        data.id = oldItem ? oldItem.id : ('local-' + Date.now());
+                        khoList[idx] = data;
+                    }
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                    showToast('Thành công', 'Đã cập nhật thông tin thiết bị lưu kho!');
+                    showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin thiết bị lưu kho!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                     resetFormKho();
                 } catch (err) {
-                    console.error(err);
-                    data.id = oldItem.id;
+                    console.error("Lỗi cập nhật kho:", err);
+                    data.id = oldItem ? oldItem.id : ('local-' + Date.now());
                     khoList[idx] = data;
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                    showToast('Lưu Offline', 'Không kết nối được Supabase. Đã cập nhật tạm thời trên trình duyệt!', 'warning');
+                    showToast('Lưu Offline', 'Đã cập nhật tạm thời trên trình duyệt!', 'warning');
                     resetFormKho();
                 }
             }
