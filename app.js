@@ -278,22 +278,61 @@ async function startApp() {
     const tabContents = document.querySelectorAll('.tab-content');
     const pageTitle = document.getElementById('page-title');
 
+    function showTabFormOnly(tabId) {
+        const targetTab = document.getElementById(tabId);
+        if (!targetTab) return;
+        const formCard = targetTab.querySelector('.form-card');
+        const tableCard = targetTab.querySelector('.table-card');
+        if (formCard) formCard.style.display = 'block';
+        if (tableCard) tableCard.style.display = 'none';
+    }
+
+    function showTabTableOnly(tabId) {
+        const targetTab = document.getElementById(tabId);
+        if (!targetTab) return;
+        const formCard = targetTab.querySelector('.form-card');
+        const tableCard = targetTab.querySelector('.table-card');
+        if (formCard) formCard.style.display = 'none';
+        if (tableCard) tableCard.style.display = 'block';
+    }
+
+    function hideAllTabForms() {
+        const tabs = ['tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han'];
+        tabs.forEach(tabId => showTabTableOnly(tabId));
+    }
+
     // Tab Navigation Logic
-    function switchToTab(targetTabId) {
+    function switchToTab(targetTabId, keepFormVisible = false) {
         if (!targetTabId) return;
         const targetItem = document.querySelector(`.menu-item[data-tab="${targetTabId}"]`);
         const targetContent = document.getElementById(targetTabId);
-        if (!targetItem || !targetContent) return;
+        if (!targetContent) return;
 
         menuItems.forEach(btn => btn.classList.remove('active'));
         tabContents.forEach(content => content.classList.remove('active'));
 
-        targetItem.classList.add('active');
+        if (targetItem) {
+            targetItem.classList.add('active');
+        }
         targetContent.classList.add('active');
 
-        const tabName = targetItem.querySelector('span')?.innerText || '';
+        if (!keepFormVisible) {
+            hideAllTabForms();
+        }
+
+        let tabName = targetItem ? (targetItem.querySelector('span')?.innerText || '') : '';
+        if (!tabName) {
+            if (targetTabId === 'tab-cap-phat-list') tabName = 'Danh sách đã cấp phát';
+            else if (targetTabId === 'tab-cap-phat-form') tabName = 'Quản lý cấp phát';
+            else if (targetTabId === 'tab-kho-thiet-bi') tabName = 'Thiết bị lưu kho';
+            else tabName = 'Trang chủ';
+        }
         if (pageTitle) {
             pageTitle.innerHTML = `ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản <small style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 10px;">/ ${tabName}</small>`;
+        }
+
+        if (targetTabId === 'tab-trang-chu') {
+            renderDashboard();
         }
 
         // Persist active tab so F5 stays on the same page
@@ -309,10 +348,12 @@ async function startApp() {
         });
     });
 
-    // Restore last active tab after F5
+    // Restore last active tab after F5 or default to tab-trang-chu
     const savedTab = localStorage.getItem('erg_asset_active_tab');
     if (savedTab && document.getElementById(savedTab)) {
         switchToTab(savedTab);
+    } else {
+        switchToTab('tab-trang-chu');
     }
 
     // -------------------------------------------------------------------------
@@ -714,22 +755,253 @@ async function startApp() {
         });
     }
 
+    function getItemTimestamp(item) {
+        if (!item) return 0;
+        if (item.history && item.history.length > 0) {
+            const createLog = item.history.find(h => h.action === 'Tạo mới') || item.history[0];
+            if (createLog && createLog.time) {
+                const parsed = parseDateDMY(createLog.time);
+                if (parsed) return parsed.getTime();
+            }
+        }
+        if (item.createdAt) {
+            const parsed = parseDateDMY(item.createdAt);
+            if (parsed) return parsed.getTime();
+        }
+        if (item.updatedAt) {
+            const parsed = parseDateDMY(item.updatedAt);
+            if (parsed) return parsed.getTime();
+        }
+        return 0;
+    }
+
+    function renderDashboard() {
+        const totalUsers = thietBiList.length;
+        const onlineUsers = thietBiList.filter(item => !item.userDisabled).length;
+        const offlineUsers = thietBiList.filter(item => item.userDisabled).length;
+
+        // PC vs Laptop vs Personal vs No device
+        let totalPc = 0;
+        let totalLaptop = 0;
+        let totalPersonal = 0;
+        let totalNoDevice = 0;
+
+        thietBiList.forEach(item => {
+            const alloc = item.devAllocation || (item.devStatus === 'Không cấp' ? 'no' : (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : 'yes'));
+            if (alloc === 'no' || item.devStatus === 'Không cấp') {
+                totalNoDevice++;
+            } else if (alloc === 'personal' || item.devStatus === 'Thiết bị cá nhân') {
+                totalPersonal++;
+            } else {
+                const type = (item.devType || '').toLowerCase().trim();
+                if (type.includes('laptop') || type.includes('macbook') || type.includes('notebook')) {
+                    totalLaptop++;
+                } else if (type.includes('pc') || type.includes('máy bàn') || type.includes('workstation') || type.includes('desktop') || type.includes('đồng bộ')) {
+                    totalPc++;
+                } else if (type) {
+                    totalPc++;
+                }
+            }
+        });
+
+        // 1. Update Stat Cards
+        const elTotalUsers = document.getElementById('dash-total-users');
+        const elUserOnline = document.getElementById('dash-user-online');
+        const elUserOffline = document.getElementById('dash-user-offline');
+        const elTotalPc = document.getElementById('dash-total-pc');
+        const elTotalLaptop = document.getElementById('dash-total-laptop');
+        const elTotalPersonal = document.getElementById('dash-total-personal');
+        const elPersonalSub = document.getElementById('dash-personal-sub');
+        const elTotalKho = document.getElementById('dash-total-kho');
+        const elKhoReady = document.getElementById('dash-kho-ready');
+
+        if (elTotalUsers) elTotalUsers.innerText = totalUsers;
+        if (elUserOnline) elUserOnline.innerText = `🟢 ${onlineUsers} Online`;
+        if (elUserOffline) elUserOffline.innerText = `🔴 ${offlineUsers} Offline`;
+        if (elTotalPc) elTotalPc.innerText = totalPc;
+        if (elTotalLaptop) elTotalLaptop.innerText = totalLaptop;
+        if (elTotalPersonal) elTotalPersonal.innerText = totalPersonal + totalNoDevice;
+        if (elPersonalSub) elPersonalSub.innerText = `${totalPersonal} Cá nhân | ${totalNoDevice} Không cấp`;
+
+        const totalKhoItems = khoList ? khoList.length : 0;
+        const readyKhoItems = khoList ? khoList.filter(k => (k.status || '').toLowerCase().includes('sẵn sàng')).length : 0;
+        if (elTotalKho) elTotalKho.innerText = totalKhoItems;
+        if (elKhoReady) elKhoReady.innerText = `${readyKhoItems} Sẵn sàng cấp phát`;
+
+        // 2. Department User Distribution Breakdown
+        const elDeptList = document.getElementById('dash-dept-list');
+        const elDeptCount = document.getElementById('dash-dept-count');
+
+        if (elDeptList) {
+            elDeptList.innerHTML = '';
+            const deptCounts = {};
+            thietBiList.forEach(item => {
+                const dept = (item.userDept || '').trim() || 'Chưa phân phòng ban';
+                deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+            });
+
+            const sortedDepts = Object.keys(deptCounts).sort((a, b) => deptCounts[b] - deptCounts[a]);
+            if (elDeptCount) elDeptCount.innerText = `${sortedDepts.length} phòng ban`;
+
+            if (sortedDepts.length === 0) {
+                elDeptList.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Chưa có dữ liệu phòng ban</div>';
+            } else {
+                const maxDeptUser = Math.max(...Object.values(deptCounts)) || 1;
+                sortedDepts.forEach(dept => {
+                    const count = deptCounts[dept];
+                    const percent = Math.round((count / maxDeptUser) * 100);
+                    const div = document.createElement('div');
+                    div.style.cssText = 'display: flex; flex-direction: column; gap: 4px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.2s ease;';
+                    div.title = `Click để xem danh sách nhân sự ${dept}`;
+                    div.onclick = () => {
+                        switchToTab('tab-cap-phat-list');
+                        const filterDept = document.getElementById('filter-dept-thietbi');
+                        if (filterDept) {
+                            filterDept.value = dept;
+                            renderThietBi();
+                        }
+                    };
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500;">
+                            <span style="color: var(--text-primary);"><i class="fa-solid fa-folder" style="color: var(--primary-color); margin-right: 6px;"></i>${dept}</span>
+                            <span style="font-weight: 700; color: var(--primary-color);">${count} nhân sự</span>
+                        </div>
+                        <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden;">
+                            <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, var(--primary-color), #f97316); border-radius: 4px; transition: width 0.5s ease;"></div>
+                        </div>
+                    `;
+                    elDeptList.appendChild(div);
+                });
+            }
+        }
+
+        // 3. Device Condition Status Breakdown
+        const elStatusBreakdown = document.getElementById('dash-status-breakdown');
+        if (elStatusBreakdown) {
+            elStatusBreakdown.innerHTML = '';
+            const statusCounts = { 'Mới': 0, 'Trung bình': 0, 'Cũ': 0, 'Xem xét thay thế': 0 };
+            let totalAllocatedWithStatus = 0;
+
+            thietBiList.forEach(item => {
+                if (item.devStatus && statusCounts.hasOwnProperty(item.devStatus)) {
+                    statusCounts[item.devStatus]++;
+                    totalAllocatedWithStatus++;
+                }
+            });
+
+            const statusColors = {
+                'Mới': '#22c55e',
+                'Trung bình': '#3b82f6',
+                'Cũ': '#eab308',
+                'Xem xét thay thế': '#ef4444'
+            };
+
+            for (const st in statusCounts) {
+                const count = statusCounts[st];
+                const pct = totalAllocatedWithStatus > 0 ? Math.round((count / totalAllocatedWithStatus) * 100) : 0;
+                const color = statusColors[st] || '#3b82f6';
+                const div = document.createElement('div');
+                div.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+                div.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500;">
+                        <span style="color: var(--text-primary);"><i class="fa-solid fa-circle" style="font-size: 8px; color: ${color}; margin-right: 6px;"></i>Tình trạng "${st}"</span>
+                        <span style="font-weight: 700; color: ${color};">${count} thiết bị (${pct}%)</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden;">
+                        <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.5s ease;"></div>
+                    </div>
+                `;
+                elStatusBreakdown.appendChild(div);
+            }
+        }
+
+        // 4. Recent Activity Log Feed
+        const elRecentActivity = document.getElementById('dash-recent-activity');
+        if (elRecentActivity) {
+            elRecentActivity.innerHTML = '';
+            let allLogs = [];
+            thietBiList.forEach(item => {
+                if (item.history && item.history.length > 0) {
+                    item.history.forEach(log => {
+                        allLogs.push({
+                            userName: item.userName,
+                            userId: item.userId,
+                            time: log.time,
+                            action: log.action,
+                            details: log.details
+                        });
+                    });
+                }
+            });
+
+            if (allLogs.length === 0) {
+                elRecentActivity.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Chưa có hoạt động cập nhật</div>';
+            } else {
+                allLogs.slice(-6).reverse().forEach(log => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; font-size: 12px;';
+                    div.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary); margin-bottom: 3px;">
+                            <span>${log.userName} (${log.userId}) - <span style="color: var(--primary-color);">${log.action}</span></span>
+                            <span style="font-weight: 400; color: var(--text-secondary); font-size: 11px;">${log.time}</span>
+                        </div>
+                        <div style="color: var(--text-secondary); line-height: 1.4;">${log.details}</div>
+                    `;
+                    elRecentActivity.appendChild(div);
+                });
+            }
+        }
+
+        // 5. License Expiry Alerts Summary
+        const elLicenseAlerts = document.getElementById('dash-license-alerts');
+        if (elLicenseAlerts) {
+            elLicenseAlerts.innerHTML = '';
+            const upcomingLicenses = giaHanList ? giaHanList.slice(0, 5) : [];
+            if (upcomingLicenses.length === 0) {
+                elLicenseAlerts.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Không có bản quyền sắp hết hạn</div>';
+            } else {
+                upcomingLicenses.forEach(lic => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; font-size: 13px;';
+                    div.innerHTML = `
+                        <div>
+                            <div style="font-weight: 600; color: var(--text-primary);">${lic.softwareName || 'Bản quyền'}</div>
+                            <div style="font-size: 11px; color: var(--text-secondary);">${lic.provider || ''} ${lic.userCount ? '| ' + lic.userCount + ' User' : ''}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <span class="badge badge-danger" style="font-size: 11px;">${lic.expiryDate || 'N/A'}</span>
+                        </div>
+                    `;
+                    elLicenseAlerts.appendChild(div);
+                });
+            }
+        }
+    }
+
     function renderThietBi(filterText = '') {
         tbodyThietBi.innerHTML = '';
         
-        // Sắp xếp mặc định A-Z theo Họ và Tên nhân viên
-        const sortedList = [...thietBiList].sort((a, b) => {
-            const nameA = a.userName ? a.userName.trim() : "";
-            const nameB = b.userName ? b.userName.trim() : "";
-            return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
-        });
-
         const deptFilter = document.getElementById('filter-dept-thietbi') 
             ? document.getElementById('filter-dept-thietbi').value 
             : '';
         const userStatusFilter = document.getElementById('filter-status-thietbi')
             ? document.getElementById('filter-status-thietbi').value
             : '';
+
+        let sortedList = [...thietBiList];
+        if (userStatusFilter === 'recent') {
+            sortedList.sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+        } else {
+            sortedList.sort((a, b) => {
+                const nameA = a.userName ? a.userName.trim() : "";
+                const nameB = b.userName ? b.userName.trim() : "";
+                return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+            });
+        }
+
+        const now = new Date().getTime();
+        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+        const hasStrictRecent = thietBiList.some(item => (now - getItemTimestamp(item)) <= thirtyDaysMs && getItemTimestamp(item) > 0);
 
         // Safe filter matching keyword
         const keywords = filterText.toLowerCase().split(/\s+/).filter(Boolean);
@@ -743,10 +1015,17 @@ async function startApp() {
             if (userStatusFilter === 'active' && item.userDisabled) {
                 return false;
             }
+            if (userStatusFilter === 'recent') {
+                const ts = getItemTimestamp(item);
+                if (hasStrictRecent && (now - ts) > thirtyDaysMs) {
+                    return false;
+                }
+            }
 
             if (keywords.length === 0) return true;
             
             const disabledTag = item.userDisabled ? 'offline disable user nghỉ việc đã vô hiệu hóa' : 'online đang hoạt động';
+            const recentTag = (now - getItemTimestamp(item)) <= thirtyDaysMs ? 'mới thêm gần đây recent' : '';
             const itemText = `
                 ${item.userId || ''} 
                 ${item.userName || ''} 
@@ -760,6 +1039,7 @@ async function startApp() {
                 ${item.devRam || ''}
                 ${item.devNotes || ''}
                 ${disabledTag}
+                ${recentTag}
             `.toLowerCase();
             
             return keywords.every(kw => itemText.includes(kw));
@@ -844,12 +1124,17 @@ async function startApp() {
             if (item.devApps) keyArr.push(`<div class="key-item" title="App bản quyền"><i class="fa-solid fa-cubes text-warning"></i> <span>${item.devApps}</span></div>`);
             const keysText = keyArr.length > 0 ? keyArr.join('') : '<span class="text-muted">Không có key</span>';
 
+            const itemTs = getItemTimestamp(item);
+            const nowTs = new Date().getTime();
+            const isRecentBadge = itemTs > 0 && ((nowTs - itemTs) <= 7 * 24 * 60 * 60 * 1000);
+
             tr.innerHTML = `
                 <td>
                     <div class="user-info-cell">
                         <span class="name">
                             <span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> 
                             <span class="badge badge-blue">${item.userId}</span>
+                            ${isRecentBadge ? `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);"><i class="fa-solid fa-sparkles"></i> Mới</span>` : ''}
                             ${item.userDisabled 
                                 ? `<span class="badge badge-danger" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #ef4444;"></i> Offline</span>` 
                                 : `<span class="badge badge-success" style="margin-left: 4px; font-size: 11px; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Online</span>`}
@@ -1312,6 +1597,94 @@ async function startApp() {
         });
     });
 
+    const btnDashGotoAdd = document.getElementById('btn-dash-goto-add');
+    if (btnDashGotoAdd) btnDashGotoAdd.addEventListener('click', () => switchToTab('tab-cap-phat-form'));
+
+    const btnDashGotoList = document.getElementById('btn-dash-goto-list');
+    if (btnDashGotoList) btnDashGotoList.addEventListener('click', () => switchToTab('tab-cap-phat-list'));
+
+    const btnDashGotoGiahan = document.getElementById('btn-dash-goto-giahan');
+    if (btnDashGotoGiahan) btnDashGotoGiahan.addEventListener('click', () => switchToTab('tab-gia-han'));
+
+    const cardDashKho = document.getElementById('card-dash-kho');
+    if (cardDashKho) cardDashKho.addEventListener('click', () => switchToTab('tab-kho-thiet-bi'));
+
+    // Thêm thông tin Modal Popup & Actions
+    function openAddInfoAction(action) {
+        const modal = document.getElementById('modal-add-info-options');
+        if (modal) modal.style.display = 'none';
+
+        let targetTabId = '';
+        let resetFn = null;
+
+        if (action === 'add-cong-ty') {
+            targetTabId = 'tab-cong-ty';
+            resetFn = typeof resetFormCongTy === 'function' ? resetFormCongTy : null;
+        } else if (action === 'add-account') {
+            targetTabId = 'tab-account';
+            resetFn = typeof resetFormAccount === 'function' ? resetFormAccount : null;
+        } else if (action === 'add-ho-tro') {
+            targetTabId = 'tab-ho-tro';
+            resetFn = typeof resetFormHoTro === 'function' ? resetFormHoTro : null;
+        } else if (action === 'add-tips') {
+            targetTabId = 'tab-tips';
+            resetFn = typeof resetFormTips === 'function' ? resetFormTips : null;
+        } else if (action === 'add-camera') {
+            targetTabId = 'tab-camera';
+            resetFn = typeof resetFormCamera === 'function' ? resetFormCamera : null;
+        } else if (action === 'add-gia-han') {
+            targetTabId = 'tab-gia-han';
+            resetFn = typeof resetFormGiaHan === 'function' ? resetFormGiaHan : null;
+        } else if (action === 'add-kho') {
+            targetTabId = 'tab-kho-thiet-bi';
+            resetFn = typeof resetFormKho === 'function' ? resetFormKho : null;
+        }
+
+        if (targetTabId) {
+            switchToTab(targetTabId, true);
+            if (resetFn) resetFn();
+            showTabFormOnly(targetTabId);
+        }
+    }
+
+    const btnToggleAddInfo = document.getElementById('btn-toggle-add-info');
+    const modalAddInfoOptions = document.getElementById('modal-add-info-options');
+    const btnCloseModalAddInfo = document.getElementById('btn-close-modal-add-info');
+
+    if (btnToggleAddInfo && modalAddInfoOptions) {
+        btnToggleAddInfo.addEventListener('click', (e) => {
+            e.stopPropagation();
+            modalAddInfoOptions.style.display = 'flex';
+        });
+    }
+
+    if (btnCloseModalAddInfo && modalAddInfoOptions) {
+        btnCloseModalAddInfo.addEventListener('click', () => {
+            modalAddInfoOptions.style.display = 'none';
+        });
+    }
+
+    if (modalAddInfoOptions) {
+        modalAddInfoOptions.addEventListener('click', (e) => {
+            if (e.target === modalAddInfoOptions) {
+                modalAddInfoOptions.style.display = 'none';
+            }
+        });
+
+        const optionCards = modalAddInfoOptions.querySelectorAll('.option-add-card');
+        optionCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const action = card.getAttribute('data-action');
+                if (action) {
+                    openAddInfoAction(action);
+                }
+            });
+        });
+    }
+
+    const btnAddNewCongTy = document.querySelector('.btn-add-new-congty');
+    if (btnAddNewCongTy) btnAddNewCongTy.addEventListener('click', () => openAddInfoAction('add-cong-ty'));
+
     const userDisabledCheckbox = document.getElementById('user-disabled');
     if (userDisabledCheckbox) {
         userDisabledCheckbox.addEventListener('change', (e) => {
@@ -1582,6 +1955,8 @@ async function startApp() {
 
     function editCongTy(index) {
         const item = congTyList[index];
+        if (!item) return;
+        showTabFormOnly('tab-cong-ty');
         editIndexCongTy.value = index;
 
         document.getElementById('company-code').value = item.code;
@@ -1635,6 +2010,7 @@ async function startApp() {
         btnSaveCongTy.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
         btnCancelCongTy.classList.add('hidden');
         formCongTy.reset();
+        showTabTableOnly('tab-cong-ty');
     }
 
     btnCancelCongTy.addEventListener('click', resetFormCongTy);
@@ -1862,6 +2238,9 @@ async function startApp() {
 
     function editAccount(index) {
         const item = accountList[index];
+        if (!item) return;
+        const formCard = document.querySelector('#tab-account .form-card');
+        if (formCard) formCard.style.display = 'block';
         editIndexAccount.value = index;
 
         document.getElementById('acc-func').value = item.func;
@@ -1916,6 +2295,7 @@ async function startApp() {
         passInput.type = 'password';
         const toggleBtn = passInput.nextElementSibling;
         toggleBtn.innerHTML = '<i class="fa-regular fa-eye"></i>';
+        showTabTableOnly('tab-account');
     }
 
     btnCancelAccount.addEventListener('click', resetFormAccount);
@@ -2124,6 +2504,11 @@ async function startApp() {
 
     function editHoTro(index) {
         const item = hoTroList[index];
+        if (!item) return;
+
+        const formCard = document.querySelector('#tab-ho-tro .form-card');
+        if (formCard) formCard.style.display = 'block';
+
         editIndexHoTro.value = index;
 
         document.getElementById('support-unit').value = item.unit;
@@ -2169,6 +2554,7 @@ async function startApp() {
         formHoTro.reset();
         document.getElementById('support-zalo').checked = false;
         document.getElementById('support-role').value = '';
+        showTabTableOnly('tab-ho-tro');
     }
 
     btnCancelHoTro.addEventListener('click', resetFormHoTro);
@@ -2440,6 +2826,11 @@ async function startApp() {
 
     function editCamera(index) {
         const item = cameraList[index];
+        if (!item) return;
+
+        const formCard = document.querySelector('#tab-camera .form-card');
+        if (formCard) formCard.style.display = 'block';
+
         editIndexCamera.value = index;
 
         document.getElementById('cam-project').value = item.project;
@@ -2489,6 +2880,7 @@ async function startApp() {
         btnSaveCamera.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Camera';
         btnCancelCamera.classList.add('hidden');
         formCamera.reset();
+        showTabTableOnly('tab-camera');
     }
 
     btnCancelCamera.addEventListener('click', resetFormCamera);
@@ -2683,6 +3075,9 @@ async function startApp() {
 
     function editTips(index) {
         const item = tipsList[index];
+        if (!item) return;
+        const formCard = document.querySelector('#tab-tips .form-card');
+        if (formCard) formCard.style.display = 'block';
         editIndexTips.value = index;
         
         document.getElementById('tip-issue').value = item.issue;
@@ -2722,6 +3117,7 @@ async function startApp() {
         btnSaveTips.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Tip & Trick';
         btnCancelTips.classList.add('hidden');
         formTips.reset();
+        showTabTableOnly('tab-tips');
     }
 
     btnCancelTips.addEventListener('click', resetFormTips);
@@ -3163,6 +3559,8 @@ async function startApp() {
 
     function editGiaHan(index) {
         const item = giaHanList[index];
+        if (!item) return;
+        showTabFormOnly('tab-gia-han');
         editIndexGiaHan.value = index;
         
         document.getElementById('license-name').value = item.name;
@@ -3208,6 +3606,7 @@ async function startApp() {
         if (btnSaveGiaHan) btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Gia Hạn';
         if (btnCancelGiaHan) btnCancelGiaHan.classList.add('hidden');
         if (formGiaHan) formGiaHan.reset();
+        showTabTableOnly('tab-gia-han');
     }
 
     if (btnCancelGiaHan) btnCancelGiaHan.addEventListener('click', resetFormGiaHan);
@@ -3458,6 +3857,7 @@ async function startApp() {
     function editKho(index) {
         const item = khoList[index];
         if (!item) return;
+        showTabFormOnly('tab-kho-thiet-bi');
         if (editIndexKho) editIndexKho.value = index;
 
         document.getElementById('kho-code').value = item.code || '';
@@ -3510,6 +3910,7 @@ async function startApp() {
         if (formKho) formKho.reset();
         const khoDateInput = document.getElementById('kho-date-stored');
         if (khoDateInput) khoDateInput.value = formatDateDMY(new Date());
+        showTabTableOnly('tab-kho-thiet-bi');
     }
 
     if (btnCancelKho) btnCancelKho.addEventListener('click', resetFormKho);
@@ -4202,6 +4603,7 @@ async function startApp() {
             await Promise.all(fetchPromises);
             showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
             initCustomAutocompletes();
+            renderDashboard();
         } catch (err) {
             console.error('Initial load failed:', err);
             const errorDetails = err.message || err.details || (typeof err === 'object' ? JSON.stringify(err) : err);
@@ -4311,7 +4713,9 @@ async function startApp() {
                     showToast('Đăng nhập', offlineMode ? 'Đăng nhập thành công (Chế độ Ngoại tuyến)!' : 'Đăng nhập thành công!', 'success');
                     if (loginScreen) loginScreen.classList.add('hidden');
                     if (appContainer) appContainer.classList.remove('hidden');
-                    initApp();
+                    switchToTab('tab-trang-chu');
+                    initApp().catch(err => console.warn("Background initApp error:", err));
+                    renderDashboard();
                 } else {
                     throw new Error('Tên đăng nhập hoặc mật khẩu không chính xác!');
                 }
