@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=7.8">
+    <link rel="stylesheet" href="style.css?v=8.0">
 </head>
 <body>
     <!-- Login Screen -->
@@ -448,12 +448,13 @@
                                             <label for="dev-sn">Serial thiết bị</label>
                                             <input type="text" id="dev-sn" placeholder="Nhập Serial Number của thiết bị">
                                         </div>
-                                        <div class="form-group col-span-2-lg" style="display: flex; flex-direction: column; justify-content: flex-end;">
-                                            <label for="dev-keyboard" style="margin-bottom: 8px;">Bàn phím</label>
-                                            <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; height: 38px;">
-                                                <input type="checkbox" id="dev-keyboard" style="width: 18px; height: 18px; accent-color: var(--primary-color);">
-                                                <span style="font-size: 14px; font-weight: 500;">Có</span>
-                                            </label>
+                                        <div class="form-group col-span-2-lg">
+                                            <label for="dev-keyboard">Bàn phím</label>
+                                            <select id="dev-keyboard">
+                                                <option value="">-- Chọn bàn phím --</option>
+                                                <option value="Bàn phím có dây">Bàn phím có dây</option>
+                                                <option value="Bàn phím không dây">Bàn phím không dây</option>
+                                            </select>
                                         </div>
                                         <div class="form-group col-span-2-lg">
                                             <label for="dev-mouse">Chuột</label>
@@ -1567,6 +1568,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=7.8"></script>
+    <script src="app.js?v=8.0"></script>
 </body>
 </html>

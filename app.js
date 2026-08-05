@@ -68,75 +68,97 @@ async function startApp() {
     // Mappers to translate between Javascript camelCase and PostgreSQL snake_case
     const mappers = {
         thietBi: {
-            fromDB: (db) => ({
-                id: db.id,
-                userId: db.user_id,
-                userName: db.user_name,
-                userTitle: db.user_title || '',
-                userDept: db.user_dept || '',
-                userEmail: db.user_email || '',
-                userPhone: db.user_phone || '',
-                devId: db.dev_id || '',
-                devType: db.dev_type || '',
-                devMain: db.dev_main || '',
-                devCpu: db.dev_cpu || '',
-                devRam: db.dev_ram || '',
-                devRamSlots: db.dev_ram_slots || '',
-                devSsd: db.dev_ssd || '',
-                devHdd: db.dev_hdd || '',
-                devVga: db.dev_vga || '',
-                devMonitor: db.dev_monitor || '',
-                devMonitorSn: db.dev_monitor_sn || '',
-                devSn: db.dev_sn || '',
-                devKeyboard: !!db.dev_keyboard,
-                devMouse: db.dev_mouse || '',
-                devCables: db.dev_cables || '',
-                keyWin: db.key_win || '',
-                keyOffice: db.key_office || '',
-                keyPdf: db.key_pdf || '',
-                devNotes: db.dev_notes || '',
-                devApps: db.dev_apps || '',
-                devStatus: db.dev_status || '',
-                devAllocation: db.dev_allocation || (db.dev_status === 'Không cấp' ? 'no' : (db.dev_status === 'Thiết bị cá nhân' ? 'personal' : 'yes')),
-                hasDevice: db.has_device !== false && db.dev_status !== 'Không cấp' && db.dev_status !== 'Thiết bị cá nhân',
-                userDisabled: !!db.user_disabled,
-                updatedAt: db.updated_at || '',
-                history: db.history || []
-            }),
-            toDB: (js) => ({
-                user_id: js.userId,
-                user_name: js.userName,
-                user_title: js.userTitle,
-                user_dept: js.userDept,
-                user_email: js.userEmail,
-                user_phone: js.userPhone,
-                user_disabled: !!js.userDisabled,
-                has_device: js.devAllocation === 'yes',
-                dev_allocation: js.devAllocation || 'yes',
-                dev_id: js.devId || null,
-                dev_type: js.devType,
-                dev_main: js.devMain,
-                dev_cpu: js.devCpu,
-                dev_ram: js.devRam,
-                dev_ram_slots: js.devRamSlots,
-                dev_ssd: js.devSsd,
-                dev_hdd: js.devHdd,
-                dev_vga: js.devVga,
-                dev_monitor: js.devMonitor,
-                dev_monitor_sn: js.devMonitorSn,
-                dev_sn: js.devSn,
-                dev_keyboard: js.devKeyboard,
-                dev_mouse: js.devMouse,
-                dev_cables: js.devCables,
-                key_win: js.keyWin,
-                key_office: js.keyOffice,
-                key_pdf: js.keyPdf,
-                dev_notes: js.devNotes,
-                dev_apps: js.devApps,
-                dev_status: js.devAllocation === 'no' ? 'Không cấp' : (js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : js.devStatus),
-                updated_at: new Date().toISOString(),
-                history: js.history
-            })
+            fromDB: (db) => {
+                let kbVal = '';
+                if (db.dev_cables && db.dev_cables.includes('[KBD_WIRELESS]')) {
+                    kbVal = 'Bàn phím không dây';
+                } else if (db.dev_keyboard === true || db.dev_keyboard === 'true') {
+                    kbVal = 'Bàn phím có dây';
+                } else if (typeof db.dev_keyboard === 'string' && db.dev_keyboard) {
+                    kbVal = db.dev_keyboard;
+                }
+                const cleanCables = (db.dev_cables || '').replace('[KBD_WIRELESS]', '').trim();
+
+                return {
+                    id: db.id,
+                    userId: db.user_id,
+                    userName: db.user_name,
+                    userTitle: db.user_title,
+                    userDept: db.user_dept,
+                    userEmail: db.user_email,
+                    userPhone: db.user_phone,
+                    devId: db.dev_id || '',
+                    devType: db.dev_type || '',
+                    devMain: db.dev_main || '',
+                    devCpu: db.dev_cpu || '',
+                    devRam: db.dev_ram || '',
+                    devRamSlots: db.dev_ram_slots || '',
+                    devSsd: db.dev_ssd || '',
+                    devHdd: db.dev_hdd || '',
+                    devVga: db.dev_vga || '',
+                    devMonitor: db.dev_monitor || '',
+                    devMonitorSn: db.dev_monitor_sn || '',
+                    devSn: db.dev_sn || '',
+                    devKeyboard: kbVal,
+                    devMouse: db.dev_mouse || '',
+                    devCables: cleanCables,
+                    keyWin: db.key_win || '',
+                    keyOffice: db.key_office || '',
+                    keyPdf: db.key_pdf || '',
+                    devNotes: db.dev_notes || '',
+                    devApps: db.dev_apps || '',
+                    devStatus: db.dev_status || '',
+                    devAllocation: db.dev_allocation || (db.dev_status === 'Không cấp' ? 'no' : (db.dev_status === 'Thiết bị cá nhân' ? 'personal' : 'yes')),
+                    hasDevice: db.has_device !== false && db.dev_status !== 'Không cấp' && db.dev_status !== 'Thiết bị cá nhân',
+                    userDisabled: !!db.user_disabled,
+                    updatedAt: db.updated_at || '',
+                    history: db.history || []
+                };
+            },
+            toDB: (js) => {
+                let cablesVal = js.devCables || '';
+                if (js.devKeyboard === 'Bàn phím không dây') {
+                    if (!cablesVal.includes('[KBD_WIRELESS]')) {
+                        cablesVal = cablesVal ? cablesVal + ' [KBD_WIRELESS]' : '[KBD_WIRELESS]';
+                    }
+                } else {
+                    cablesVal = cablesVal.replace('[KBD_WIRELESS]', '').trim();
+                }
+                return {
+                    user_id: js.userId,
+                    user_name: js.userName,
+                    user_title: js.userTitle,
+                    user_dept: js.userDept,
+                    user_email: js.userEmail,
+                    user_phone: js.userPhone,
+                    user_disabled: !!js.userDisabled,
+                    has_device: js.devAllocation === 'yes',
+                    dev_allocation: js.devAllocation || 'yes',
+                    dev_id: js.devId || null,
+                    dev_type: js.devType,
+                    dev_main: js.devMain,
+                    dev_cpu: js.devCpu,
+                    dev_ram: js.devRam,
+                    dev_ram_slots: js.devRamSlots,
+                    dev_ssd: js.devSsd,
+                    dev_hdd: js.devHdd,
+                    dev_vga: js.devVga,
+                    dev_monitor: js.devMonitor,
+                    dev_monitor_sn: js.devMonitorSn,
+                    dev_sn: js.devSn,
+                    dev_keyboard: !!js.devKeyboard,
+                    dev_mouse: js.devMouse,
+                    dev_cables: cablesVal,
+                    key_win: js.keyWin,
+                    key_office: js.keyOffice,
+                    key_pdf: js.keyPdf,
+                    dev_notes: js.devNotes,
+                    dev_apps: js.devApps,
+                    dev_status: js.devAllocation === 'no' ? 'Không cấp' : (js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : js.devStatus),
+                    updated_at: new Date().toISOString(),
+                    history: js.history
+                };
+            }
         },
         congTy: {
             fromDB: (db) => ({
@@ -1174,7 +1196,10 @@ async function startApp() {
             if (item.devMonitor) configArr.push(`Màn hình: ${item.devMonitor}`);
             if (item.devMonitorSn) configArr.push(`S/N Màn hình: ${item.devMonitorSn}`);
             if (item.devSn) configArr.push(`S/N Thiết bị: ${item.devSn}`);
-            if (item.devKeyboard) configArr.push(`Bàn phím: Có`);
+            if (item.devKeyboard) {
+                const kbText = (item.devKeyboard === true || item.devKeyboard === 'true') ? 'Bàn phím có dây' : item.devKeyboard;
+                configArr.push(`Bàn phím: ${kbText}`);
+            }
             if (item.devMouse) configArr.push(`Chuột: ${item.devMouse}`);
             if (item.devCables) configArr.push(`Dây kết nối: ${item.devCables}`);
             const configText = configArr.length > 0 ? configArr.join('<br>') : 'Chưa nhập cấu hình';
@@ -1356,7 +1381,7 @@ async function startApp() {
             devMonitor: hasDevice ? document.getElementById('dev-monitor').value.trim() : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
             devSn: hasDevice ? document.getElementById('dev-sn').value.trim() : '',
-            devKeyboard: (hasDevice && document.getElementById('dev-keyboard')) ? document.getElementById('dev-keyboard').checked : false,
+            devKeyboard: (hasDevice && document.getElementById('dev-keyboard')) ? document.getElementById('dev-keyboard').value : '',
             devMouse: (hasDevice && document.getElementById('dev-mouse')) ? document.getElementById('dev-mouse').value : '',
             devCables: hasDevice ? document.getElementById('dev-cables').value : '',
             updatedAt: formattedDate
@@ -1539,7 +1564,12 @@ async function startApp() {
         document.getElementById('dev-monitor').value = item.devMonitor || '';
         if (document.getElementById('dev-monitor-sn')) document.getElementById('dev-monitor-sn').value = item.devMonitorSn || '';
         document.getElementById('dev-sn').value = item.devSn || '';
-        if (document.getElementById('dev-keyboard')) document.getElementById('dev-keyboard').checked = !!item.devKeyboard;
+        if (document.getElementById('dev-keyboard')) {
+            let kbVal = item.devKeyboard;
+            if (kbVal === true || kbVal === 'true') kbVal = 'Bàn phím có dây';
+            else if (!kbVal || kbVal === false) kbVal = '';
+            document.getElementById('dev-keyboard').value = kbVal;
+        }
         if (document.getElementById('dev-mouse')) document.getElementById('dev-mouse').value = item.devMouse || '';
         document.getElementById('dev-cables').value = item.devCables || '';
 
@@ -4969,10 +4999,10 @@ async function startApp() {
             }
             document.getElementById('receipt-dev-sn').innerText = document.getElementById('dev-sn').value.trim() || '—';
             
-            const hasKb = document.getElementById('dev-keyboard') && document.getElementById('dev-keyboard').checked;
+            const kbVal = document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '';
             const mouseVal = document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '';
             if (document.getElementById('receipt-dev-keyboard')) {
-                document.getElementById('receipt-dev-keyboard').innerText = hasKb ? 'Có' : '—';
+                document.getElementById('receipt-dev-keyboard').innerText = kbVal || '—';
             }
             if (document.getElementById('receipt-dev-mouse')) {
                 document.getElementById('receipt-dev-mouse').innerText = mouseVal || '—';
