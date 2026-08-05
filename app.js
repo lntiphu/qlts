@@ -301,12 +301,24 @@ async function startApp() {
         tabs.forEach(tabId => showTabTableOnly(tabId));
     }
 
+    let currentTabId = '';
+
     // Tab Navigation Logic
-    function switchToTab(targetTabId, keepFormVisible = false) {
+    function switchToTab(targetTabId, keepFormVisible = false, pushState = true) {
         if (!targetTabId) return;
         const targetItem = document.querySelector(`.menu-item[data-tab="${targetTabId}"]`);
         const targetContent = document.getElementById(targetTabId);
         if (!targetContent) return;
+
+        // Push history state if switching to a new tab
+        if (pushState && currentTabId && currentTabId !== targetTabId) {
+            try {
+                history.pushState({ tabId: targetTabId }, '', `#${targetTabId}`);
+            } catch (e) {
+                console.warn('History pushState error:', e);
+            }
+        }
+        currentTabId = targetTabId;
 
         menuItems.forEach(btn => btn.classList.remove('active'));
         tabContents.forEach(content => content.classList.remove('active'));
@@ -339,6 +351,22 @@ async function startApp() {
         localStorage.setItem('erg_asset_active_tab', targetTabId);
     }
 
+    // Handle Browser Back / Forward buttons (popstate)
+    window.addEventListener('popstate', (e) => {
+        let targetTab = '';
+        if (e.state && e.state.tabId) {
+            targetTab = e.state.tabId;
+        } else if (window.location.hash) {
+            targetTab = window.location.hash.replace('#', '');
+        }
+        
+        if (targetTab && document.getElementById(targetTab)) {
+            switchToTab(targetTab, false, false);
+        } else {
+            switchToTab('tab-trang-chu', false, false);
+        }
+    });
+
     menuItems.forEach(item => {
         item.addEventListener('click', () => {
             const targetTab = item.getAttribute('data-tab');
@@ -349,12 +377,16 @@ async function startApp() {
     });
 
     // Restore last active tab after F5 or default to tab-trang-chu
+    const initialHash = window.location.hash ? window.location.hash.replace('#', '') : '';
     const savedTab = localStorage.getItem('erg_asset_active_tab');
-    if (savedTab && document.getElementById(savedTab)) {
-        switchToTab(savedTab);
-    } else {
-        switchToTab('tab-trang-chu');
-    }
+    const tabToLoad = (initialHash && document.getElementById(initialHash)) 
+        ? initialHash 
+        : ((savedTab && document.getElementById(savedTab)) ? savedTab : 'tab-trang-chu');
+
+    switchToTab(tabToLoad, false, false);
+    try {
+        history.replaceState({ tabId: tabToLoad }, '', `#${tabToLoad}`);
+    } catch (e) {}
 
     // -------------------------------------------------------------------------
     // 3. TOAST NOTIFICATION SYSTEM
@@ -1452,11 +1484,7 @@ async function startApp() {
 
         if (indexStr !== '') {
             resetFormThietBi();
-            menuItems.forEach(btn => {
-                if (btn.getAttribute('data-tab') === 'tab-cap-phat-list') {
-                    btn.click();
-                }
-            });
+            switchToTab('tab-cap-phat-list');
         } else {
             resetFormThietBi();
         }
@@ -1595,11 +1623,7 @@ async function startApp() {
 
     btnCancelThietBi.addEventListener('click', () => {
         resetFormThietBi();
-        menuItems.forEach(btn => {
-            if (btn.getAttribute('data-tab') === 'tab-cap-phat-list') {
-                btn.click();
-            }
-        });
+        switchToTab('tab-cap-phat-list');
     });
 
     function toggleDeviceFields(hasDevice) {
