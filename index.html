@@ -11,7 +11,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=7.7">
+    <link rel="stylesheet" href="style.css?v=7.8">
 </head>
 <body>
     <!-- Login Screen -->
@@ -681,9 +681,13 @@
                                     <label for="kho-code">Mã thiết bị (*)</label>
                                     <input type="text" id="kho-code" required placeholder="VD: KHO-PC-01, KHO-LAP-02">
                                 </div>
-                                <div class="form-group col-span-4-lg">
+                                <div class="form-group col-span-3-lg">
                                     <label for="kho-name">Tên thiết bị (*)</label>
                                     <input type="text" id="kho-name" required placeholder="Nhập tên thiết bị (VD: Laptop Dell Vostro 3510, PC Văn Phòng i5...)">
+                                </div>
+                                <div class="form-group col-span-1-lg">
+                                    <label for="kho-quantity">Số lượng (*)</label>
+                                    <input type="number" id="kho-quantity" required min="1" value="1" placeholder="1">
                                 </div>
                                 <div class="form-group col-span-4-lg">
                                     <label for="kho-reason">Lý do lưu kho (*)</label>
@@ -731,10 +735,11 @@
                             <table class="data-table" id="table-kho">
                                 <thead>
                                     <tr>
-                                        <th style="width: 130px;">Mã thiết bị</th>
+                                        <th style="width: 120px;">Mã thiết bị</th>
                                         <th>Tên thiết bị</th>
+                                        <th class="text-center" style="width: 90px;">Số lượng</th>
                                         <th>Lý do lưu kho</th>
-                                        <th style="width: 140px;">Ngày lưu kho</th>
+                                        <th style="width: 130px;">Ngày lưu kho</th>
                                         <th class="text-center" style="width: 100px;">Thao tác</th>
                                     </tr>
                                 </thead>
@@ -1562,6 +1567,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=7.7"></script>
+    <script src="app.js?v=7.8"></script>
 </body>
 </html>

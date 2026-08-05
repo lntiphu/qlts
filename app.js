@@ -257,6 +257,7 @@ async function startApp() {
                 id: db.id,
                 code: db.code || '',
                 name: db.name || '',
+                quantity: db.quantity !== undefined && db.quantity !== null ? parseInt(db.quantity) : 1,
                 reason: db.reason || '',
                 dateStored: db.date_stored ? formatDateDMY(db.date_stored) : '',
                 notes: db.notes || ''
@@ -264,6 +265,7 @@ async function startApp() {
             toDB: (js) => ({
                 code: js.code,
                 name: js.name,
+                quantity: parseInt(js.quantity) || 1,
                 reason: js.reason,
                 date_stored: dateToISO(js.dateStored),
                 notes: js.notes
@@ -3784,7 +3786,7 @@ async function startApp() {
         if (totalItems === 0) {
             tbodyKho.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="5" class="text-center text-muted">Chưa có thiết bị nào trong kho!</td>
+                    <td colspan="6" class="text-center text-muted">Chưa có thiết bị nào trong kho!</td>
                 </tr>
             `;
             return;
@@ -3799,6 +3801,7 @@ async function startApp() {
             tr.innerHTML = `
                 <td><span class="badge badge-blue">${item.code}</span></td>
                 <td><strong>${item.name}</strong></td>
+                <td class="text-center"><span class="badge badge-warning" style="font-size: 13px; font-weight: 700;">${item.quantity || 1}</span></td>
                 <td style="font-size: 13px; color: var(--text-secondary);">${item.reason}</td>
                 <td style="font-size: 13px;">${formatDateDMY(item.dateStored)}</td>
                 <td>
@@ -3850,6 +3853,7 @@ async function startApp() {
             const data = {
                 code: document.getElementById('kho-code').value.trim(),
                 name: document.getElementById('kho-name').value.trim(),
+                quantity: parseInt(document.getElementById('kho-quantity').value) || 1,
                 reason: document.getElementById('kho-reason').value.trim(),
                 dateStored: dateStoredVal
             };
@@ -3911,6 +3915,7 @@ async function startApp() {
 
         document.getElementById('kho-code').value = item.code || '';
         document.getElementById('kho-name').value = item.name || '';
+        document.getElementById('kho-quantity').value = item.quantity || 1;
         document.getElementById('kho-reason').value = item.reason || '';
         document.getElementById('kho-date-stored').value = item.dateStored ? formatDateDMY(item.dateStored) : '';
 
@@ -3957,6 +3962,7 @@ async function startApp() {
         if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
         if (btnCancelKho) btnCancelKho.classList.add('hidden');
         if (formKho) formKho.reset();
+        if (document.getElementById('kho-quantity')) document.getElementById('kho-quantity').value = '1';
         const khoDateInput = document.getElementById('kho-date-stored');
         if (khoDateInput) khoDateInput.value = formatDateDMY(new Date());
         showTabTableOnly('tab-kho-thiet-bi');
@@ -4157,8 +4163,8 @@ async function startApp() {
             zip.file("7_Danh_sach_gia_han.csv", convertToCSV(giaHanList, giaHanHeaders, giaHanKeys));
 
             // 8. Kho Thiet Bi
-            const khoHeaders = ["Mã thiết bị", "Tên thiết bị", "Lý do lưu kho", "Ngày lưu kho"];
-            const khoKeys = ["code", "name", "reason", "dateStored"];
+            const khoHeaders = ["Mã thiết bị", "Tên thiết bị", "Số lượng", "Lý do lưu kho", "Ngày lưu kho"];
+            const khoKeys = ["code", "name", "quantity", "reason", "dateStored"];
             zip.file("8_Danh_sach_kho_thiet_bi.csv", convertToCSV(khoList, khoHeaders, khoKeys));
 
             showToast('Đang xử lý', 'Đang tạo file ZIP chứa các báo cáo...', 'info');
