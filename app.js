@@ -133,7 +133,6 @@ async function startApp() {
                     user_phone: js.userPhone,
                     user_disabled: !!js.userDisabled,
                     has_device: js.devAllocation === 'yes',
-                    dev_allocation: js.devAllocation || 'yes',
                     dev_id: js.devId || null,
                     dev_type: js.devType,
                     dev_main: js.devMain,
@@ -1401,6 +1400,10 @@ async function startApp() {
                         .from('thiet_bi')
                         .insert([dbData])
                         .select();
+                    if (error) {
+                        console.error('[SUPABASE INSERT ERROR] thiet_bi:', JSON.stringify(error));
+                        console.error('[SUPABASE INSERT DATA SENT]:', JSON.stringify(dbData));
+                    }
                     if (!error && insertedData && insertedData.length > 0) {
                         thietBiList.push(mappers.thietBi.fromDB(insertedData[0]));
                         isDbSuccess = true;
@@ -1493,6 +1496,8 @@ async function startApp() {
             
             try {
                 const dbData = mappers.thietBi.toDB(data);
+                console.log('[DEBUG UPDATE] dbData keys:', Object.keys(dbData));
+                console.log('[DEBUG UPDATE] dbData:', JSON.stringify(dbData));
                 let isDbSuccess = false;
                 const isLocalId = oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
                 if (supabaseClient && !isLocalId) {
@@ -1501,6 +1506,10 @@ async function startApp() {
                         .update(dbData)
                         .eq('id', oldItem.id)
                         .select();
+                    if (error) {
+                        console.error('[SUPABASE UPDATE ERROR] thiet_bi:', JSON.stringify(error));
+                        console.error('[SUPABASE UPDATE DATA SENT]:', JSON.stringify(dbData));
+                    }
                     if (!error && updatedData && updatedData.length > 0) {
                         thietBiList[idx] = mappers.thietBi.fromDB(updatedData[0]);
                         isDbSuccess = true;
