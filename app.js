@@ -952,24 +952,53 @@ async function startApp() {
             }
         }
 
-        // 5. License Expiry Alerts Summary
+        // 5. License Expiry Alerts Summary (Sorted by Soonest Expiry Date)
         const elLicenseAlerts = document.getElementById('dash-license-alerts');
         if (elLicenseAlerts) {
             elLicenseAlerts.innerHTML = '';
-            const upcomingLicenses = giaHanList ? giaHanList.slice(0, 5) : [];
-            if (upcomingLicenses.length === 0) {
-                elLicenseAlerts.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Không có bản quyền sắp hết hạn</div>';
+            
+            const sortedGiaHan = [...(giaHanList || [])].sort((a, b) => {
+                const dateA = parseDateDMY(a.expiryDate) || new Date(8640000000000000);
+                const dateB = parseDateDMY(b.expiryDate) || new Date(8640000000000000);
+                return dateA - dateB;
+            });
+
+            if (sortedGiaHan.length === 0) {
+                elLicenseAlerts.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Không có thông tin bản quyền nào</div>';
             } else {
-                upcomingLicenses.forEach(lic => {
+                sortedGiaHan.forEach(lic => {
+                    const days = calculateDaysRemaining(lic.expiryDate);
+                    const dateFormatted = formatDateDMY(lic.expiryDate);
+                    let badgeBg = 'rgba(239, 68, 68, 0.15)';
+                    let badgeColor = '#ef4444';
+                    let badgeBorder = 'rgba(239, 68, 68, 0.3)';
+                    let statusText = dateFormatted;
+
+                    if (days <= 0) {
+                        statusText = `Đã hết hạn (${dateFormatted})`;
+                    } else if (days <= 30) {
+                        statusText = `Còn ${days} ngày (${dateFormatted})`;
+                    } else if (days <= 90) {
+                        badgeBg = 'rgba(234, 179, 8, 0.15)';
+                        badgeColor = '#eab308';
+                        badgeBorder = 'rgba(234, 179, 8, 0.3)';
+                        statusText = `Còn ${days} ngày (${dateFormatted})`;
+                    } else {
+                        badgeBg = 'rgba(34, 197, 94, 0.15)';
+                        badgeColor = '#22c55e';
+                        badgeBorder = 'rgba(34, 197, 94, 0.3)';
+                        statusText = dateFormatted;
+                    }
+
                     const div = document.createElement('div');
-                    div.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; font-size: 13px;';
+                    div.style.cssText = `display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: rgba(255, 255, 255, 0.03); border: 1px solid ${badgeBorder}; border-radius: 10px; font-size: 13px; margin-bottom: 8px; transition: all 0.2s;`;
                     div.innerHTML = `
                         <div>
-                            <div style="font-weight: 600; color: var(--text-primary);">${lic.softwareName || 'Bản quyền'}</div>
-                            <div style="font-size: 11px; color: var(--text-secondary);">${lic.provider || ''} ${lic.userCount ? '| ' + lic.userCount + ' User' : ''}</div>
+                            <div style="font-weight: 600; color: var(--text-primary); font-size: 14px; margin-bottom: 2px;">Bản quyền ${lic.name || lic.softwareName || ''}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${lic.provider || '—'}</div>
                         </div>
                         <div style="text-align: right;">
-                            <span class="badge badge-danger" style="font-size: 11px;">${lic.expiryDate || 'N/A'}</span>
+                            <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${badgeBorder}; font-size: 12px; font-weight: 600;">${statusText}</span>
                         </div>
                     `;
                     elLicenseAlerts.appendChild(div);
@@ -1490,12 +1519,8 @@ async function startApp() {
         // Scroll to top of tab view to see form
         document.querySelector('.tab-container').scrollTop = 0;
 
-        // Switch tab to cap-phat-form (1.1)
-        menuItems.forEach(btn => {
-            if (btn.getAttribute('data-tab') === 'tab-cap-phat-form') {
-                btn.click();
-            }
-        });
+        // Switch tab to cap-phat-form
+        switchToTab('tab-cap-phat-form');
         
         // Remove error states if any
         document.getElementById('err-user-id').style.display = 'none';
