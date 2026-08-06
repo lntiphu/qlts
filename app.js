@@ -810,12 +810,16 @@ async function startApp() {
         });
     }
 
-    function getItemTimestamp(item) {
+    function getItemCreatedTimestamp(item) {
         if (!item) return 0;
         if (item.history && item.history.length > 0) {
-            const createLog = item.history.find(h => h.action === 'Tạo mới') || item.history[0];
+            const createLog = item.history.find(h => h.action === 'Tạo mới');
             if (createLog && createLog.time) {
                 const parsed = parseDateDMY(createLog.time);
+                if (parsed) return parsed.getTime();
+            }
+            if (item.history.length === 1 && item.history[0].time) {
+                const parsed = parseDateDMY(item.history[0].time);
                 if (parsed) return parsed.getTime();
             }
         }
@@ -823,11 +827,23 @@ async function startApp() {
             const parsed = parseDateDMY(item.createdAt);
             if (parsed) return parsed.getTime();
         }
+        return 0;
+    }
+
+    function getItemUpdatedTimestamp(item) {
+        if (!item) return 0;
+        if (item.history && item.history.length > 0) {
+            const lastLog = item.history[item.history.length - 1];
+            if (lastLog && lastLog.time) {
+                const parsed = parseDateDMY(lastLog.time);
+                if (parsed) return parsed.getTime();
+            }
+        }
         if (item.updatedAt) {
             const parsed = parseDateDMY(item.updatedAt);
             if (parsed) return parsed.getTime();
         }
-        return 0;
+        return getItemCreatedTimestamp(item);
     }
 
     function renderDashboard() {
@@ -1092,8 +1108,10 @@ async function startApp() {
             : '';
 
         let sortedList = [...thietBiList];
-        if (userStatusFilter === 'recent') {
-            sortedList.sort((a, b) => getItemTimestamp(b) - getItemTimestamp(a));
+        if (userStatusFilter === 'created_recent') {
+            sortedList.sort((a, b) => getItemCreatedTimestamp(b) - getItemCreatedTimestamp(a));
+        } else if (userStatusFilter === 'recent' || userStatusFilter === 'updated_recent') {
+            sortedList.sort((a, b) => getItemUpdatedTimestamp(b) - getItemUpdatedTimestamp(a));
         } else {
             sortedList.sort((a, b) => {
                 const nameA = a.userName ? a.userName.trim() : "";
@@ -1103,8 +1121,7 @@ async function startApp() {
         }
 
         const now = new Date().getTime();
-        const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-        const hasStrictRecent = thietBiList.some(item => (now - getItemTimestamp(item)) <= thirtyDaysMs && getItemTimestamp(item) > 0);
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
 
         // Safe filter matching keyword
         const keywords = filterText.toLowerCase().split(/\s+/).filter(Boolean);
@@ -1118,17 +1135,28 @@ async function startApp() {
             if (userStatusFilter === 'active' && item.userDisabled) {
                 return false;
             }
+            if (userStatusFilter === 'created_recent') {
+                const cTs = getItemCreatedTimestamp(item);
+                if (cTs === 0 || (now - cTs) > sevenDaysMs) return false;
+            }
+            if (userStatusFilter === 'updated_recent') {
+                const uTs = getItemUpdatedTimestamp(item);
+                if (uTs === 0 || (now - uTs) > sevenDaysMs) return false;
+            }
             if (userStatusFilter === 'recent') {
-                const ts = getItemTimestamp(item);
-                if (hasStrictRecent && (now - ts) > thirtyDaysMs) {
-                    return false;
-                }
+                const maxTs = Math.max(getItemCreatedTimestamp(item), getItemUpdatedTimestamp(item));
+                if (maxTs === 0 || (now - maxTs) > sevenDaysMs) return false;
             }
 
             if (keywords.length === 0) return true;
             
+            const cTs = getItemCreatedTimestamp(item);
+            const uTs = getItemUpdatedTimestamp(item);
+            const isCreatedRecent = cTs > 0 && ((now - cTs) <= sevenDaysMs);
+            const isUpdatedRecent = uTs > 0 && ((now - uTs) <= sevenDaysMs);
+
             const disabledTag = item.userDisabled ? 'offline disable user nghỉ việc đã vô hiệu hóa' : 'online đang hoạt động';
-            const recentTag = (now - getItemTimestamp(item)) <= thirtyDaysMs ? 'mới thêm gần đây recent' : '';
+            const recentTag = (isCreatedRecent ? 'mới thêm mới tạo mới gần đây ' : '') + (isUpdatedRecent ? 'mới cập nhật gần đây recent' : '');
             const itemText = `
                 ${item.userId || ''} 
                 ${item.userName || ''} 
@@ -1153,41 +1181,67 @@ async function startApp() {
         if (currentPageThietBi > totalPages) currentPageThietBi = totalPages;
         if (currentPageThietBi < 1) currentPageThietBi = 1;
 
-        const startIndex = (currentPageThietBi - 1) * itemsPerPageThietBi;
-        const endIndex = Math.min(startIndex + itemsPerPageThietBi, totalItems);
+        const elStart = document.getElementById('pag-start-thietbi');
+        const elEnd = document.getElementById('pag-end-thietbi');
+        const elTotal = document.getElementById('pag-total-thietbi');
+        const elCurrent = document.getElementById('pag-current-thietbi');
 
-        // Update pagination labels
-        document.getElementById('pag-start').innerText = totalItems > 0 ? startIndex + 1 : 0;
-        document.getElementById('pag-end').innerText = endIndex;
-        document.getElementById('pag-total').innerText = totalItems;
-        document.getElementById('pag-current').innerText = `Trang ${currentPageThietBi} / ${totalPages}`;
+        if (elStart) elStart.innerText = totalItems > 0 ? (currentPageThietBi - 1) * itemsPerPageThietBi + 1 : 0;
+        if (elEnd) elEnd.innerText = Math.min(currentPageThietBi * itemsPerPageThietBi, totalItems);
+        if (elTotal) elTotal.innerText = totalItems;
+        if (elCurrent) elCurrent.innerText = `Trang ${currentPageThietBi} / ${totalPages}`;
 
-        // Disable/enable pagination buttons
-        const btnPrev = document.getElementById('btn-prev-page');
-        const btnNext = document.getElementById('btn-next-page');
-        
-        btnPrev.disabled = currentPageThietBi === 1;
-        btnNext.disabled = currentPageThietBi === totalPages;
-        btnPrev.style.opacity = currentPageThietBi === 1 ? '0.5' : '1';
-        btnPrev.style.cursor = currentPageThietBi === 1 ? 'not-allowed' : 'pointer';
-        btnNext.style.opacity = currentPageThietBi === totalPages ? '0.5' : '1';
-        btnNext.style.cursor = currentPageThietBi === totalPages ? 'not-allowed' : 'pointer';
+        const btnPrev = document.getElementById('btn-prev-page-thietbi');
+        const btnNext = document.getElementById('btn-next-page-thietbi');
+
+        if (btnPrev) {
+            btnPrev.disabled = currentPageThietBi === 1;
+            btnPrev.style.opacity = currentPageThietBi === 1 ? '0.5' : '1';
+            btnPrev.style.cursor = currentPageThietBi === 1 ? 'not-allowed' : 'pointer';
+        }
+        if (btnNext) {
+            btnNext.disabled = currentPageThietBi === totalPages;
+            btnNext.style.opacity = currentPageThietBi === totalPages ? '0.5' : '1';
+            btnNext.style.cursor = currentPageThietBi === totalPages ? 'not-allowed' : 'pointer';
+        }
 
         if (totalItems === 0) {
             tbodyThietBi.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="6" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát!</td>
+                    <td colspan="7" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát thiết bị!</td>
                 </tr>
             `;
             return;
         }
 
+        const startIndex = (currentPageThietBi - 1) * itemsPerPageThietBi;
+        const endIndex = Math.min(startIndex + itemsPerPageThietBi, totalItems);
         const pageItems = filtered.slice(startIndex, endIndex);
 
-        pageItems.forEach((item, index) => {
-            // Find the original index in the main list
+        pageItems.forEach((item) => {
             const originalIndex = thietBiList.indexOf(item);
-            
+            const tr = document.createElement('tr');
+
+            let keyArr = [];
+            if (item.keyWin) keyArr.push(`<div class="key-item"><i class="fa-brands fa-windows text-primary"></i> <span>${item.keyWin}</span></div>`);
+            if (item.keyOffice) keyArr.push(`<div class="key-item"><i class="fa-solid fa-file-word text-success"></i> <span>${item.keyOffice}</span></div>`);
+            if (item.keyPdf) keyArr.push(`<div class="key-item"><i class="fa-solid fa-file-pdf text-danger"></i> <span>${item.keyPdf}</span></div>`);
+            if (item.devApps) keyArr.push(`<div class="key-item" title="App bản quyền"><i class="fa-solid fa-cubes text-warning"></i> <span>${item.devApps}</span></div>`);
+            const keysText = keyArr.length > 0 ? keyArr.join('') : '<span class="text-muted">Không có key</span>';
+
+            const createdTs = getItemCreatedTimestamp(item);
+            const updatedTs = getItemUpdatedTimestamp(item);
+            const nowTs = new Date().getTime();
+            const isCreatedRecentBadge = createdTs > 0 && ((nowTs - createdTs) <= 7 * 24 * 60 * 60 * 1000);
+            const isUpdatedRecentBadge = !isCreatedRecentBadge && updatedTs > 0 && ((nowTs - updatedTs) <= 7 * 24 * 60 * 60 * 1000);
+
+            let statusBadgeHtml = '';
+            if (isCreatedRecentBadge) {
+                statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);" title="Mới tạo trong 7 ngày gần đây"><i class="fa-solid fa-sparkles"></i> Mới thêm</span>`;
+            } else if (isUpdatedRecentBadge) {
+                statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);" title="Mới cập nhật thông tin trong 7 ngày gần đây"><i class="fa-solid fa-rotate"></i> Mới cập nhật</span>`;
+            }
+
             const getStatusBadgeClass = (status) => {
                 switch (status) {
                     case 'Mới': return 'badge-green';
@@ -1198,9 +1252,6 @@ async function startApp() {
                 }
             };
 
-            const tr = document.createElement('tr');
-            
-            // Format Config details
             const configArr = [];
             if (item.devMain) configArr.push(`Main: ${item.devMain}`);
             if (item.devCpu) configArr.push(`CPU: ${item.devCpu}`);
@@ -1222,25 +1273,13 @@ async function startApp() {
             if (item.devCables) configArr.push(`Dây kết nối: ${item.devCables}`);
             const configText = configArr.length > 0 ? configArr.join('<br>') : 'Chưa nhập cấu hình';
 
-            // Format License keys
-            const keyArr = [];
-            if (item.keyWin) keyArr.push(`<div class="key-item"><i class="fa-brands fa-windows text-primary"></i> <span>${item.keyWin}</span></div>`);
-            if (item.keyOffice) keyArr.push(`<div class="key-item"><i class="fa-solid fa-file-word text-success"></i> <span>${item.keyOffice}</span></div>`);
-            if (item.keyPdf) keyArr.push(`<div class="key-item"><i class="fa-solid fa-file-pdf text-danger"></i> <span>${item.keyPdf}</span></div>`);
-            if (item.devApps) keyArr.push(`<div class="key-item" title="App bản quyền"><i class="fa-solid fa-cubes text-warning"></i> <span>${item.devApps}</span></div>`);
-            const keysText = keyArr.length > 0 ? keyArr.join('') : '<span class="text-muted">Không có key</span>';
-
-            const itemTs = getItemTimestamp(item);
-            const nowTs = new Date().getTime();
-            const isRecentBadge = itemTs > 0 && ((nowTs - itemTs) <= 7 * 24 * 60 * 60 * 1000);
-
             tr.innerHTML = `
                 <td>
                     <div class="user-info-cell">
                         <span class="name">
                             <span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> 
                             <span class="badge badge-blue">${item.userId}</span>
-                            ${isRecentBadge ? `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);"><i class="fa-solid fa-sparkles"></i> Mới</span>` : ''}
+                            ${statusBadgeHtml}
                             ${item.userDisabled 
                                 ? `<span class="badge badge-danger" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #ef4444;"></i> Offline</span>` 
                                 : `<span class="badge badge-success" style="margin-left: 4px; font-size: 11px; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Online</span>`}

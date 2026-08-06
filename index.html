@@ -532,11 +532,12 @@
                                     <select id="filter-dept-thietbi" class="filter-select">
                                         <option value="">-- Tất cả phòng ban --</option>
                                     </select>
-                                    <select id="filter-status-thietbi" class="filter-select" style="min-width: 175px;">
+                                    <select id="filter-status-thietbi" class="filter-select" style="min-width: 210px;">
                                         <option value="">-- Tất cả trạng thái --</option>
-                                        <option value="active">🟢 Online</option>
-                                        <option value="disabled">🔴 Offline</option>
-                                        <option value="recent">✨ Mới thêm gần đây</option>
+                                        <option value="active">🟢 Online (Đang hoạt động)</option>
+                                        <option value="disabled">🔴 Offline (Vô hiệu hóa)</option>
+                                        <option value="created_recent">✨ Mới thêm gần đây</option>
+                                        <option value="updated_recent">🔄 Mới cập nhật gần đây</option>
                                     </select>
                                 </div>
                                 <div class="search-box">
@@ -1730,6 +1731,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=8.8"></script>
+    <script src="app.js?v=9.1"></script>
 </body>
 </html>
