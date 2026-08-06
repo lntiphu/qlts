@@ -970,11 +970,26 @@ async function startApp() {
             }
         }
 
-        // 4. Recent Activity Log Feed
+        // 4. Recent Activity Log Feed (Sorted Chronologically: Newest First)
         const elRecentActivity = document.getElementById('dash-recent-activity');
         if (elRecentActivity) {
             elRecentActivity.innerHTML = '';
             let allLogs = [];
+
+            function parseLogTime(timeStr) {
+                if (!timeStr) return 0;
+                const match = String(timeStr).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+lúc\s+(\d{1,2}):(\d{1,2}))?/);
+                if (match) {
+                    const day = parseInt(match[1]);
+                    const month = parseInt(match[2]) - 1;
+                    const year = parseInt(match[3]);
+                    const hour = match[4] ? parseInt(match[4]) : 0;
+                    const min = match[5] ? parseInt(match[5]) : 0;
+                    return new Date(year, month, day, hour, min).getTime();
+                }
+                return 0;
+            }
+
             thietBiList.forEach(item => {
                 if (item.history && item.history.length > 0) {
                     item.history.forEach(log => {
@@ -983,16 +998,20 @@ async function startApp() {
                             userId: item.userId,
                             time: log.time,
                             action: log.action,
-                            details: log.details
+                            details: log.details,
+                            timestamp: parseLogTime(log.time)
                         });
                     });
                 }
             });
 
+            // Sắp xếp các nhật ký mới nhất theo thời gian (giảm dần)
+            allLogs.sort((a, b) => b.timestamp - a.timestamp);
+
             if (allLogs.length === 0) {
                 elRecentActivity.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Chưa có hoạt động cập nhật</div>';
             } else {
-                allLogs.slice(-6).reverse().forEach(log => {
+                allLogs.slice(0, 8).forEach(log => {
                     const div = document.createElement('div');
                     div.style.cssText = 'padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; font-size: 12px;';
                     div.innerHTML = `
@@ -1414,6 +1433,7 @@ async function startApp() {
                     thietBiList.push(data);
                 }
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
+                processPendingKhoDeduct();
                 showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu thông tin cấp phát thiết bị mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
             } catch (err) {
                 console.error("Lỗi thêm thiết bị:", err);
@@ -1421,64 +1441,84 @@ async function startApp() {
                 data.id = 'local-' + Date.now();
                 thietBiList.push(data);
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
+                processPendingKhoDeduct();
                 showToast('Lưu Offline', 'Không kết nối được Supabase. Đã lưu tạm thời trên trình duyệt!', 'warning');
             }
         } else {
             const idx = parseInt(indexStr);
             const oldItem = thietBiList[idx];
             
-            // Compare fields
+            // Compare fields cleanly and accurately
             let changes = [];
-            const fieldsToCompare = {
-                hasDevice: "Cấp phát thiết bị",
-                userDisabled: "Disable User",
+            const wasDeviceAllocated = oldItem.hasDevice !== false && oldItem.devStatus !== 'Không cấp';
+            const isDeviceAllocated = data.hasDevice;
+
+            // 1. Kiểm tra trạng thái User (Disable / Active)
+            if (!!oldItem.userDisabled !== !!data.userDisabled) {
+                const statusOld = oldItem.userDisabled ? "Đã Disable User" : "Đang hoạt động";
+                const statusNew = data.userDisabled ? "Đã Disable User" : "Đang hoạt động";
+                changes.push(`• Thay đổi <strong>Disable User</strong>: "${statusOld}" ➔ "${statusNew}"`);
+            }
+
+            // 2. Kiểm tra thông tin nhân sự cơ bản
+            const userFields = {
                 userId: "ID Nhân viên",
                 userName: "Họ và Tên",
                 userTitle: "Chức danh",
                 userDept: "Phòng ban",
                 userEmail: "Email",
-                userPhone: "Số điện thoại",
-                devId: "ID Thiết bị",
-                devType: "Loại thiết bị",
-                devMain: "Mainboard",
-                devCpu: "CPU",
-                devRam: "RAM",
-                devRamSlots: "Số thanh RAM",
-                devSsd: "SSD",
-                devHdd: "HDD",
-                devVga: "VGA",
-                keyWin: "Key Windows",
-                keyOffice: "Key Office",
-                keyPdf: "Key PDF",
-                devNotes: "Ghi chú thiết bị",
-                devApps: "Các app bản quyền",
-                devStatus: "Tình trạng thiết bị",
-                devMonitor: "Tên màn hình",
-                devMonitorSn: "Serial màn hình",
-                devSn: "Serial thiết bị",
-                devKeyboard: "Bàn phím",
-                devMouse: "Chuột",
-                devCables: "Dây kết nối"
+                userPhone: "Số điện thoại"
             };
-
-            for (const key in fieldsToCompare) {
-                let oldVal = oldItem[key];
-                let newVal = data[key];
-                if (key === 'hasDevice') {
-                    oldVal = oldItem.hasDevice !== false && oldItem.devStatus !== 'Không cấp' ? "Có cấp" : "Không cấp";
-                    newVal = data.hasDevice ? "Có cấp" : "Không cấp";
-                } else if (key === 'userDisabled') {
-                    oldVal = oldItem.userDisabled ? "Đã Disable User" : "Đang hoạt động";
-                    newVal = data.userDisabled ? "Đã Disable User" : "Đang hoạt động";
-                } else if (typeof oldVal === 'boolean' || typeof newVal === 'boolean') {
-                    oldVal = oldVal ? "Có" : "Không";
-                    newVal = newVal ? "Có" : "Không";
-                } else {
-                    oldVal = (oldVal || '').toString().trim() || "Trống";
-                    newVal = (newVal || '').toString().trim() || "Trống";
-                }
+            for (const key in userFields) {
+                let oldVal = (oldItem[key] || '').toString().trim() || "Trống";
+                let newVal = (data[key] || '').toString().trim() || "Trống";
                 if (oldVal !== newVal) {
-                    changes.push(`• Thay đổi <strong>${fieldsToCompare[key]}</strong>: "${oldVal}" ➔ "${newVal}"`);
+                    changes.push(`• Thay đổi <strong>${userFields[key]}</strong>: "${oldVal}" ➔ "${newVal}"`);
+                }
+            }
+
+            // 3. Kiểm tra thay đổi Cấp phát thiết bị
+            if (wasDeviceAllocated && !isDeviceAllocated) {
+                // Thu hồi / Bỏ cấp phát thiết bị
+                const oldDevInfo = oldItem.devId ? `${oldItem.devId} (${oldItem.devType || 'Thiết bị'})` : (oldItem.devType || 'Thiết bị');
+                const reasonText = data.devAllocation === 'personal' ? 'Chuyển sang Sử dụng thiết bị cá nhân' : 'Bỏ cấp phát thiết bị';
+                changes.push(`• Thu hồi thiết bị: <strong>"${oldDevInfo}"</strong> ➔ <strong>"${reasonText}"</strong>`);
+            } else if (!wasDeviceAllocated && isDeviceAllocated) {
+                // Cấp phát thiết bị mới
+                const newDevInfo = data.devId ? `${data.devId} (${data.devType || 'Thiết bị'})` : (data.devType || 'Thiết bị');
+                changes.push(`• Cấp phát thiết bị mới: <strong>"Không cấp"</strong> ➔ <strong>"${newDevInfo}"</strong>`);
+            } else if (isDeviceAllocated) {
+                // Nếu cả cũ và mới đều có cấp thiết bị, so sánh chi tiết từng thông số phần cứng
+                const devFields = {
+                    devId: "ID Thiết bị",
+                    devType: "Loại thiết bị",
+                    devMain: "Mainboard",
+                    devCpu: "CPU",
+                    devRam: "RAM",
+                    devRamSlots: "Số thanh RAM",
+                    devSsd: "SSD",
+                    devHdd: "HDD",
+                    devVga: "VGA",
+                    devMonitor: "Tên màn hình",
+                    devMonitorSn: "Serial màn hình",
+                    devSn: "Serial thiết bị",
+                    devKeyboard: "Bàn phím",
+                    devMouse: "Chuột",
+                    devCables: "Dây kết nối",
+                    keyWin: "Key Windows",
+                    keyOffice: "Key Office",
+                    keyPdf: "Key PDF",
+                    devNotes: "Ghi chú thiết bị",
+                    devApps: "Các app bản quyền",
+                    devStatus: "Tình trạng thiết bị"
+                };
+
+                for (const key in devFields) {
+                    let oldVal = (oldItem[key] || '').toString().trim() || "Trống";
+                    let newVal = (data[key] || '').toString().trim() || "Trống";
+                    if (oldVal !== newVal) {
+                        changes.push(`• Thay đổi <strong>${devFields[key]}</strong>: "${oldVal}" ➔ "${newVal}"`);
+                    }
                 }
             }
 
@@ -1520,6 +1560,7 @@ async function startApp() {
                     thietBiList[idx] = data;
                 }
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
+                processPendingKhoDeduct();
                 showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin cấp phát thiết bị!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
                 resetFormThietBi();
             } catch (err) {
@@ -1527,6 +1568,7 @@ async function startApp() {
                 data.id = oldItem.id;
                 thietBiList[idx] = data;
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
+                processPendingKhoDeduct();
                 showToast('Lưu Offline', 'Không kết nối được Supabase. Đã cập nhật tạm thời trên trình duyệt!', 'warning');
                 resetFormThietBi();
             }
@@ -1652,8 +1694,8 @@ async function startApp() {
 
     function resetFormThietBi() {
         editIndexThietBi.value = '';
+        pendingKhoIndexToDeduct = null;
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới';
-        btnCancelThietBi.classList.add('hidden');
         formCapPhat.reset();
         const devAllocYes = document.getElementById('dev-alloc-yes');
         if (devAllocYes) {
@@ -1682,7 +1724,7 @@ async function startApp() {
 
     btnCancelThietBi.addEventListener('click', () => {
         resetFormThietBi();
-        switchToTab('tab-cap-phat-list');
+        showToast('Thông báo', 'Đã hủy nhập liệu và làm mới form!', 'info');
     });
 
     function toggleDeviceFields(hasDevice) {
@@ -1704,6 +1746,839 @@ async function startApp() {
             toggleDeviceFields(e.target.value === 'yes');
         });
     });
+
+    // =========================================================================
+    // MODAL CHUYỂN CẤU HÌNH THIẾT BỊ
+    // =========================================================================
+    const btnOpenTransferModal = document.getElementById('btn-open-transfer-modal');
+    const modalTransferDevice = document.getElementById('modal-transfer-device');
+    const btnCloseTransferModal = document.getElementById('btn-close-transfer-modal');
+    const btnCancelTransferModal = document.getElementById('btn-cancel-transfer-modal');
+    const btnSubmitTransfer = document.getElementById('btn-submit-transfer');
+
+    const transferTypeUserRadio = document.getElementById('transfer-type-user');
+    const transferTypeKhoRadio = document.getElementById('transfer-type-kho');
+    const transferSectionUser = document.getElementById('transfer-section-user');
+    const transferSectionKho = document.getElementById('transfer-section-kho');
+
+    const transferTargetUserIdInput = document.getElementById('transfer-target-user-id');
+    const transferUserSuggestions = document.getElementById('transfer-user-suggestions');
+    const transferTargetUserPreview = document.getElementById('transfer-target-user-preview');
+    const transferKhoReasonInput = document.getElementById('transfer-kho-reason');
+    const transferKhoNotesInput = document.getElementById('transfer-kho-notes');
+
+    const transferSummaryTitle = document.getElementById('transfer-summary-title');
+    const transferSummaryDetails = document.getElementById('transfer-summary-details');
+
+    // Helper: Lấy thông tin thiết bị hiện tại (từ form hoặc item đang chỉnh sửa)
+    function getCurrentDeviceSpecs() {
+        const indexStr = editIndexThietBi.value;
+        const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
+        const devAllocVal = allocSelected ? allocSelected.value : 'yes';
+
+        let devId = devIdInput.value.trim();
+        let devType = document.getElementById('dev-type').value.trim();
+        let devCpu = document.getElementById('dev-cpu').value.trim();
+        let devRam = document.getElementById('dev-ram').value;
+        let devSsd = document.getElementById('dev-ssd').value.trim();
+        let devHdd = document.getElementById('dev-hdd').value.trim();
+        let devMain = document.getElementById('dev-main').value.trim();
+        let devMonitor = document.getElementById('dev-monitor').value.trim();
+        let devStatus = document.getElementById('dev-status').value;
+
+        // Nếu đang sửa item sẵn có
+        let sourceUser = null;
+        if (indexStr !== '') {
+            const idx = parseInt(indexStr);
+            if (idx >= 0 && idx < thietBiList.length) {
+                sourceUser = thietBiList[idx];
+            }
+        }
+
+        // Tên nhân sự hiện tại
+        const currentUserId = userIdInput.value.trim();
+        const currentUserName = document.getElementById('user-name').value.trim() || (sourceUser ? sourceUser.userName : 'Nhân viên hiện tại');
+
+        return {
+            sourceUser: sourceUser,
+            currentUserId: currentUserId,
+            currentUserName: currentUserName,
+            devAllocVal: devAllocVal,
+            hasDevice: devAllocVal === 'yes' && (devId || devType || devCpu || devRam),
+            devId: devId,
+            devType: devType || 'PC / Laptop',
+            devMain: devMain,
+            devCpu: devCpu,
+            devRam: devRam,
+            devRamSlots: document.getElementById('dev-ram-slots').value,
+            devSsd: devSsd,
+            devHdd: devHdd,
+            devVga: document.getElementById('dev-vga').value.trim(),
+            keyWin: document.getElementById('key-win').value.trim(),
+            keyOffice: document.getElementById('key-office').value.trim(),
+            keyPdf: document.getElementById('key-pdf').value.trim(),
+            devNotes: document.getElementById('dev-notes').value.trim(),
+            devApps: document.getElementById('dev-apps').value.trim(),
+            devStatus: devStatus,
+            devMonitor: devMonitor,
+            devMonitorSn: document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '',
+            devSn: document.getElementById('dev-sn').value.trim(),
+            devKeyboard: document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '',
+            devMouse: document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '',
+            devCables: document.getElementById('dev-cables').value
+        };
+    }
+
+    // Đóng Modal Chuyển Thiết Bị
+    function closeTransferModal() {
+        if (modalTransferDevice) modalTransferDevice.classList.add('hidden');
+        if (transferTargetUserIdInput) transferTargetUserIdInput.value = '';
+        if (transferUserSuggestions) transferUserSuggestions.classList.add('hidden');
+        if (transferTargetUserPreview) transferTargetUserPreview.classList.add('hidden');
+        if (transferKhoReasonInput) transferKhoReasonInput.value = '';
+        if (transferKhoNotesInput) transferKhoNotesInput.value = '';
+    }
+
+    // Mở Modal Chuyển Thiết Bị
+    if (btnOpenTransferModal) {
+        btnOpenTransferModal.addEventListener('click', () => {
+            const specs = getCurrentDeviceSpecs();
+
+            if (!specs.hasDevice && !specs.devId && !specs.devType && !specs.devCpu) {
+                showToast('Thông báo', 'Không có thông tin thiết bị để chuyển! Vui lòng chọn "Có cấp" và điền thông tin thiết bị trước.', 'warning');
+                return;
+            }
+
+            // Nạp nội dung hiển thị tổng quan thiết bị
+            transferSummaryTitle.innerText = `Thiết bị từ ${specs.currentUserName} (${specs.currentUserId || 'Mới'}):`;
+            
+            let html = `<strong>Mã thiết bị:</strong> ${specs.devId || 'Chưa đặt ID'}<br>`;
+            html += `<strong>Loại:</strong> ${specs.devType} | <strong>Tình trạng:</strong> ${specs.devStatus}<br>`;
+            let hardware = [];
+            if (specs.devCpu) hardware.push(`CPU: ${specs.devCpu}`);
+            if (specs.devRam) hardware.push(`RAM: ${specs.devRam}`);
+            if (specs.devSsd) hardware.push(`SSD: ${specs.devSsd}GB`);
+            if (specs.devHdd) hardware.push(`HDD: ${specs.devHdd}`);
+            if (specs.devMonitor) hardware.push(`Màn hình: ${specs.devMonitor}`);
+            html += `<strong>Cấu hình:</strong> ${hardware.length > 0 ? hardware.join(', ') : 'Chưa nhập chi tiết'}`;
+            
+            transferSummaryDetails.innerHTML = html;
+
+            // Set lý do mặc định cho Lưu kho
+            if (transferKhoReasonInput) {
+                transferKhoReasonInput.value = `Thu hồi thiết bị (${specs.devId || specs.devType}) từ nhân viên ${specs.currentUserName}`;
+            }
+
+            // Reset tab lựa chọn
+            if (transferTypeUserRadio) transferTypeUserRadio.checked = true;
+            if (transferSectionUser) transferSectionUser.classList.remove('hidden');
+            if (transferSectionKho) transferSectionKho.classList.add('hidden');
+
+            if (modalTransferDevice) modalTransferDevice.classList.remove('hidden');
+        });
+    }
+
+    if (btnCloseTransferModal) btnCloseTransferModal.addEventListener('click', closeTransferModal);
+    if (btnCancelTransferModal) btnCancelTransferModal.addEventListener('click', closeTransferModal);
+
+    // Chuyển đổi giữa 2 hình thức: Chuyển cho User vs Chuyển về Kho
+    if (transferTypeUserRadio) {
+        transferTypeUserRadio.addEventListener('change', () => {
+            if (transferSectionUser) transferSectionUser.classList.remove('hidden');
+            if (transferSectionKho) transferSectionKho.classList.add('hidden');
+        });
+    }
+    if (transferTypeKhoRadio) {
+        transferTypeKhoRadio.addEventListener('change', () => {
+            if (transferSectionUser) transferSectionUser.classList.add('hidden');
+            if (transferSectionKho) transferSectionKho.classList.remove('hidden');
+        });
+    }
+
+    // Autocomplete cho ô nhập ID Nhân viên nhận
+    if (transferTargetUserIdInput) {
+        transferTargetUserIdInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            if (!query) {
+                if (transferUserSuggestions) transferUserSuggestions.classList.add('hidden');
+                if (transferTargetUserPreview) transferTargetUserPreview.classList.add('hidden');
+                return;
+            }
+
+            const currentUserId = userIdInput.value.trim().toLowerCase();
+
+            // Tìm gợi ý các user trong thietBiList
+            const matches = thietBiList.filter(u => 
+                u.userId.toLowerCase() !== currentUserId &&
+                (u.userId.toLowerCase().includes(query) || u.userName.toLowerCase().includes(query) || (u.userDept && u.userDept.toLowerCase().includes(query)))
+            ).slice(0, 5);
+
+            if (matches.length === 0) {
+                if (transferUserSuggestions) transferUserSuggestions.classList.add('hidden');
+                if (transferTargetUserPreview) transferTargetUserPreview.classList.add('hidden');
+                return;
+            }
+
+            let html = '';
+            matches.forEach(m => {
+                const devText = m.hasDevice ? ` (Có MB: ${m.devId || m.devType})` : ' (Không cấp MB)';
+                html += `<div class="autocomplete-suggestion-item" data-userid="${m.userId}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <strong>${m.userId}</strong> - ${m.userName} (${m.userDept || 'K.Xác Định'})<span style="font-size: 11px; opacity: 0.7; float: right;">${devText}</span>
+                </div>`;
+            });
+
+            transferUserSuggestions.innerHTML = html;
+            transferUserSuggestions.classList.remove('hidden');
+
+            // Bắt sự kiện nhấp chọn item gợi ý
+            const items = transferUserSuggestions.querySelectorAll('.autocomplete-suggestion-item');
+            items.forEach(item => {
+                item.addEventListener('click', () => {
+                    const selectedId = item.getAttribute('data-userid');
+                    transferTargetUserIdInput.value = selectedId;
+                    transferUserSuggestions.classList.add('hidden');
+                    updateTargetUserPreview(selectedId);
+                });
+            });
+
+            // Cập nhật preview nếu khớp chính xác
+            const exactMatch = matches.find(m => m.userId.toLowerCase() === query);
+            if (exactMatch) {
+                updateTargetUserPreview(exactMatch.userId);
+            } else {
+                if (transferTargetUserPreview) transferTargetUserPreview.classList.add('hidden');
+            }
+        });
+    }
+
+    function updateTargetUserPreview(userId) {
+        const target = thietBiList.find(u => u.userId.toLowerCase() === userId.toLowerCase());
+        if (target && transferTargetUserPreview) {
+            let statusText = target.hasDevice ? `⚠️ Đang sử dụng thiết bị: <strong>${target.devId || target.devType}</strong> (Cấu hình này sẽ bị thay thế)` : `✅ Hiện chưa có thiết bị (Sẵn sàng nhận)`;
+            transferTargetUserPreview.innerHTML = `
+                <div style="font-weight: 600;"><i class="fa-solid fa-user-check"></i> ${target.userName} (${target.userId})</div>
+                <div style="font-size: 11px; margin-top: 3px;">Phòng ban: ${target.userDept || 'K.Xác Định'} | Chức danh: ${target.userTitle || 'N/A'}</div>
+                <div style="font-size: 11px; margin-top: 4px; color: ${target.hasDevice ? '#f59e0b' : '#22c55e'};">${statusText}</div>
+            `;
+            transferTargetUserPreview.classList.remove('hidden');
+        } else if (transferTargetUserPreview) {
+            transferTargetUserPreview.classList.add('hidden');
+        }
+    }
+
+    // XỬ LÝ THỰC HIỆN CHUYỂN THIẾT BỊ
+    if (btnSubmitTransfer) {
+        btnSubmitTransfer.addEventListener('click', async () => {
+            const specs = getCurrentDeviceSpecs();
+            const now = new Date();
+            const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            const isTransferToUser = transferTypeUserRadio.checked;
+
+            if (isTransferToUser) {
+                const targetUserId = transferTargetUserIdInput.value.trim();
+                if (!targetUserId) {
+                    showToast('Lỗi nhập liệu', 'Vui lòng nhập ID Nhân viên nhận thiết bị!', 'error');
+                    return;
+                }
+
+                // Tìm target user
+                const targetIdx = thietBiList.findIndex(u => u.userId.toLowerCase() === targetUserId.toLowerCase());
+                if (targetIdx === -1) {
+                    showToast('Không tìm thấy', `Không tìm thấy nhân viên nào có ID: "${targetUserId}"!`, 'error');
+                    return;
+                }
+
+                const targetUser = thietBiList[targetIdx];
+
+                // Kiểm tra xem có trùng với nhân viên hiện tại không
+                if (specs.sourceUser && specs.sourceUser.id === targetUser.id) {
+                    showToast('Cảnh báo', 'Không thể chuyển thiết bị cho chính nhân viên này!', 'warning');
+                    return;
+                }
+                if (specs.currentUserId && specs.currentUserId.toLowerCase() === targetUser.userId.toLowerCase()) {
+                    showToast('Cảnh báo', 'Không thể chuyển thiết bị cho chính nhân viên này!', 'warning');
+                    return;
+                }
+
+                // 1. Cập nhật thiết bị cho targetUser
+                const devIdentifier = specs.devId || specs.devType || 'Thiết bị';
+                targetUser.hasDevice = true;
+                targetUser.devAllocation = 'yes';
+                targetUser.devId = specs.devId;
+                targetUser.devType = specs.devType;
+                targetUser.devMain = specs.devMain;
+                targetUser.devCpu = specs.devCpu;
+                targetUser.devRam = specs.devRam;
+                targetUser.devRamSlots = specs.devRamSlots;
+                targetUser.devSsd = specs.devSsd;
+                targetUser.devHdd = specs.devHdd;
+                targetUser.devVga = specs.devVga;
+                targetUser.keyWin = specs.keyWin;
+                targetUser.keyOffice = specs.keyOffice;
+                targetUser.keyPdf = specs.keyPdf;
+                targetUser.devNotes = specs.devNotes;
+                targetUser.devApps = specs.devApps;
+                targetUser.devStatus = specs.devStatus || 'Mới';
+                targetUser.devMonitor = specs.devMonitor;
+                targetUser.devMonitorSn = specs.devMonitorSn;
+                targetUser.devSn = specs.devSn;
+                targetUser.devKeyboard = specs.devKeyboard;
+                targetUser.devMouse = specs.devMouse;
+                targetUser.devCables = specs.devCables;
+                targetUser.updatedAt = formattedDate;
+
+                if (!targetUser.history) targetUser.history = [];
+                targetUser.history.push({
+                    time: formattedDate,
+                    action: 'Nhận bàn giao thiết bị',
+                    details: `Nhận điều chuyển thiết bị <strong>${devIdentifier}</strong> từ nhân viên <strong>${specs.currentUserName}</strong> (${specs.currentUserId || 'Mới'}).`
+                });
+
+                // Lưu targetUser lên Supabase
+                try {
+                    const dbTarget = mappers.thietBi.toDB(targetUser);
+                    if (supabaseClient && targetUser.id && !String(targetUser.id).startsWith('local-')) {
+                        await supabaseClient.from('thiet_bi').update(dbTarget).eq('id', targetUser.id);
+                    }
+                } catch (e) {
+                    console.warn("Lỗi lưu targetUser lên Supabase:", e);
+                }
+
+                // 2. Nếu đang sửa sourceUser trong thietBiList -> Xóa thiết bị của sourceUser
+                if (specs.sourceUser) {
+                    const sourceIdx = thietBiList.findIndex(u => u.id === specs.sourceUser.id);
+                    if (sourceIdx !== -1) {
+                        const sUser = thietBiList[sourceIdx];
+                        sUser.hasDevice = false;
+                        sUser.devAllocation = 'no';
+                        sUser.devId = '';
+                        sUser.devType = '';
+                        sUser.devMain = '';
+                        sUser.devCpu = '';
+                        sUser.devRam = '';
+                        sUser.devRamSlots = '';
+                        sUser.devSsd = '';
+                        sUser.devHdd = '';
+                        sUser.devVga = '';
+                        sUser.keyWin = '';
+                        sUser.keyOffice = '';
+                        sUser.keyPdf = '';
+                        sUser.devNotes = '';
+                        sUser.devApps = '';
+                        sUser.devStatus = 'Không cấp';
+                        sUser.devMonitor = '';
+                        sUser.devMonitorSn = '';
+                        sUser.devSn = '';
+                        sUser.devKeyboard = '';
+                        sUser.devMouse = '';
+                        sUser.devCables = '';
+                        sUser.updatedAt = formattedDate;
+
+                        if (!sUser.history) sUser.history = [];
+                        sUser.history.push({
+                            time: formattedDate,
+                            action: 'Chuyển thiết bị',
+                            details: `Chuyển điều phối thiết bị <strong>${devIdentifier}</strong> sang cho nhân viên <strong>${targetUser.userName}</strong> (${targetUser.userId}).`
+                        });
+
+                        try {
+                            const dbSource = mappers.thietBi.toDB(sUser);
+                            if (supabaseClient && sUser.id && !String(sUser.id).startsWith('local-')) {
+                                await supabaseClient.from('thiet_bi').update(dbSource).eq('id', sUser.id);
+                            }
+                        } catch (e) {
+                            console.warn("Lỗi lưu sourceUser lên Supabase:", e);
+                        }
+                    }
+                }
+
+                // Reset form thiết bị về "Không cấp"
+                const devAllocNo = document.getElementById('dev-alloc-no');
+                if (devAllocNo) {
+                    devAllocNo.checked = true;
+                    toggleDeviceFields(false);
+                }
+
+                // Lưu LocalStorage & Render lại
+                saveToLocalStorageFallback('thiet_bi', thietBiList);
+                renderThietBi();
+                closeTransferModal();
+
+                showToast('Thành công', `Đã chuyển thiết bị "${devIdentifier}" sang cho nhân viên ${targetUser.userName} (${targetUser.userId})!`, 'success');
+
+            } else {
+                // CHUYỂN VỀ LƯU KHO (kho_thiet_bi)
+                const reason = transferKhoReasonInput.value.trim() || `Thu hồi thiết bị từ nhân viên ${specs.currentUserName}`;
+                const notes = transferKhoNotesInput.value.trim();
+
+                const devIdentifier = specs.devId || specs.devType || 'TB-KHO';
+                let specsDetail = [];
+                if (specs.devCpu) specsDetail.push(`CPU: ${specs.devCpu}`);
+                if (specs.devRam) specsDetail.push(`RAM: ${specs.devRam}`);
+                if (specs.devSsd) specsDetail.push(`SSD: ${specs.devSsd}GB`);
+                if (specs.devHdd) specsDetail.push(`HDD: ${specs.devHdd}`);
+                if (specs.devMonitor) specsDetail.push(`Màn hình: ${specs.devMonitor}`);
+
+                const fullNotes = `Cấu hình: ${specsDetail.join(', ')}` + (notes ? `. Ghi chú: ${notes}` : '');
+
+                const newKhoItem = {
+                    code: devIdentifier,
+                    name: `${specs.devType} ${specs.devCpu ? '(' + specs.devCpu + ')' : ''}`.trim(),
+                    quantity: 1,
+                    reason: reason,
+                    dateStored: `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`,
+                    notes: fullNotes
+                };
+
+                let isDbSuccess = false;
+                try {
+                    const dbData = mappers.khoThietBi.toDB(newKhoItem);
+                    if (supabaseClient) {
+                        const { data: inserted, error } = await supabaseClient
+                            .from('kho_thiet_bi')
+                            .insert([dbData])
+                            .select();
+                        if (!error && inserted && inserted.length > 0) {
+                            khoList.push(mappers.khoThietBi.fromDB(inserted[0]));
+                            isDbSuccess = true;
+                        }
+                    }
+                } catch (e) {
+                    console.warn("Lỗi lưu kho_thiet_bi lên Supabase:", e);
+                }
+
+                if (!isDbSuccess) {
+                    newKhoItem.id = 'local-kho-' + Date.now();
+                    khoList.push(newKhoItem);
+                }
+                saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                renderKho();
+
+                // Cập nhật sourceUser (nếu có)
+                if (specs.sourceUser) {
+                    const sourceIdx = thietBiList.findIndex(u => u.id === specs.sourceUser.id);
+                    if (sourceIdx !== -1) {
+                        const sUser = thietBiList[sourceIdx];
+                        sUser.hasDevice = false;
+                        sUser.devAllocation = 'no';
+                        sUser.devId = '';
+                        sUser.devType = '';
+                        sUser.devMain = '';
+                        sUser.devCpu = '';
+                        sUser.devRam = '';
+                        sUser.devRamSlots = '';
+                        sUser.devSsd = '';
+                        sUser.devHdd = '';
+                        sUser.devVga = '';
+                        sUser.keyWin = '';
+                        sUser.keyOffice = '';
+                        sUser.keyPdf = '';
+                        sUser.devNotes = '';
+                        sUser.devApps = '';
+                        sUser.devStatus = 'Không cấp';
+                        sUser.devMonitor = '';
+                        sUser.devMonitorSn = '';
+                        sUser.devSn = '';
+                        sUser.devKeyboard = '';
+                        sUser.devMouse = '';
+                        sUser.devCables = '';
+                        sUser.updatedAt = formattedDate;
+
+                        if (!sUser.history) sUser.history = [];
+                        sUser.history.push({
+                            time: formattedDate,
+                            action: 'Thu hồi về kho',
+                            details: `Thu hồi thiết bị <strong>${devIdentifier}</strong> chuyển về lưu kho thiết bị.`
+                        });
+
+                        try {
+                            const dbSource = mappers.thietBi.toDB(sUser);
+                            if (supabaseClient && sUser.id && !String(sUser.id).startsWith('local-')) {
+                                await supabaseClient.from('thiet_bi').update(dbSource).eq('id', sUser.id);
+                            }
+                        } catch (e) {
+                            console.warn("Lỗi lưu sourceUser lên Supabase:", e);
+                        }
+                        saveToLocalStorageFallback('thiet_bi', thietBiList);
+                        renderThietBi();
+                    }
+                }
+
+                // Reset form thiết bị về "Không cấp"
+                const devAllocNo = document.getElementById('dev-alloc-no');
+                if (devAllocNo) {
+                    devAllocNo.checked = true;
+                    toggleDeviceFields(false);
+                }
+
+                closeTransferModal();
+                showToast('Thành công', `Đã chuyển thiết bị "${devIdentifier}" về kho lưu trữ thành công!`, 'success');
+            }
+        });
+    }
+
+    // =========================================================================
+    // MODAL CẤP PHÁT THIẾT BỊ TỪ KHO CHO NHÂN VIÊN
+    // =========================================================================
+    let currentSelectedKhoIndex = -1;
+
+    const modalAllocateFromKho = document.getElementById('modal-allocate-from-kho');
+    const btnCloseAllocateKhoModal = document.getElementById('btn-close-allocate-kho-modal');
+    const btnCancelAllocateKhoModal = document.getElementById('btn-cancel-allocate-kho-modal');
+    const btnSubmitAllocateKho = document.getElementById('btn-submit-allocate-kho');
+
+    const allocateKhoTargetUserIdInput = document.getElementById('allocate-kho-target-user-id');
+    const allocateKhoUserSuggestions = document.getElementById('allocate-kho-user-suggestions');
+    const allocateKhoUserPreview = document.getElementById('allocate-kho-user-preview');
+    const allocateKhoSummaryTitle = document.getElementById('allocate-kho-summary-title');
+    const allocateKhoSummaryDetails = document.getElementById('allocate-kho-summary-details');
+
+    function closeAllocateKhoModal() {
+        if (modalAllocateFromKho) modalAllocateFromKho.classList.add('hidden');
+        if (allocateKhoTargetUserIdInput) allocateKhoTargetUserIdInput.value = '';
+        if (allocateKhoUserSuggestions) allocateKhoUserSuggestions.classList.add('hidden');
+        if (allocateKhoUserPreview) allocateKhoUserPreview.classList.add('hidden');
+        currentSelectedKhoIndex = -1;
+    }
+
+    function openAllocateKhoModal(index) {
+        if (index < 0 || index >= khoList.length) return;
+        currentSelectedKhoIndex = index;
+        const item = khoList[index];
+
+        if (allocateKhoSummaryTitle) {
+            allocateKhoSummaryTitle.innerText = `Thiết bị từ kho: ${item.code || 'Mã KHO'}`;
+        }
+        if (allocateKhoSummaryDetails) {
+            let html = `<strong>Tên thiết bị:</strong> ${item.name || 'Thiết bị'} | <strong>Số lượng trong kho:</strong> <span style="color:#eab308; font-weight:bold;">${item.quantity || 1}</span><br>`;
+            html += `<strong>Lý do lưu kho:</strong> ${item.reason || 'Không có'}<br>`;
+            if (item.notes) {
+                html += `<strong>Ghi chú / Cấu hình:</strong> ${item.notes}`;
+            }
+            allocateKhoSummaryDetails.innerHTML = html;
+        }
+
+        if (allocateKhoTargetUserIdInput) allocateKhoTargetUserIdInput.value = '';
+        if (allocateKhoUserSuggestions) allocateKhoUserSuggestions.classList.add('hidden');
+        if (allocateKhoUserPreview) allocateKhoUserPreview.classList.add('hidden');
+
+        if (modalAllocateFromKho) modalAllocateFromKho.classList.remove('hidden');
+    }
+
+    if (btnCloseAllocateKhoModal) btnCloseAllocateKhoModal.addEventListener('click', closeAllocateKhoModal);
+    if (btnCancelAllocateKhoModal) btnCancelAllocateKhoModal.addEventListener('click', closeAllocateKhoModal);
+
+    // Autocomplete cho ô nhập ID Nhân viên nhận từ kho
+    if (allocateKhoTargetUserIdInput) {
+        allocateKhoTargetUserIdInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            if (!query) {
+                if (allocateKhoUserSuggestions) allocateKhoUserSuggestions.classList.add('hidden');
+                if (allocateKhoUserPreview) allocateKhoUserPreview.classList.add('hidden');
+                return;
+            }
+
+            const matches = thietBiList.filter(u => 
+                u.userId.toLowerCase().includes(query) || 
+                u.userName.toLowerCase().includes(query) || 
+                (u.userDept && u.userDept.toLowerCase().includes(query))
+            ).slice(0, 5);
+
+            if (matches.length === 0) {
+                if (allocateKhoUserSuggestions) allocateKhoUserSuggestions.classList.add('hidden');
+                if (allocateKhoUserPreview) allocateKhoUserPreview.classList.add('hidden');
+                return;
+            }
+
+            let html = '';
+            matches.forEach(m => {
+                const devText = m.hasDevice ? ` (Đang dùng: ${m.devId || m.devType})` : ' (Chưa có TB)';
+                html += `<div class="autocomplete-suggestion-item" data-userid="${m.userId}" style="padding: 8px 12px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                    <strong>${m.userId}</strong> - ${m.userName} (${m.userDept || 'K.Xác Định'})<span style="font-size: 11px; opacity: 0.7; float: right;">${devText}</span>
+                </div>`;
+            });
+
+            allocateKhoUserSuggestions.innerHTML = html;
+            allocateKhoUserSuggestions.classList.remove('hidden');
+
+            const items = allocateKhoUserSuggestions.querySelectorAll('.autocomplete-suggestion-item');
+            items.forEach(item => {
+                item.addEventListener('click', () => {
+                    const selectedId = item.getAttribute('data-userid');
+                    allocateKhoTargetUserIdInput.value = selectedId;
+                    allocateKhoUserSuggestions.classList.add('hidden');
+                    updateAllocateKhoUserPreview(selectedId);
+                });
+            });
+
+            const exactMatch = matches.find(m => m.userId.toLowerCase() === query);
+            if (exactMatch) {
+                updateAllocateKhoUserPreview(exactMatch.userId);
+            } else {
+                if (allocateKhoUserPreview) allocateKhoUserPreview.classList.add('hidden');
+            }
+        });
+    }
+
+    function updateAllocateKhoUserPreview(userId) {
+        const target = thietBiList.find(u => u.userId.toLowerCase() === userId.toLowerCase());
+        if (target && allocateKhoUserPreview) {
+            let statusText = target.hasDevice ? `⚠️ Đang dùng thiết bị: <strong>${target.devId || target.devType}</strong> (Thiết bị này sẽ thay thế cấu hình cũ)` : `✅ Sẵn sàng nhận thiết bị từ kho`;
+            allocateKhoUserPreview.innerHTML = `
+                <div style="font-weight: 600;"><i class="fa-solid fa-user-check"></i> ${target.userName} (${target.userId})</div>
+                <div style="font-size: 11px; margin-top: 3px;">Phòng ban: ${target.userDept || 'K.Xác Định'} | Chức danh: ${target.userTitle || 'N/A'}</div>
+                <div style="font-size: 11px; margin-top: 4px; color: ${target.hasDevice ? '#f59e0b' : '#22c55e'};">${statusText}</div>
+            `;
+            allocateKhoUserPreview.classList.remove('hidden');
+        } else if (allocateKhoUserPreview) {
+            allocateKhoUserPreview.classList.add('hidden');
+        }
+    }
+
+    // XỬ LÝ CẤP PHÁT TỪ KHO -> NHÂN VIÊN
+    if (btnSubmitAllocateKho) {
+        btnSubmitAllocateKho.addEventListener('click', async () => {
+            if (currentSelectedKhoIndex < 0 || currentSelectedKhoIndex >= khoList.length) {
+                showToast('Lỗi', 'Không tìm thấy thiết bị kho được chọn!', 'error');
+                return;
+            }
+
+            const targetUserId = allocateKhoTargetUserIdInput.value.trim();
+            if (!targetUserId) {
+                showToast('Lỗi nhập liệu', 'Vui lòng nhập ID Nhân viên nhận thiết bị!', 'error');
+                return;
+            }
+
+            const targetIdx = thietBiList.findIndex(u => u.userId.toLowerCase() === targetUserId.toLowerCase());
+            if (targetIdx === -1) {
+                showToast('Không tìm thấy', `Không tìm thấy nhân viên nào có ID: "${targetUserId}"!`, 'error');
+                return;
+            }
+
+            const targetUser = thietBiList[targetIdx];
+            const khoItem = khoList[currentSelectedKhoIndex];
+            const now = new Date();
+            const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+            // 1. Cập nhật targetUser
+            targetUser.hasDevice = true;
+            targetUser.devAllocation = 'yes';
+            targetUser.devId = khoItem.code || '';
+            targetUser.devType = khoItem.name || 'Thiết bị';
+            targetUser.devNotes = khoItem.notes ? `Xuất từ kho: ${khoItem.notes}` : 'Xuất từ kho thiết bị';
+            targetUser.devStatus = 'Mới';
+            targetUser.updatedAt = formattedDate;
+
+            if (!targetUser.history) targetUser.history = [];
+            targetUser.history.push({
+                time: formattedDate,
+                action: 'Nhận cấp phát từ kho',
+                details: `Nhận cấp phát thiết bị <strong>${khoItem.code || khoItem.name}</strong> xuất từ Kho lưu trữ thiết bị.`
+            });
+
+            // Lưu targetUser lên Supabase
+            try {
+                const dbTarget = mappers.thietBi.toDB(targetUser);
+                if (supabaseClient && targetUser.id && !String(targetUser.id).startsWith('local-')) {
+                    await supabaseClient.from('thiet_bi').update(dbTarget).eq('id', targetUser.id);
+                }
+            } catch (e) {
+                console.warn("Lỗi cập nhật targetUser lên Supabase:", e);
+            }
+            saveToLocalStorageFallback('thiet_bi', thietBiList);
+            renderThietBi();
+
+            // 2. Giảm số lượng trong kho hoặc xóa nếu số lượng = 0
+            const currentQty = parseInt(khoItem.quantity) || 1;
+            if (currentQty <= 1) {
+                // Xóa khỏi kho
+                const itemToDelete = khoList[currentSelectedKhoIndex];
+                try {
+                    if (supabaseClient && itemToDelete.id && !String(itemToDelete.id).startsWith('local-')) {
+                        await supabaseClient.from('kho_thiet_bi').delete().eq('id', itemToDelete.id);
+                    }
+                } catch (e) {
+                    console.warn("Lỗi xóa item kho trên Supabase:", e);
+                }
+                khoList.splice(currentSelectedKhoIndex, 1);
+            } else {
+                // Giảm bớt 1
+                khoItem.quantity = currentQty - 1;
+                try {
+                    const dbKho = mappers.khoThietBi.toDB(khoItem);
+                    if (supabaseClient && khoItem.id && !String(khoItem.id).startsWith('local-')) {
+                        await supabaseClient.from('kho_thiet_bi').update(dbKho).eq('id', khoItem.id);
+                    }
+                } catch (e) {
+                    console.warn("Lỗi giảm số lượng kho trên Supabase:", e);
+                }
+            }
+            saveToLocalStorageFallback('kho_thiet_bi', khoList);
+            renderKho();
+            closeAllocateKhoModal();
+
+            showToast('Thành công', `Đã xuất cấp thiết bị "${khoItem.code || khoItem.name}" từ kho cho nhân viên ${targetUser.userName} (${targetUser.userId})!`, 'success');
+        });
+    }
+
+    // =========================================================================
+    // MODAL POP-UP CHỌN NHẬN THIẾT BỊ TỪ KHO (ĐIỀN VÀO FORM)
+    // =========================================================================
+    let pendingKhoIndexToDeduct = null;
+
+    const btnOpenReceiveFromKhoModal = document.getElementById('btn-open-receive-from-kho-modal');
+    const modalReceiveFromKho = document.getElementById('modal-receive-from-kho');
+    const btnCloseReceiveFromKhoModal = document.getElementById('btn-close-receive-from-kho-modal');
+    const btnCancelReceiveFromKhoModal = document.getElementById('btn-cancel-receive-from-kho-modal');
+    const searchReceiveKhoInput = document.getElementById('search-receive-kho-input');
+    const receiveKhoItemsContainer = document.getElementById('receive-kho-items-container');
+
+    function closeReceiveFromKhoModal() {
+        if (modalReceiveFromKho) modalReceiveFromKho.classList.add('hidden');
+        if (searchReceiveKhoInput) searchReceiveKhoInput.value = '';
+    }
+
+    function renderReceiveKhoList(filterText = '') {
+        if (!receiveKhoItemsContainer) return;
+        receiveKhoItemsContainer.innerHTML = '';
+
+        const keyword = filterText.trim().toLowerCase();
+        const filtered = khoList.filter(item => {
+            return (
+                (item.code || '').toLowerCase().includes(keyword) ||
+                (item.name || '').toLowerCase().includes(keyword) ||
+                (item.notes || '').toLowerCase().includes(keyword) ||
+                (item.reason || '').toLowerCase().includes(keyword)
+            );
+        });
+
+        if (filtered.length === 0) {
+            receiveKhoItemsContainer.innerHTML = `
+                <div style="text-align: center; color: var(--text-secondary); padding: 30px 10px; font-style: italic; font-size: 13px;">
+                    Kho lưu trữ hiện không có thiết bị nào${keyword ? ' khớp từ khóa "' + filterText + '"' : ''}!
+                </div>
+            `;
+            return;
+        }
+
+        filtered.forEach((item) => {
+            const originalIndex = khoList.indexOf(item);
+            const card = document.createElement('div');
+            card.style.cssText = 'background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: border-color 0.2s ease;';
+
+            card.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span class="badge badge-blue" style="font-weight: 700;">${item.code || 'MÃ KHO'}</span>
+                        <strong style="font-size: 14px; color: #f8fafc;">${item.name || 'Thiết bị kho'}</strong>
+                        <span style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">SL: ${item.quantity || 1}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
+                        ${item.notes ? `<strong>Ghi chú / Cấu hình:</strong> ${item.notes}<br>` : ''}
+                        ${item.reason ? `<strong>Lý do lưu kho:</strong> ${item.reason}` : ''}
+                    </div>
+                </div>
+                <button type="button" class="btn btn-select-receive-kho" data-index="${originalIndex}" style="background: #16a34a; color: #fff; border: none; font-size: 12px; font-weight: 600; padding: 8px 14px; border-radius: 6px; cursor: pointer; flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-check"></i> Lấy thiết bị này
+                </button>
+            `;
+            receiveKhoItemsContainer.appendChild(card);
+        });
+
+        // Bắt sự kiện chọn nút "Lấy thiết bị này"
+        const selectButtons = receiveKhoItemsContainer.querySelectorAll('.btn-select-receive-kho');
+        selectButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                selectKhoItemToForm(idx);
+            });
+        });
+    }
+
+    function selectKhoItemToForm(index) {
+        if (index < 0 || index >= khoList.length) return;
+        const khoItem = khoList[index];
+
+        // 1. Chuyển radio sang "Có cấp"
+        const devAllocYes = document.getElementById('dev-alloc-yes');
+        if (devAllocYes) {
+            devAllocYes.checked = true;
+            toggleDeviceFields(true);
+        }
+
+        // 2. Điền thông tin vào form
+        if (devIdInput) devIdInput.value = khoItem.code || '';
+        const devTypeInput = document.getElementById('dev-type');
+        if (devTypeInput) devTypeInput.value = khoItem.name || '';
+
+        // Tự động phân tích ghi chú / cấu hình (nếu có)
+        if (khoItem.notes) {
+            const notesText = khoItem.notes;
+            const cpuMatch = notesText.match(/CPU:\s*([^,.\n]+)/i);
+            const ramMatch = notesText.match(/RAM:\s*([^,.\n]+)/i);
+            const ssdMatch = notesText.match(/SSD:\s*([^,.\n]+)/i);
+            const hddMatch = notesText.match(/HDD:\s*([^,.\n]+)/i);
+            const monMatch = notesText.match(/Màn hình:\s*([^,.\n]+)/i);
+
+            if (cpuMatch) document.getElementById('dev-cpu').value = cpuMatch[1].trim();
+            if (ramMatch) document.getElementById('dev-ram').value = ramMatch[1].trim();
+            if (ssdMatch) document.getElementById('dev-ssd').value = ssdMatch[1].trim().replace(/GB/i, '');
+            if (hddMatch) document.getElementById('dev-hdd').value = hddMatch[1].trim();
+            if (monMatch) document.getElementById('dev-monitor').value = monMatch[1].trim();
+
+            const devNotesInput = document.getElementById('dev-notes');
+            if (devNotesInput) devNotesInput.value = `Xuất từ kho: ${khoItem.notes}`;
+        }
+
+        // Lưu chỉ số thiết bị kho đang chờ trừ số lượng khi Lưu Form
+        pendingKhoIndexToDeduct = index;
+
+        closeReceiveFromKhoModal();
+        showToast('Đã chọn thiết bị', `Đã điền thông tin thiết bị "${khoItem.code || khoItem.name}" từ kho vào form!`, 'success');
+    }
+
+    function processPendingKhoDeduct() {
+        if (pendingKhoIndexToDeduct !== null && pendingKhoIndexToDeduct >= 0 && pendingKhoIndexToDeduct < khoList.length) {
+            const khoItem = khoList[pendingKhoIndexToDeduct];
+            const currentQty = parseInt(khoItem.quantity) || 1;
+            if (currentQty <= 1) {
+                try {
+                    if (supabaseClient && khoItem.id && !String(khoItem.id).startsWith('local-')) {
+                        supabaseClient.from('kho_thiet_bi').delete().eq('id', khoItem.id).catch(e => console.warn(e));
+                    }
+                } catch (e) {}
+                khoList.splice(pendingKhoIndexToDeduct, 1);
+            } else {
+                khoItem.quantity = currentQty - 1;
+                try {
+                    const dbKho = mappers.khoThietBi.toDB(khoItem);
+                    if (supabaseClient && khoItem.id && !String(khoItem.id).startsWith('local-')) {
+                        supabaseClient.from('kho_thiet_bi').update(dbKho).eq('id', khoItem.id).catch(e => console.warn(e));
+                    }
+                } catch (e) {}
+            }
+            saveToLocalStorageFallback('kho_thiet_bi', khoList);
+            renderKho();
+            pendingKhoIndexToDeduct = null;
+        }
+    }
+
+    if (btnOpenReceiveFromKhoModal) {
+        btnOpenReceiveFromKhoModal.addEventListener('click', () => {
+            renderReceiveKhoList('');
+            if (modalReceiveFromKho) modalReceiveFromKho.classList.remove('hidden');
+        });
+    }
+
+    if (btnCloseReceiveFromKhoModal) btnCloseReceiveFromKhoModal.addEventListener('click', closeReceiveFromKhoModal);
+    if (btnCancelReceiveFromKhoModal) btnCancelReceiveFromKhoModal.addEventListener('click', closeReceiveFromKhoModal);
+
+    if (searchReceiveKhoInput) {
+        searchReceiveKhoInput.addEventListener('input', (e) => {
+            renderReceiveKhoList(e.target.value);
+        });
+    }
 
     const btnDashGotoAdd = document.getElementById('btn-dash-goto-add');
     if (btnDashGotoAdd) btnDashGotoAdd.addEventListener('click', () => switchToTab('tab-cap-phat-form'));
@@ -3973,6 +4848,9 @@ async function startApp() {
                 <td style="font-size: 13px;">${formatDateDMY(item.dateStored)}</td>
                 <td>
                     <div class="actions-cell">
+                        <button class="btn-icon-only edit btn-allocate-kho" data-index="${originalIndex}" title="Cấp phát cho Nhân viên" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </button>
                         <button class="btn-icon-only edit btn-edit-kho" data-index="${originalIndex}" title="Sửa">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
@@ -3983,6 +4861,13 @@ async function startApp() {
                 </td>
             `;
             tbodyKho.appendChild(tr);
+        });
+
+        document.querySelectorAll('.btn-allocate-kho').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                openAllocateKhoModal(idx);
+            });
         });
 
         document.querySelectorAll('.btn-edit-kho').forEach(btn => {

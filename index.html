@@ -340,7 +340,15 @@
                             <!-- Subsection 2: Thông tin thiết bị -->
                             <div class="form-subsection">
                                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
-                                    <h4 class="subsection-title" style="margin-bottom: 0;">2. Thông tin thiết bị</h4>
+                                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                        <h4 class="subsection-title" style="margin-bottom: 0;">2. Thông tin thiết bị</h4>
+                                        <button type="button" id="btn-open-transfer-modal" class="btn" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                            <i class="fa-solid fa-right-left"></i> Chuyển thiết bị
+                                        </button>
+                                        <button type="button" id="btn-open-receive-from-kho-modal" class="btn" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s ease;">
+                                            <i class="fa-solid fa-box-open"></i> Nhận thiết bị từ kho
+                                        </button>
+                                    </div>
                                     <div class="device-allocation-toggle" style="display: flex; align-items: center; gap: 16px; background: rgba(255, 255, 255, 0.05); padding: 5px 14px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.1); user-select: none; flex-wrap: wrap;">
                                         <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--success-color);">
                                             <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked style="width: 15px; height: 15px; accent-color: #22c55e; cursor: pointer;">
@@ -497,8 +505,8 @@
                                 <button type="button" class="btn" id="btn-show-handover-modal" style="background-color: var(--success-color); color: #fff; border: none; display: inline-flex; align-items: center; gap: 6px;">
                                     <i class="fa-solid fa-file-invoice"></i> Xuất thông tin nhân viên
                                 </button>
-                                <button type="button" class="btn btn-secondary hidden" id="btn-cancel-thiet-bi">
-                                    Hủy Chỉnh Sửa
+                                <button type="button" class="btn" id="btn-cancel-thiet-bi" style="background-color: var(--danger-color); color: #fff; border: none; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-xmark"></i> Hủy / Làm mới
                                 </button>
                             </div>
                         </form>
@@ -1561,6 +1569,160 @@
         </div>
     </div>
 
+    <!-- Modal Chuyển Cấu Hình Thiết Bị -->
+    <div id="modal-transfer-device" class="backup-modal hidden">
+        <div class="backup-modal-content" style="max-width: 520px; width: 92%;">
+            <div class="backup-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 14px;">
+                <h3 class="backup-modal-title" style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: #60a5fa;">
+                    <i class="fa-solid fa-right-left"></i> Chuyển Cấu Hình Thiết Bị
+                </h3>
+                <button type="button" class="backup-modal-close" id="btn-close-transfer-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer; line-height: 1; margin: 0; padding: 0;">&times;</button>
+            </div>
+
+            <div class="backup-modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 0;">
+                <!-- Box xem nhanh thông tin thiết bị đang chuyển -->
+                <div id="transfer-device-info-box" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(59, 130, 246, 0.25); padding: 12px 14px; border-radius: 8px; font-size: 12px;">
+                    <div style="font-weight: 600; color: #38bdf8; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                        <i class="fa-solid fa-desktop"></i> <span id="transfer-summary-title">Thiết bị chuyển đi:</span>
+                    </div>
+                    <div id="transfer-summary-details" style="color: #cbd5e1; line-height: 1.6;">
+                        <!-- JS sẽ nạp thông tin cấu hình vào đây -->
+                    </div>
+                </div>
+
+                <!-- Lựa chọn đích đến -->
+                <div>
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; font-size: 13px; color: var(--text-primary);">
+                        Chọn hình thức chuyển:
+                    </label>
+                    <div style="display: flex; gap: 16px; background: rgba(255, 255, 255, 0.03); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #60a5fa;">
+                            <input type="radio" name="transfer-target-type" id="transfer-type-user" value="user" checked style="width: 15px; height: 15px; accent-color: #3b82f6; cursor: pointer;">
+                            <span><i class="fa-solid fa-user-gear"></i> Chuyển sang Nhân viên khác</span>
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #eab308;">
+                            <input type="radio" name="transfer-target-type" id="transfer-type-kho" value="kho" style="width: 15px; height: 15px; accent-color: #eab308; cursor: pointer;">
+                            <span><i class="fa-solid fa-boxes-stacked"></i> Chuyển về Lưu kho</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Nhóm 1: Chuyển sang Nhân viên -->
+                <div id="transfer-section-user" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="position: relative;">
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary);">
+                            Nhập ID Nhân viên nhận (*) <span style="font-weight: normal; opacity: 0.7;">(Nhập ID hoặc chọn từ gợi ý)</span>:
+                        </label>
+                        <input type="text" id="transfer-target-user-id" class="form-input" placeholder="Nhập ID Nhân viên..." autocomplete="off" style="width: 100%; box-sizing: border-box;">
+                        <div id="transfer-user-suggestions" class="autocomplete-suggestions hidden" style="width: 100%; max-height: 180px; overflow-y: auto;"></div>
+                    </div>
+                    
+                    <!-- Preview nhân viên nhận -->
+                    <div id="transfer-target-user-preview" class="hidden" style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #4ade80;">
+                        <!-- Tự nạp thông tin nhân viên được chọn -->
+                    </div>
+                </div>
+
+                <!-- Nhóm 2: Chuyển về Lưu kho -->
+                <div id="transfer-section-kho" class="hidden" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary);">
+                            Lý do thu hồi / lưu kho:
+                        </label>
+                        <input type="text" id="transfer-kho-reason" class="form-input" placeholder="VD: Thu hồi từ nhân viên nghỉ việc..." style="width: 100%; box-sizing: border-box;">
+                    </div>
+                    <div>
+                        <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary);">
+                            Ghi chú thêm:
+                        </label>
+                        <input type="text" id="transfer-kho-notes" class="form-input" placeholder="Ghi chú thêm về tình trạng thiết bị..." style="width: 100%; box-sizing: border-box;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="backup-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 14px;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-transfer-modal">Hủy</button>
+                <button type="button" class="btn" id="btn-submit-transfer" style="background: #2563eb; color: #fff; border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 8px 18px;">
+                    <i class="fa-solid fa-check"></i> Xác Nhận Chuyển
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Cấp Phát Thiết Bị Từ Kho Cho Nhân Viên -->
+    <div id="modal-allocate-from-kho" class="backup-modal hidden">
+        <div class="backup-modal-content" style="max-width: 520px; width: 92%;">
+            <div class="backup-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 14px;">
+                <h3 class="backup-modal-title" style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: #4ade80;">
+                    <i class="fa-solid fa-user-plus"></i> Cấp Phát Thiết Bị Từ Kho Cho Nhân Viên
+                </h3>
+                <button type="button" class="backup-modal-close" id="btn-close-allocate-kho-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer; line-height: 1; margin: 0; padding: 0;">&times;</button>
+            </div>
+
+            <div class="backup-modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 0;">
+                <!-- Box xem nhanh thông tin thiết bị trong kho -->
+                <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(34, 197, 94, 0.25); padding: 12px 14px; border-radius: 8px; font-size: 12px;">
+                    <div style="font-weight: 600; color: #4ade80; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+                        <i class="fa-solid fa-box-open"></i> <span id="allocate-kho-summary-title">Thiết bị từ kho:</span>
+                    </div>
+                    <div id="allocate-kho-summary-details" style="color: #cbd5e1; line-height: 1.6;">
+                        <!-- JS nạp thông tin item kho -->
+                    </div>
+                </div>
+
+                <!-- Ô nhập chọn Nhân viên nhận -->
+                <div style="position: relative;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-secondary);">
+                        Nhập ID Nhân viên nhận (*) <span style="font-weight: normal; opacity: 0.7;">(Nhập ID hoặc chọn từ gợi ý)</span>:
+                    </label>
+                    <input type="text" id="allocate-kho-target-user-id" class="form-input" placeholder="Nhập ID Nhân viên nhận thiết bị..." autocomplete="off" style="width: 100%; box-sizing: border-box;">
+                    <div id="allocate-kho-user-suggestions" class="autocomplete-suggestions hidden" style="width: 100%; max-height: 180px; overflow-y: auto;"></div>
+                </div>
+
+                <!-- Preview Nhân viên nhận -->
+                <div id="allocate-kho-user-preview" class="hidden" style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); padding: 10px 14px; border-radius: 6px; font-size: 12px; color: #4ade80;">
+                    <!-- Tự nạp thông tin nhân viên nhận -->
+                </div>
+            </div>
+
+            <div class="backup-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 14px;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-allocate-kho-modal">Hủy</button>
+                <button type="button" class="btn" id="btn-submit-allocate-kho" style="background: #16a34a; color: #fff; border: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 600; padding: 8px 18px;">
+                    <i class="fa-solid fa-check"></i> Xác Nhận Cấp Phát
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Pop-up Chọn Nhận Thiết Bị Từ Kho -->
+    <div id="modal-receive-from-kho" class="backup-modal hidden">
+        <div class="backup-modal-content" style="max-width: 640px; width: 94%;">
+            <div class="backup-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 14px;">
+                <h3 class="backup-modal-title" style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: #4ade80;">
+                    <i class="fa-solid fa-box-open"></i> Chọn Nhận Thiết Bị Từ Kho Lưu Trữ
+                </h3>
+                <button type="button" class="backup-modal-close" id="btn-close-receive-from-kho-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer; line-height: 1; margin: 0; padding: 0;">&times;</button>
+            </div>
+
+            <div class="backup-modal-body" style="display: flex; flex-direction: column; gap: 12px; padding: 0;">
+                <!-- Ô tìm kiếm thiết bị kho -->
+                <div style="position: relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 13px;"></i>
+                    <input type="text" id="search-receive-kho-input" class="form-input" placeholder="Tìm theo Mã, Tên thiết bị, Cấu hình trong kho..." style="padding-left: 34px; width: 100%; box-sizing: border-box;">
+                </div>
+
+                <!-- Danh sách các thiết bị hiện có trong kho -->
+                <div id="receive-kho-items-container" style="max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+                    <!-- JS nạp các card thiết bị từ kho vào đây -->
+                </div>
+            </div>
+
+            <div class="backup-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 14px;">
+                <button type="button" class="btn btn-secondary" id="btn-cancel-receive-from-kho-modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Supabase JS Client Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- JSZip Library for CSV zipping -->
@@ -1568,6 +1730,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=8.1"></script>
+    <script src="app.js?v=8.8"></script>
 </body>
 </html>
