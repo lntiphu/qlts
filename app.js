@@ -1114,6 +1114,13 @@ async function startApp() {
             sortedList.sort((a, b) => getItemUpdatedTimestamp(b) - getItemUpdatedTimestamp(a));
         } else {
             sortedList.sort((a, b) => {
+                // 1. Ưu tiên Online (0) trước, Offline (1) sau
+                const statusA = a.userDisabled ? 1 : 0;
+                const statusB = b.userDisabled ? 1 : 0;
+                if (statusA !== statusB) {
+                    return statusA - statusB;
+                }
+                // 2. Sắp xếp tên từ A đến Z
                 const nameA = a.userName ? a.userName.trim() : "";
                 const nameB = b.userName ? b.userName.trim() : "";
                 return nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
