@@ -1181,18 +1181,18 @@ async function startApp() {
         if (currentPageThietBi > totalPages) currentPageThietBi = totalPages;
         if (currentPageThietBi < 1) currentPageThietBi = 1;
 
-        const elStart = document.getElementById('pag-start-thietbi');
-        const elEnd = document.getElementById('pag-end-thietbi');
-        const elTotal = document.getElementById('pag-total-thietbi');
-        const elCurrent = document.getElementById('pag-current-thietbi');
+        const elStart = document.getElementById('pag-start') || document.getElementById('pag-start-thietbi');
+        const elEnd = document.getElementById('pag-end') || document.getElementById('pag-end-thietbi');
+        const elTotal = document.getElementById('pag-total') || document.getElementById('pag-total-thietbi');
+        const elCurrent = document.getElementById('pag-current') || document.getElementById('pag-current-thietbi');
 
         if (elStart) elStart.innerText = totalItems > 0 ? (currentPageThietBi - 1) * itemsPerPageThietBi + 1 : 0;
         if (elEnd) elEnd.innerText = Math.min(currentPageThietBi * itemsPerPageThietBi, totalItems);
         if (elTotal) elTotal.innerText = totalItems;
         if (elCurrent) elCurrent.innerText = `Trang ${currentPageThietBi} / ${totalPages}`;
 
-        const btnPrev = document.getElementById('btn-prev-page-thietbi');
-        const btnNext = document.getElementById('btn-next-page-thietbi');
+        const btnPrev = document.getElementById('btn-prev-page') || document.getElementById('btn-prev-page-thietbi');
+        const btnNext = document.getElementById('btn-next-page') || document.getElementById('btn-next-page-thietbi');
 
         if (btnPrev) {
             btnPrev.disabled = currentPageThietBi === 1;
@@ -2748,34 +2748,8 @@ async function startApp() {
     });
 
     document.getElementById('btn-next-page').addEventListener('click', () => {
-        const keyword = searchThietBi.value.trim();
-        const deptFilter = document.getElementById('filter-dept-thietbi') 
-            ? document.getElementById('filter-dept-thietbi').value 
-            : '';
-        const keywords = keyword.toLowerCase().split(/\s+/).filter(Boolean);
-        const totalItems = thietBiList.filter(item => {
-            if (deptFilter && (item.userDept || '').trim() !== deptFilter) {
-                return false;
-            }
-            if (keywords.length === 0) return true;
-            const itemText = `
-                ${item.userId || ''} 
-                ${item.userName || ''} 
-                ${item.devId || ''} 
-                ${item.userDept || ''}
-                ${item.devType || ''}
-                ${item.devMain || ''}
-                ${item.devCpu || ''}
-                ${item.devRam || ''}
-                ${item.devNotes || ''}
-            `.toLowerCase();
-            return keywords.every(kw => itemText.includes(kw));
-        }).length;
-        const totalPages = Math.ceil(totalItems / itemsPerPageThietBi) || 1;
-        if (currentPageThietBi < totalPages) {
-            currentPageThietBi++;
-            renderThietBi(keyword);
-        }
+        currentPageThietBi++;
+        renderThietBi(searchThietBi.value.trim());
     });
 
 
