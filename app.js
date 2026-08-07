@@ -39,7 +39,14 @@ async function startApp() {
             const data = localStorage.getItem('fallback_' + key);
             if (data) {
                 list.length = 0;
-                list.push(...JSON.parse(data));
+                const parsed = JSON.parse(data);
+                const items = parsed.map(item => {
+                    if (key === 'thiet_bi' && typeof mappers !== 'undefined' && mappers.thietBi) {
+                        return mappers.thietBi.fromDB(item);
+                    }
+                    return item;
+                });
+                list.push(...items);
                 if (renderFn) renderFn();
             }
         } catch (e) {
@@ -69,52 +76,57 @@ async function startApp() {
     const mappers = {
         thietBi: {
             fromDB: (db) => {
+                if (!db) return {};
+                let cablesStr = typeof db.dev_cables === 'string' ? db.dev_cables : (typeof db.devCables === 'string' ? db.devCables : '');
                 let kbVal = '';
-                if (db.dev_cables && db.dev_cables.includes('[KBD_WIRELESS]')) {
+                if (cablesStr.includes('[KBD_WIRELESS]')) {
                     kbVal = 'Bàn phím không dây';
-                } else if (db.dev_keyboard === true || db.dev_keyboard === 'true') {
+                } else if (db.dev_keyboard === true || db.dev_keyboard === 'true' || db.devKeyboard === true || db.devKeyboard === 'true') {
                     kbVal = 'Bàn phím có dây';
                 } else if (typeof db.dev_keyboard === 'string' && db.dev_keyboard) {
                     kbVal = db.dev_keyboard;
+                } else if (typeof db.devKeyboard === 'string' && db.devKeyboard) {
+                    kbVal = db.devKeyboard;
                 }
-                const cleanCables = (db.dev_cables || '').replace('[KBD_WIRELESS]', '').trim();
+                const cleanCables = cablesStr.replace('[KBD_WIRELESS]', '').trim();
+                const devStat = db.dev_status || db.devStatus || '';
 
                 return {
                     id: db.id,
-                    userId: db.user_id,
-                    userName: db.user_name,
-                    userTitle: db.user_title,
-                    userDept: db.user_dept,
-                    userEmail: db.user_email,
-                    userPhone: db.user_phone,
-                    userElement: db.user_element || '',
-                    userKeyElement: db.user_key_element || '',
-                    devId: db.dev_id || '',
-                    devType: db.dev_type || '',
-                    devMain: db.dev_main || '',
-                    devCpu: db.dev_cpu || '',
-                    devRam: db.dev_ram || '',
-                    devRamSlots: db.dev_ram_slots || '',
-                    devSsd: db.dev_ssd || '',
-                    devHdd: db.dev_hdd || '',
-                    devVga: db.dev_vga || '',
-                    devMonitor: db.dev_monitor || '',
-                    devMonitorSn: db.dev_monitor_sn || '',
-                    devSn: db.dev_sn || '',
+                    userId: db.user_id || db.userId || '',
+                    userName: db.user_name || db.userName || '',
+                    userTitle: db.user_title || db.userTitle || '',
+                    userDept: db.user_dept || db.userDept || '',
+                    userEmail: db.user_email || db.userEmail || '',
+                    userPhone: db.user_phone || db.userPhone || '',
+                    userElement: db.user_element || db.userElement || '',
+                    userKeyElement: db.user_key_element || db.userKeyElement || '',
+                    devId: db.dev_id || db.devId || '',
+                    devType: db.dev_type || db.devType || '',
+                    devMain: db.dev_main || db.devMain || '',
+                    devCpu: db.dev_cpu || db.devCpu || '',
+                    devRam: db.dev_ram || db.devRam || '',
+                    devRamSlots: db.dev_ram_slots || db.devRamSlots || '',
+                    devSsd: db.dev_ssd || db.devSsd || '',
+                    devHdd: db.dev_hdd || db.devHdd || '',
+                    devVga: db.dev_vga || db.devVga || '',
+                    devMonitor: db.dev_monitor || db.devMonitor || '',
+                    devMonitorSn: db.dev_monitor_sn || db.devMonitorSn || '',
+                    devSn: db.dev_sn || db.devSn || '',
                     devKeyboard: kbVal,
-                    devMouse: db.dev_mouse || '',
+                    devMouse: db.dev_mouse || db.devMouse || '',
                     devCables: cleanCables,
-                    keyWin: db.key_win || '',
-                    keyOffice: db.key_office || '',
-                    keyPdf: db.key_pdf || '',
-                    devNotes: db.dev_notes || '',
-                    devApps: db.dev_apps || '',
-                    devStatus: db.dev_status || '',
-                    devAllocation: db.dev_allocation || (db.dev_status === 'Không cấp' ? 'no' : (db.dev_status === 'Thiết bị cá nhân' ? 'personal' : 'yes')),
-                    hasDevice: db.has_device !== false && db.dev_status !== 'Không cấp' && db.dev_status !== 'Thiết bị cá nhân',
-                    userDisabled: !!db.user_disabled,
-                    updatedAt: db.updated_at || '',
-                    history: db.history || []
+                    keyWin: db.key_win || db.keyWin || '',
+                    keyOffice: db.key_office || db.keyOffice || '',
+                    keyPdf: db.key_pdf || db.keyPdf || '',
+                    devNotes: db.dev_notes || db.devNotes || '',
+                    devApps: db.dev_apps || db.devApps || '',
+                    devStatus: devStat,
+                    devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Không cấp' ? 'no' : (devStat === 'Thiết bị cá nhân' ? 'personal' : 'yes')),
+                    hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân',
+                    userDisabled: !!(db.user_disabled || db.userDisabled),
+                    updatedAt: db.updated_at || db.updatedAt || '',
+                    history: Array.isArray(db.history) ? db.history : []
                 };
             },
             toDB: (js) => {
@@ -1231,8 +1243,9 @@ async function startApp() {
         const endIndex = Math.min(startIndex + itemsPerPageThietBi, totalItems);
         const pageItems = filtered.slice(startIndex, endIndex);
 
-        pageItems.forEach((item) => {
-            const originalIndex = thietBiList.indexOf(item);
+        pageItems.forEach((rawItem) => {
+            const item = (typeof mappers !== 'undefined' && mappers.thietBi) ? mappers.thietBi.fromDB(rawItem) : rawItem;
+            const originalIndex = thietBiList.indexOf(rawItem);
             const tr = document.createElement('tr');
 
             let keyArr = [];
@@ -1299,23 +1312,31 @@ async function startApp() {
                         </span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
+                        ${item.userElement ? `
+                            <span class="contact" style="display: flex; align-items: center; margin-top: 2px;">
+                                <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 14px; background: var(--text-muted); color: var(--bg-card, #1e293b); font-size: 9px; font-weight: 800; border-radius: 3px; line-height: 1; margin-right: 5px;">E</span> ${item.userElement}
+                            </span>
+                        ` : ''}
+                        ${item.userKeyElement ? `
+                            <span class="contact" style="display: flex; align-items: center; margin-top: 2px;">
+                                <i class="fa-solid fa-key" style="font-size: 11px; margin-right: 5px;"></i> ${item.userKeyElement}
+                            </span>
+                        ` : ''}
                     </div>
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${(item.devAllocation === 'no' || item.devStatus === 'Không cấp') ? `
+                        ${item.devId ? `<span class="name"><span class="badge badge-green">${item.devId}</span> ${item.devStatus ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}</span>` : ''}
+                        ${(item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
                             <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
-                        ` : ((item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân') ? `
+                        ` : ((item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân') && !item.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);"><i class="fa-solid fa-laptop-code"></i> Sử dụng thiết bị cá nhân</span>
-                        ` : ((item.devId || item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || (item.devStatus && item.devStatus !== 'Không cấp' && item.devStatus !== 'Thiết bị cá nhân')) ? `
-                            <span class="name">
-                                ${item.devId ? `<span class="badge badge-green">${item.devId}</span>` : ''}
-                                ${item.devStatus ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}
-                            </span>
+                        ` : ((item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus) ? `
+                            ${!item.devId && item.devStatus ? `<span class="name"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             <span class="details">Loại: ${item.devType || 'Chưa phân loại'}</span>
-                        ` : `
+                        ` : (!item.devId ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
-                        `))}
+                        ` : '')))}
                     </div>
                 </td>
                 <td style="max-width: 250px; font-size: 13px;">
@@ -1435,7 +1456,7 @@ async function startApp() {
             userPhone: document.getElementById('user-phone').value.trim(),
             userElement: document.getElementById('user-element') ? document.getElementById('user-element').value.trim() : '',
             userKeyElement: document.getElementById('user-key-element') ? document.getElementById('user-key-element').value.trim() : '',
-            devId: hasDevice ? devIdInput.value.trim() : '',
+            devId: devIdInput ? devIdInput.value.trim() : '',
             devType: hasDevice ? document.getElementById('dev-type').value.trim() : '',
             devMain: hasDevice ? document.getElementById('dev-main').value.trim() : '',
             devCpu: hasDevice ? document.getElementById('dev-cpu').value.trim() : '',
@@ -1476,6 +1497,7 @@ async function startApp() {
                     if (error) {
                         console.error('[SUPABASE INSERT ERROR] thiet_bi:', JSON.stringify(error));
                         console.error('[SUPABASE INSERT DATA SENT]:', JSON.stringify(dbData));
+                        showToast('Lỗi Lưu Mới DB', `Supabase báo lỗi: ${error.message || 'Thiếu cột hoặc chưa cấp quyền SQL'}`, 'error');
                     }
                     if (!error && insertedData && insertedData.length > 0) {
                         thietBiList.push(mappers.thietBi.fromDB(insertedData[0]));
@@ -1501,6 +1523,9 @@ async function startApp() {
         } else {
             const idx = parseInt(indexStr);
             const oldItem = thietBiList[idx];
+            const oldDevId = oldItem ? (oldItem.devId || '') : '';
+            const newDevId = devIdInput ? devIdInput.value.trim() : '';
+            data.devId = newDevId || oldDevId;
             
             // Compare fields cleanly and accurately
             let changes = [];
@@ -1605,6 +1630,7 @@ async function startApp() {
                     if (error) {
                         console.error('[SUPABASE UPDATE ERROR] thiet_bi:', JSON.stringify(error));
                         console.error('[SUPABASE UPDATE DATA SENT]:', JSON.stringify(dbData));
+                        showToast('Lỗi Cập Nhật DB', `Supabase báo lỗi: ${error.message || 'Thiếu cột hoặc chưa cấp quyền SQL'}`, 'error');
                     }
                     if (!error && updatedData && updatedData.length > 0) {
                         thietBiList[idx] = mappers.thietBi.fromDB(updatedData[0]);
@@ -1647,8 +1673,9 @@ async function startApp() {
         const item = thietBiList[index];
         editIndexThietBi.value = index;
         
-        userIdInput.value = item.userId;
-        document.getElementById('user-name').value = item.userName;
+        userIdInput.value = item.userId || '';
+        if (devIdInput) devIdInput.value = item.devId || '';
+        document.getElementById('user-name').value = item.userName || '';
         document.getElementById('user-title').value = item.userTitle;
         document.getElementById('user-dept').value = item.userDept;
         document.getElementById('user-email').value = item.userEmail || '';
@@ -5686,8 +5713,17 @@ async function startApp() {
         const fetchPromises = [
             supabaseClient.from('thiet_bi').select('*').then(({ data, error }) => {
                 if (error) throw error;
-                thietBiList = (data || []).map(mappers.thietBi.fromDB);
-                saveToLocalStorageFallback('thiet_bi', thietBiList);
+                if (data && data.length > 0) {
+                    thietBiList = data.map(mappers.thietBi.fromDB);
+                    saveToLocalStorageFallback('thiet_bi', thietBiList);
+                } else {
+                    const localData = localStorage.getItem('fallback_thiet_bi');
+                    if (localData && JSON.parse(localData).length > 0) {
+                        thietBiList = JSON.parse(localData);
+                    } else {
+                        thietBiList = [];
+                    }
+                }
                 updateDeptFilterThietBi();
                 renderThietBi();
             }).catch(err => {
