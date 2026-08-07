@@ -1809,7 +1809,8 @@ async function startApp() {
 
     btnCancelThietBi.addEventListener('click', () => {
         resetFormThietBi();
-        showToast('Thông báo', 'Đã hủy nhập liệu và làm mới form!', 'info');
+        switchToTab('tab-cap-phat-list');
+        showToast('Thông báo', 'Đã hủy nhập liệu và quay về danh sách!', 'info');
     });
 
     function toggleDeviceFields(hasDevice) {
