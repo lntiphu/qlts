@@ -832,18 +832,30 @@ async function startApp() {
     function getItemCreatedTimestamp(item) {
         if (!item) return 0;
         if (item.history && item.history.length > 0) {
-            const createLog = item.history.find(h => h.action === 'Tạo mới');
+            const createLog = item.history.find(h => h.action === 'Tạo mới' || h.action === 'Khởi tạo cấp phát');
             if (createLog && createLog.time) {
                 const parsed = parseDateDMY(createLog.time);
                 if (parsed) return parsed.getTime();
             }
-            if (item.history.length === 1 && item.history[0].time) {
+            if (item.history.length > 0 && item.history[0].time) {
                 const parsed = parseDateDMY(item.history[0].time);
                 if (parsed) return parsed.getTime();
             }
         }
         if (item.createdAt) {
             const parsed = parseDateDMY(item.createdAt);
+            if (parsed) return parsed.getTime();
+        }
+        if (item.created_at) {
+            const parsed = parseDateDMY(item.created_at);
+            if (parsed) return parsed.getTime();
+        }
+        if (item.updatedAt) {
+            const parsed = parseDateDMY(item.updatedAt);
+            if (parsed) return parsed.getTime();
+        }
+        if (item.updated_at) {
+            const parsed = parseDateDMY(item.updated_at);
             if (parsed) return parsed.getTime();
         }
         return 0;
@@ -860,6 +872,10 @@ async function startApp() {
         }
         if (item.updatedAt) {
             const parsed = parseDateDMY(item.updatedAt);
+            if (parsed) return parsed.getTime();
+        }
+        if (item.updated_at) {
+            const parsed = parseDateDMY(item.updated_at);
             if (parsed) return parsed.getTime();
         }
         return getItemCreatedTimestamp(item);
@@ -4442,20 +4458,27 @@ async function startApp() {
         const str = dateInput.toString().trim();
         if (!str) return null;
 
-        const dmyMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        const dmyMatch = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(?:lúc\s+)?(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?/i);
         if (dmyMatch) {
             const day = parseInt(dmyMatch[1], 10);
             const month = parseInt(dmyMatch[2], 10) - 1;
             const year = parseInt(dmyMatch[3], 10);
-            const d = new Date(year, month, day);
+            const hour = dmyMatch[4] ? parseInt(dmyMatch[4], 10) : 0;
+            const minute = dmyMatch[5] ? parseInt(dmyMatch[5], 10) : 0;
+            const second = dmyMatch[6] ? parseInt(dmyMatch[6], 10) : 0;
+            const d = new Date(year, month, day, hour, minute, second);
             return isNaN(d.getTime()) ? null : d;
         }
-        const ymdMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+        const ymdMatch = str.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
         if (ymdMatch) {
             const year = parseInt(ymdMatch[1], 10);
             const month = parseInt(ymdMatch[2], 10) - 1;
             const day = parseInt(ymdMatch[3], 10);
-            const d = new Date(year, month, day);
+            const hour = ymdMatch[4] ? parseInt(ymdMatch[4], 10) : 0;
+            const minute = ymdMatch[5] ? parseInt(ymdMatch[5], 10) : 0;
+            const second = ymdMatch[6] ? parseInt(ymdMatch[6], 10) : 0;
+            const d = new Date(year, month, day, hour, minute, second);
             return isNaN(d.getTime()) ? null : d;
         }
 
