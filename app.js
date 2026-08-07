@@ -610,6 +610,7 @@ async function startApp() {
         const targetIds = [
             'user-dept',
             'dev-type',
+            'dev-ram',
             'dev-main',
             'dev-cpu',
             'dev-ssd',
@@ -646,6 +647,7 @@ async function startApp() {
                         'TC', 'TGĐ', 'VP.HĐCL'
                     ],
                     'dev-type': ['Laptop', 'PC', 'Server', 'iMac', 'MacBook'],
+                    'dev-ram': ['4GB', '8GB', '16GB', '32GB', '64GB', '4GB DDR3', '8GB DDR3', '8GB DDR4', '16GB DDR4', '32GB DDR4', '16GB DDR5', '32GB DDR5', '64GB DDR5'],
                     'dev-main': ['H610M', 'B760M', 'H510M', 'B560M', 'A320M'],
                     'dev-cpu': ['Core i5 12400F', 'Core i7 13700', 'Core i3 12100', 'Core i5 10400', 'Ryzen 5 5600G'],
                     'dev-ssd': ['256GB SSD', '512GB SSD', '1TB SSD', '128GB SSD'],
@@ -662,6 +664,7 @@ async function startApp() {
                     let val = '';
                     if (fieldId === 'user-dept') val = item.userDept;
                     else if (fieldId === 'dev-type') val = item.devType;
+                    else if (fieldId === 'dev-ram') val = item.devRam;
                     else if (fieldId === 'dev-main') val = item.devMain;
                     else if (fieldId === 'dev-cpu') val = item.devCpu;
                     else if (fieldId === 'dev-ssd') val = item.devSsd;
@@ -988,16 +991,53 @@ async function startApp() {
                 const pct = totalAllocatedWithStatus > 0 ? Math.round((count / totalAllocatedWithStatus) * 100) : 0;
                 const color = statusColors[st] || '#3b82f6';
                 const div = document.createElement('div');
-                div.style.cssText = 'display: flex; flex-direction: column; gap: 4px;';
+                div.style.cssText = 'display: flex; flex-direction: column; gap: 4px; cursor: pointer; padding: 6px 8px; border-radius: 6px; transition: background 0.2s ease, transform 0.15s ease; user-select: none;';
+                div.title = `Click để xem danh sách thiết bị tình trạng "${st}"`;
+                
+                div.onmouseenter = () => {
+                    div.style.background = 'rgba(255, 255, 255, 0.06)';
+                    div.style.transform = 'translateX(3px)';
+                };
+                div.onmouseleave = () => {
+                    div.style.background = 'transparent';
+                    div.style.transform = 'translateX(0)';
+                };
+
                 div.innerHTML = `
                     <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500;">
-                        <span style="color: var(--text-primary);"><i class="fa-solid fa-circle" style="font-size: 8px; color: ${color}; margin-right: 6px;"></i>Tình trạng "${st}"</span>
+                        <span style="color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                            <i class="fa-solid fa-circle" style="font-size: 8px; color: ${color};"></i>
+                            Tình trạng "${st}"
+                            <i class="fa-solid fa-arrow-up-right-from-square" style="font-size: 10px; opacity: 0.5; margin-left: 2px;"></i>
+                        </span>
                         <span style="font-weight: 700; color: ${color};">${count} thiết bị (${pct}%)</span>
                     </div>
                     <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden;">
                         <div style="width: ${pct}%; height: 100%; background: ${color}; border-radius: 4px; transition: width 0.5s ease;"></div>
                     </div>
                 `;
+
+                div.addEventListener('click', () => {
+                    const filterSelect = document.getElementById('filter-status-thietbi');
+                    if (filterSelect) {
+                        const mapping = {
+                            'Mới': 'status_moi',
+                            'Trung bình': 'status_trung_binh',
+                            'Cũ': 'status_cu',
+                            'Xem xét thay thế': 'status_xem_xet'
+                        };
+                        filterSelect.value = mapping[st] || '';
+                    }
+
+                    const searchInput = document.getElementById('search-thiet-bi');
+                    if (searchInput) searchInput.value = '';
+
+                    switchToTab('tab-cap-phat-list');
+                    currentPageThietBi = 1;
+                    renderThietBi();
+                    showToast('Lọc thiết bị', `Đang hiển thị danh sách thiết bị có tình trạng: "${st}"`, 'info');
+                });
+
                 elStatusBreakdown.appendChild(div);
             }
         }
@@ -1156,6 +1196,18 @@ async function startApp() {
                 return false;
             }
             if (userStatusFilter === 'active' && item.userDisabled) {
+                return false;
+            }
+            if (userStatusFilter === 'status_moi' && item.devStatus !== 'Mới') {
+                return false;
+            }
+            if (userStatusFilter === 'status_trung_binh' && item.devStatus !== 'Trung bình') {
+                return false;
+            }
+            if (userStatusFilter === 'status_cu' && item.devStatus !== 'Cũ') {
+                return false;
+            }
+            if (userStatusFilter === 'status_xem_xet' && item.devStatus !== 'Xem xét thay thế') {
                 return false;
             }
             if (userStatusFilter === 'created_recent') {

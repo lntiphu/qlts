@@ -406,16 +406,7 @@
                                         </div>
                                         <div class="form-group">
                                             <label for="dev-ram">RAM</label>
-                                            <select id="dev-ram">
-                                                <option value="">-- Chọn loại RAM --</option>
-                                                <option value="4GB DDR3">4GB DDR3</option>
-                                                <option value="8GB DDR3">8GB DDR3</option>
-                                                <option value="8GB DDR4">8GB DDR4</option>
-                                                <option value="16GB DDR4">16GB DDR4</option>
-                                                <option value="32GB DDR4">32GB DDR4</option>
-                                                <option value="16GB DDR5">16GB DDR5</option>
-                                                <option value="32GB DDR5">32GB DDR5</option>
-                                            </select>
+                                            <input type="text" id="dev-ram" placeholder="VD: 8GB, 16GB DDR4..." autocomplete="off">
                                         </div>
                                         <div class="form-group">
                                             <label for="dev-ram-slots">Số thanh RAM</label>
@@ -525,32 +516,36 @@
                 <section id="tab-cap-phat-list" class="tab-content">
                     <div class="card table-card">
                         <div class="table-header">
-                            <h3 class="table-title"><i class="fa-solid fa-list-check"></i> Danh Sách Thiết Bị Đã Cấp Phát</h3>
-                            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
-                                <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" style="padding: 6px 12px; font-size: 13px;">
+                            <h3 class="table-title">Asset Assignment</h3>
+                            <div class="table-controls-wrapper" style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                                <div class="pagination-buttons" style="display: flex; gap: 4px; align-items: center;">
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-page" style="padding: 5px 10px; font-size: 12.5px;">
                                         <i class="fa-solid fa-angle-left"></i> Trang trước
                                     </button>
-                                    <span id="pag-current" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" style="padding: 6px 12px; font-size: 13px;">
+                                    <span id="pag-current" style="font-size: 13px; font-weight: 700; color: var(--text-primary); text-align: center; padding: 0 8px;">Trang 1 / 1</span>
+                                    <button type="button" class="btn btn-secondary btn-sm" id="btn-next-page" style="padding: 5px 10px; font-size: 12.5px;">
                                         Trang sau <i class="fa-solid fa-angle-right"></i>
                                     </button>
                                 </div>
-                                <div class="filter-box" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                    <select id="filter-dept-thietbi" class="filter-select">
+                                <div class="filter-box" style="display: flex; gap: 8px; align-items: center;">
+                                    <select id="filter-dept-thietbi" class="filter-select" style="max-width: 175px;">
                                         <option value="">-- Tất cả phòng ban --</option>
                                     </select>
-                                    <select id="filter-status-thietbi" class="filter-select" style="min-width: 210px;">
+                                    <select id="filter-status-thietbi" class="filter-select" style="max-width: 195px;">
                                         <option value="">-- Tất cả trạng thái --</option>
                                         <option value="active">🟢 Online (Đang hoạt động)</option>
                                         <option value="disabled">🔴 Offline (Vô hiệu hóa)</option>
+                                        <option value="status_moi">🟢 Tình trạng: Mới</option>
+                                        <option value="status_trung_binh">🔵 Tình trạng: Trung bình</option>
+                                        <option value="status_cu">🟡 Tình trạng: Cũ</option>
+                                        <option value="status_xem_xet">🔴 Tình trạng: Xem xét thay thế</option>
                                         <option value="created_recent">✨ Mới thêm gần đây</option>
                                         <option value="updated_recent">🔄 Mới cập nhật gần đây</option>
                                     </select>
                                 </div>
-                                <div class="search-box">
+                                <div class="search-box" style="width: 250px;">
                                     <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                                    <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm theo ID, Tên NV, ID Thiết bị, Phòng ban, Disable User...">
+                                    <input type="text" id="search-thiet-bi" placeholder="Tìm kiếm NV, ID, Phòng ban...">
                                 </div>
                             </div>
                         </div>
@@ -1739,6 +1734,6 @@
     <!-- html2canvas Library for DOM to PNG conversion -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=9.5"></script>
+    <script src="app.js?v=10.0"></script>
 </body>
 </html>
