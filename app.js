@@ -87,6 +87,8 @@ async function startApp() {
                     userDept: db.user_dept,
                     userEmail: db.user_email,
                     userPhone: db.user_phone,
+                    userElement: db.user_element || '',
+                    userKeyElement: db.user_key_element || '',
                     devId: db.dev_id || '',
                     devType: db.dev_type || '',
                     devMain: db.dev_main || '',
@@ -131,6 +133,8 @@ async function startApp() {
                     user_dept: js.userDept,
                     user_email: js.userEmail,
                     user_phone: js.userPhone,
+                    user_element: js.userElement,
+                    user_key_element: js.userKeyElement,
                     user_disabled: !!js.userDisabled,
                     has_device: js.devAllocation === 'yes',
                     dev_id: js.devId || null,
@@ -1171,6 +1175,8 @@ async function startApp() {
                 ${item.userDept || ''}
                 ${item.userEmail || ''}
                 ${item.userPhone || ''}
+                ${item.userElement || ''}
+                ${item.userKeyElement || ''}
                 ${item.devType || ''}
                 ${item.devMain || ''}
                 ${item.devCpu || ''}
@@ -1427,6 +1433,8 @@ async function startApp() {
             userDept: document.getElementById('user-dept').value.trim(),
             userEmail: document.getElementById('user-email').value.trim(),
             userPhone: document.getElementById('user-phone').value.trim(),
+            userElement: document.getElementById('user-element') ? document.getElementById('user-element').value.trim() : '',
+            userKeyElement: document.getElementById('user-key-element') ? document.getElementById('user-key-element').value.trim() : '',
             devId: hasDevice ? devIdInput.value.trim() : '',
             devType: hasDevice ? document.getElementById('dev-type').value.trim() : '',
             devMain: hasDevice ? document.getElementById('dev-main').value.trim() : '',
@@ -1513,7 +1521,9 @@ async function startApp() {
                 userTitle: "Chức danh",
                 userDept: "Phòng ban",
                 userEmail: "Email",
-                userPhone: "Số điện thoại"
+                userPhone: "Số điện thoại",
+                userElement: "Element",
+                userKeyElement: "Key Element"
             };
             for (const key in userFields) {
                 let oldVal = (oldItem[key] || '').toString().trim() || "Trống";
@@ -1641,8 +1651,10 @@ async function startApp() {
         document.getElementById('user-name').value = item.userName;
         document.getElementById('user-title').value = item.userTitle;
         document.getElementById('user-dept').value = item.userDept;
-        document.getElementById('user-email').value = item.userEmail;
-        document.getElementById('user-phone').value = item.userPhone;
+        document.getElementById('user-email').value = item.userEmail || '';
+        document.getElementById('user-phone').value = item.userPhone || '';
+        if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
+        if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
         const userDisabledBox = document.getElementById('user-disabled-box');
         if (userDisabledBox) {
             userDisabledBox.style.display = 'inline-flex';
@@ -5219,8 +5231,8 @@ async function startApp() {
             const zip = new JSZip();
 
             // 1. Assets
-            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Tên màn hình", "Serial màn hình", "Serial thiết bị", "Bàn phím", "Chuột", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
-            const assetsKeys = ["userDept", "userName", "userTitle", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devMonitorSn", "devSn", "devKeyboard", "devMouse", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
+            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Email", "Số điện thoại", "Element", "Key Element", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Tên màn hình", "Serial màn hình", "Serial thiết bị", "Bàn phím", "Chuột", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
+            const assetsKeys = ["userDept", "userName", "userTitle", "userEmail", "userPhone", "userElement", "userKeyElement", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devMonitorSn", "devSn", "devKeyboard", "devMouse", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
             zip.file("1_Danh_sach_cap_phat.csv", convertToCSV(thietBiList, assetsHeaders, assetsKeys));
 
             // 2. Companies
@@ -5301,6 +5313,8 @@ async function startApp() {
         "Key Windows": "keyWin",
         "Key Office": "keyOffice",
         "Key PDF": "keyPdf",
+        "Element": "userElement",
+        "Key Element": "userKeyElement",
         "Ghi chú thiết bị": "devNotes",
         "Ghi chú": "notes",
         "Ứng dụng": "devApps",
