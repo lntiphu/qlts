@@ -122,7 +122,7 @@ async function startApp() {
                     devNotes: db.dev_notes || db.devNotes || '',
                     devApps: db.dev_apps || db.devApps || '',
                     devStatus: devStat,
-                    devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Không cấp' ? 'no' : (devStat === 'Thiết bị cá nhân' ? 'personal' : 'yes')),
+                    devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
                     hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân',
                     userDisabled: !!(db.user_disabled || db.userDisabled),
                     updatedAt: db.updated_at || db.updatedAt || '',
@@ -148,7 +148,7 @@ async function startApp() {
                     user_element: js.userElement,
                     user_key_element: js.userKeyElement,
                     user_disabled: !!js.userDisabled,
-                    has_device: js.devAllocation === 'yes',
+                    has_device: js.devAllocation === 'yes' || js.devAllocation === 'project',
                     dev_id: js.devId || null,
                     dev_type: js.devType,
                     dev_main: js.devMain,
@@ -169,7 +169,7 @@ async function startApp() {
                     key_pdf: js.keyPdf,
                     dev_notes: js.devNotes,
                     dev_apps: js.devApps,
-                    dev_status: js.devAllocation === 'no' ? 'Không cấp' : (js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : js.devStatus),
+                    dev_status: js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : (js.devStatus || (js.devAllocation === 'project' ? 'Thiết bị dự án' : 'Mới')),
                     updated_at: new Date().toISOString(),
                     history: js.history
                 };
@@ -544,7 +544,7 @@ async function startApp() {
 
     function validateDuplicateDevice(excludeIndex = "") {
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
-        if (allocSelected && (allocSelected.value === 'no' || allocSelected.value === 'personal')) {
+        if (allocSelected && allocSelected.value === 'personal') {
             const errDevId = document.getElementById('err-dev-id');
             if (errDevId) errDevId.style.display = 'none';
             if (devIdInput) devIdInput.style.borderColor = '';
@@ -890,15 +890,19 @@ async function startApp() {
         let totalPc = 0;
         let totalLaptop = 0;
         let totalPersonal = 0;
+        let totalProject = 0;
         let totalNoDevice = 0;
 
         thietBiList.forEach(item => {
-            const alloc = item.devAllocation || (item.devStatus === 'Không cấp' ? 'no' : (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : 'yes'));
-            if (alloc === 'no' || item.devStatus === 'Không cấp') {
-                totalNoDevice++;
-            } else if (alloc === 'personal' || item.devStatus === 'Thiết bị cá nhân') {
+            const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
+            if (alloc === 'personal' || item.devStatus === 'Thiết bị cá nhân') {
                 totalPersonal++;
+            } else if (alloc === 'no' || item.devStatus === 'Không cấp') {
+                totalNoDevice++;
             } else {
+                if (alloc === 'project' || item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án') {
+                    totalProject++;
+                }
                 const type = (item.devType || '').toLowerCase().trim();
                 if (type.includes('laptop') || type.includes('macbook') || type.includes('notebook')) {
                     totalLaptop++;
@@ -927,7 +931,7 @@ async function startApp() {
         if (elTotalPc) elTotalPc.innerText = totalPc;
         if (elTotalLaptop) elTotalLaptop.innerText = totalLaptop;
         if (elTotalPersonal) elTotalPersonal.innerText = totalPersonal + totalNoDevice;
-        if (elPersonalSub) elPersonalSub.innerText = `${totalPersonal} Cá nhân | ${totalNoDevice} Không cấp`;
+        if (elPersonalSub) elPersonalSub.innerText = `${totalPersonal} Cá nhân${totalProject > 0 ? ' | ' + totalProject + ' Dự án' : ''}${totalNoDevice > 0 ? ' | ' + totalNoDevice + ' Không cấp' : ''}`;
 
         const totalKhoItems = khoList ? khoList.length : 0;
         const readyKhoItems = khoList ? khoList.filter(k => (k.status || '').toLowerCase().includes('sẵn sàng')).length : 0;
@@ -1394,15 +1398,20 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${item.devId ? `<span class="name"><span class="badge badge-green">${item.devId}</span> ${item.devStatus ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}</span>` : ''}
-                        ${(item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
-                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
-                        ` : ((item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân') && !item.devId ? `
+                        ${item.devAllocation === 'project' || item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' ? `
+                            <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); font-weight: 700; width: fit-content; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-people-roof"></i> Thiết bị dùng chung dự án
+                            </span>
+                        ` : ''}
+                        ${item.devId ? `<span class="name"><span class="badge badge-green">${item.devId}</span> ${item.devStatus && item.devStatus !== 'Thiết bị dự án' ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}</span>` : ''}
+                        ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân') && !item.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);"><i class="fa-solid fa-laptop-code"></i> Sử dụng thiết bị cá nhân</span>
+                        ` : ((item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
+                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
                         ` : ((item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus) ? `
-                            ${!item.devId && item.devStatus ? `<span class="name"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
+                            ${!item.devId && item.devStatus && item.devStatus !== 'Thiết bị dự án' ? `<span class="name"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             <span class="details">Loại: ${item.devType || 'Chưa phân loại'}</span>
-                        ` : (!item.devId ? `
+                        ` : (!item.devId && item.devAllocation !== 'project' ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
                         ` : '')))}
                     </div>
@@ -1420,6 +1429,11 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="actions-cell">
+                        ${item.hasDevice || item.devId || item.devCpu || item.devRam ? `
+                            <button class="btn-icon-only btn-transfer-row-thietbi" data-index="${originalIndex}" title="Chuyển thiết bị cho nhân viên khác hoặc về Kho" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
+                                <i class="fa-solid fa-right-left"></i>
+                            </button>
+                        ` : ''}
                         <button class="btn-icon-only history btn-history-thietbi" data-index="${originalIndex}" title="Xem ngày cập nhật">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                         </button>
@@ -1433,6 +1447,12 @@ async function startApp() {
         });
 
         // Bind events to action buttons inside the table
+        document.querySelectorAll('.btn-transfer-row-thietbi').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                openTransferModalForUser(idx);
+            });
+        });
         document.querySelectorAll('.btn-edit-thietbi').forEach(btn => {
             btn.addEventListener('click', function() {
                 const idx = parseInt(this.getAttribute('data-index'));
@@ -1510,7 +1530,7 @@ async function startApp() {
         let devAllocVal = 'yes';
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         if (allocSelected) devAllocVal = allocSelected.value;
-        const hasDevice = devAllocVal === 'yes';
+        const hasDevice = devAllocVal === 'yes' || devAllocVal === 'project';
 
         const data = {
             devAllocation: devAllocVal,
@@ -1538,7 +1558,7 @@ async function startApp() {
             keyPdf: hasDevice ? document.getElementById('key-pdf').value.trim() : '',
             devNotes: hasDevice ? document.getElementById('dev-notes').value.trim() : '',
             devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
-            devStatus: devAllocVal === 'no' ? 'Không cấp' : (devAllocVal === 'personal' ? 'Thiết bị cá nhân' : document.getElementById('dev-status').value),
+            devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (document.getElementById('dev-status').value || (devAllocVal === 'project' ? 'Thiết bị dự án' : 'Mới')),
             devMonitor: hasDevice ? document.getElementById('dev-monitor').value.trim() : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
             devSn: hasDevice ? document.getElementById('dev-sn').value.trim() : '',
@@ -1760,11 +1780,11 @@ async function startApp() {
                 container.style.borderColor = item.userDisabled ? 'rgba(239, 68, 68, 0.3)' : '';
             }
         }
-        const alloc = item.devAllocation || (item.devStatus === 'Không cấp' ? 'no' : (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : 'yes'));
-        const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`);
+        const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' ? 'project' : (item.devStatus === 'Không cấp' ? 'project' : 'yes')));
+        const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
             radioTarget.checked = true;
-            toggleDeviceFields(alloc === 'yes');
+            toggleDeviceFields(alloc === 'yes' || alloc === 'project');
         }
         document.getElementById('dev-type').value = item.devType || '';
         document.getElementById('dev-main').value = item.devMain;
@@ -1894,7 +1914,8 @@ async function startApp() {
     const devAllocRadios = document.querySelectorAll('input[name="dev-allocation"]');
     devAllocRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
-            toggleDeviceFields(e.target.value === 'yes');
+            const val = e.target.value;
+            toggleDeviceFields(val === 'yes' || val === 'project');
         });
     });
 
@@ -1921,8 +1942,73 @@ async function startApp() {
     const transferSummaryTitle = document.getElementById('transfer-summary-title');
     const transferSummaryDetails = document.getElementById('transfer-summary-details');
 
-    // Helper: Lấy thông tin thiết bị hiện tại (từ form hoặc item đang chỉnh sửa)
+    let transferSourceOverride = null;
+
+    // Helper: Trích xuất cấu hình đầy đủ từ chuỗi Ghi chú của Kho
+    function extractSpecsFromKhoNotes(notesText) {
+        if (!notesText) return {};
+        const jsonMatch = notesText.match(/\[SPECS_JSON:(.*?)\]/s);
+        if (jsonMatch && jsonMatch[1]) {
+            try {
+                return JSON.parse(jsonMatch[1]);
+            } catch (e) {
+                console.warn("Lỗi parse SPECS_JSON từ kho:", e);
+            }
+        }
+        // Fallback regex cho các thiết bị lưu trước đây
+        const result = {};
+        const mainMatch = notesText.match(/Main(?:board)?:\s*([^,.\n]+)/i);
+        const cpuMatch = notesText.match(/CPU:\s*([^,.\n]+)/i);
+        const ramMatch = notesText.match(/RAM:\s*([^,.\n]+)/i);
+        const ssdMatch = notesText.match(/SSD:\s*([^,.\n]+)/i);
+        const hddMatch = notesText.match(/HDD:\s*([^,.\n]+)/i);
+        const vgaMatch = notesText.match(/VGA:\s*([^,.\n]+)/i);
+        const monMatch = notesText.match(/Màn hình:\s*([^,.\n]+)/i);
+        
+        if (mainMatch) result.devMain = mainMatch[1].trim();
+        if (cpuMatch) result.devCpu = cpuMatch[1].trim();
+        if (ramMatch) result.devRam = ramMatch[1].trim();
+        if (ssdMatch) result.devSsd = ssdMatch[1].trim().replace(/GB/i, '');
+        if (hddMatch) result.devHdd = hddMatch[1].trim();
+        if (vgaMatch) result.devVga = vgaMatch[1].trim();
+        if (monMatch) result.devMonitor = monMatch[1].trim();
+        return result;
+    }
+
+    // Helper: Lấy thông tin thiết bị hiện tại (từ form hoặc nguồn được chỉ định)
     function getCurrentDeviceSpecs() {
+        if (transferSourceOverride) {
+            const u = transferSourceOverride;
+            return {
+                sourceUser: u,
+                currentUserId: u.userId || '',
+                currentUserName: u.userName || 'Nhân viên',
+                devAllocVal: u.devAllocation || 'yes',
+                hasDevice: u.hasDevice !== false && u.devAllocation !== 'no' && (u.devId || u.devType || u.devCpu || u.devRam),
+                devId: u.devId || '',
+                devType: u.devType || 'PC / Laptop',
+                devMain: u.devMain || '',
+                devCpu: u.devCpu || '',
+                devRam: u.devRam || '',
+                devRamSlots: u.devRamSlots || '',
+                devSsd: u.devSsd || '',
+                devHdd: u.devHdd || '',
+                devVga: u.devVga || '',
+                keyWin: u.keyWin || '',
+                keyOffice: u.keyOffice || '',
+                keyPdf: u.keyPdf || '',
+                devNotes: u.devNotes || '',
+                devApps: u.devApps || '',
+                devStatus: u.devStatus || 'Mới',
+                devMonitor: u.devMonitor || '',
+                devMonitorSn: u.devMonitorSn || '',
+                devSn: u.devSn || '',
+                devKeyboard: u.devKeyboard || '',
+                devMouse: u.devMouse || '',
+                devCables: u.devCables || ''
+            };
+        }
+
         const indexStr = editIndexThietBi.value;
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         const devAllocVal = allocSelected ? allocSelected.value : 'yes';
@@ -1961,22 +2047,22 @@ async function startApp() {
             devMain: devMain,
             devCpu: devCpu,
             devRam: devRam,
-            devRamSlots: document.getElementById('dev-ram-slots').value,
+            devRamSlots: document.getElementById('dev-ram-slots') ? document.getElementById('dev-ram-slots').value : '',
             devSsd: devSsd,
             devHdd: devHdd,
-            devVga: document.getElementById('dev-vga').value.trim(),
-            keyWin: document.getElementById('key-win').value.trim(),
-            keyOffice: document.getElementById('key-office').value.trim(),
-            keyPdf: document.getElementById('key-pdf').value.trim(),
-            devNotes: document.getElementById('dev-notes').value.trim(),
-            devApps: document.getElementById('dev-apps').value.trim(),
-            devStatus: devStatus,
+            devVga: document.getElementById('dev-vga') ? document.getElementById('dev-vga').value.trim() : '',
+            keyWin: document.getElementById('key-win') ? document.getElementById('key-win').value.trim() : '',
+            keyOffice: document.getElementById('key-office') ? document.getElementById('key-office').value.trim() : '',
+            keyPdf: document.getElementById('key-pdf') ? document.getElementById('key-pdf').value.trim() : '',
+            devNotes: document.getElementById('dev-notes') ? document.getElementById('dev-notes').value.trim() : '',
+            devApps: document.getElementById('dev-apps') ? document.getElementById('dev-apps').value.trim() : '',
+            devStatus: devStatus || 'Mới',
             devMonitor: devMonitor,
             devMonitorSn: document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '',
-            devSn: document.getElementById('dev-sn').value.trim(),
+            devSn: document.getElementById('dev-sn') ? document.getElementById('dev-sn').value.trim() : '',
             devKeyboard: document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '',
             devMouse: document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '',
-            devCables: document.getElementById('dev-cables').value
+            devCables: document.getElementById('dev-cables') ? document.getElementById('dev-cables').value : ''
         };
     }
 
@@ -1988,44 +2074,66 @@ async function startApp() {
         if (transferTargetUserPreview) transferTargetUserPreview.classList.add('hidden');
         if (transferKhoReasonInput) transferKhoReasonInput.value = '';
         if (transferKhoNotesInput) transferKhoNotesInput.value = '';
+        transferSourceOverride = null;
     }
 
-    // Mở Modal Chuyển Thiết Bị
+    // Mở Modal Chuyển Thiết Bị nội bộ
+    function openTransferModalInternal() {
+        const specs = getCurrentDeviceSpecs();
+
+        if (!specs.hasDevice && !specs.devId && !specs.devType && !specs.devCpu && !specs.devRam) {
+            showToast('Thông báo', 'Không có thông tin thiết bị để chuyển! Vui lòng chọn nhân viên có cấp phát thiết bị hoặc điền thông tin thiết bị trước.', 'warning');
+            transferSourceOverride = null;
+            return;
+        }
+
+        // Nạp nội dung hiển thị tổng quan thiết bị
+        transferSummaryTitle.innerText = `Thiết bị từ ${specs.currentUserName} (${specs.currentUserId || 'Mới'}):`;
+        
+        let html = `<strong>Mã thiết bị:</strong> ${specs.devId || 'Chưa đặt ID'}<br>`;
+        html += `<strong>Loại:</strong> ${specs.devType} | <strong>Tình trạng:</strong> ${specs.devStatus}<br>`;
+        let hardware = [];
+        if (specs.devMain) hardware.push(`Main: ${specs.devMain}`);
+        if (specs.devCpu) hardware.push(`CPU: ${specs.devCpu}`);
+        if (specs.devRam) hardware.push(`RAM: ${specs.devRam}${specs.devRamSlots ? ' (' + specs.devRamSlots + ')' : ''}`);
+        if (specs.devSsd) hardware.push(`SSD: ${specs.devSsd}GB`);
+        if (specs.devHdd) hardware.push(`HDD: ${specs.devHdd}`);
+        if (specs.devVga) hardware.push(`VGA: ${specs.devVga}`);
+        if (specs.devMonitor) hardware.push(`Màn hình: ${specs.devMonitor}`);
+        html += `<strong>Cấu hình:</strong> ${hardware.length > 0 ? hardware.join(', ') : 'Chưa nhập chi tiết'}`;
+        
+        transferSummaryDetails.innerHTML = html;
+
+        // Set lý do mặc định cho Lưu kho
+        if (transferKhoReasonInput) {
+            transferKhoReasonInput.value = `Thu hồi thiết bị (${specs.devId || specs.devType}) từ nhân viên ${specs.currentUserName}`;
+        }
+
+        // Reset tab lựa chọn
+        if (transferTypeUserRadio) transferTypeUserRadio.checked = true;
+        if (transferSectionUser) transferSectionUser.classList.remove('hidden');
+        if (transferSectionKho) transferSectionKho.classList.add('hidden');
+
+        if (modalTransferDevice) modalTransferDevice.classList.remove('hidden');
+    }
+
+    // Mở Modal Chuyển Thiết Bị từ bảng Danh Sách
+    function openTransferModalForUser(index) {
+        if (index < 0 || index >= thietBiList.length) return;
+        const user = thietBiList[index];
+        if (!user.hasDevice && !user.devId && !user.devType && !user.devCpu && user.devAllocation === 'no') {
+            showToast('Thông báo', `Nhân viên ${user.userName} (${user.userId}) hiện không có thiết bị để chuyển!`, 'warning');
+            return;
+        }
+        transferSourceOverride = user;
+        openTransferModalInternal();
+    }
+
+    // Mở Modal Chuyển Thiết Bị từ Form
     if (btnOpenTransferModal) {
         btnOpenTransferModal.addEventListener('click', () => {
-            const specs = getCurrentDeviceSpecs();
-
-            if (!specs.hasDevice && !specs.devId && !specs.devType && !specs.devCpu) {
-                showToast('Thông báo', 'Không có thông tin thiết bị để chuyển! Vui lòng chọn "Có cấp" và điền thông tin thiết bị trước.', 'warning');
-                return;
-            }
-
-            // Nạp nội dung hiển thị tổng quan thiết bị
-            transferSummaryTitle.innerText = `Thiết bị từ ${specs.currentUserName} (${specs.currentUserId || 'Mới'}):`;
-            
-            let html = `<strong>Mã thiết bị:</strong> ${specs.devId || 'Chưa đặt ID'}<br>`;
-            html += `<strong>Loại:</strong> ${specs.devType} | <strong>Tình trạng:</strong> ${specs.devStatus}<br>`;
-            let hardware = [];
-            if (specs.devCpu) hardware.push(`CPU: ${specs.devCpu}`);
-            if (specs.devRam) hardware.push(`RAM: ${specs.devRam}`);
-            if (specs.devSsd) hardware.push(`SSD: ${specs.devSsd}GB`);
-            if (specs.devHdd) hardware.push(`HDD: ${specs.devHdd}`);
-            if (specs.devMonitor) hardware.push(`Màn hình: ${specs.devMonitor}`);
-            html += `<strong>Cấu hình:</strong> ${hardware.length > 0 ? hardware.join(', ') : 'Chưa nhập chi tiết'}`;
-            
-            transferSummaryDetails.innerHTML = html;
-
-            // Set lý do mặc định cho Lưu kho
-            if (transferKhoReasonInput) {
-                transferKhoReasonInput.value = `Thu hồi thiết bị (${specs.devId || specs.devType}) từ nhân viên ${specs.currentUserName}`;
-            }
-
-            // Reset tab lựa chọn
-            if (transferTypeUserRadio) transferTypeUserRadio.checked = true;
-            if (transferSectionUser) transferSectionUser.classList.remove('hidden');
-            if (transferSectionKho) transferSectionKho.classList.add('hidden');
-
-            if (modalTransferDevice) modalTransferDevice.classList.remove('hidden');
+            transferSourceOverride = null;
+            openTransferModalInternal();
         });
     }
 
@@ -2056,7 +2164,7 @@ async function startApp() {
                 return;
             }
 
-            const currentUserId = userIdInput.value.trim().toLowerCase();
+            const currentUserId = (transferSourceOverride ? transferSourceOverride.userId : userIdInput.value).trim().toLowerCase();
 
             // Tìm gợi ý các user trong thietBiList
             const matches = thietBiList.filter(u => 
@@ -2152,7 +2260,7 @@ async function startApp() {
                     return;
                 }
 
-                // 1. Cập nhật thiết bị cho targetUser
+                // 1. Cập nhật ĐẦY ĐỦ 100% CẤU HÌNH THIẾT BỊ cho targetUser
                 const devIdentifier = specs.devId || specs.devType || 'Thiết bị';
                 targetUser.hasDevice = true;
                 targetUser.devAllocation = 'yes';
@@ -2183,22 +2291,23 @@ async function startApp() {
                 targetUser.history.push({
                     time: formattedDate,
                     action: 'Nhận bàn giao thiết bị',
-                    details: `Nhận điều chuyển thiết bị <strong>${devIdentifier}</strong> từ nhân viên <strong>${specs.currentUserName}</strong> (${specs.currentUserId || 'Mới'}).`
+                    details: `Nhận điều chuyển thiết bị <strong>${devIdentifier}</strong> (${specs.devCpu ? specs.devCpu + ', ' : ''}${specs.devRam ? 'RAM ' + specs.devRam : ''}) từ nhân viên <strong>${specs.currentUserName}</strong> (${specs.currentUserId || 'Mới'}).`
                 });
 
                 // Lưu targetUser lên Supabase
                 try {
                     const dbTarget = mappers.thietBi.toDB(targetUser);
                     if (supabaseClient && targetUser.id && !String(targetUser.id).startsWith('local-')) {
-                        await supabaseClient.from('thiet_bi').update(dbTarget).eq('id', targetUser.id);
+                        const { error } = await supabaseClient.from('thiet_bi').update(dbTarget).eq('id', targetUser.id);
+                        if (error) console.error("Lỗi lưu targetUser lên Supabase:", error);
                     }
                 } catch (e) {
                     console.warn("Lỗi lưu targetUser lên Supabase:", e);
                 }
 
-                // 2. Nếu đang sửa sourceUser trong thietBiList -> Xóa thiết bị của sourceUser
+                // 2. Nếu có sourceUser trong thietBiList -> Xóa thiết bị của sourceUser
                 if (specs.sourceUser) {
-                    const sourceIdx = thietBiList.findIndex(u => u.id === specs.sourceUser.id);
+                    const sourceIdx = thietBiList.findIndex(u => (specs.sourceUser.id && u.id === specs.sourceUser.id) || (specs.sourceUser.userId && u.userId.toLowerCase() === specs.sourceUser.userId.toLowerCase()));
                     if (sourceIdx !== -1) {
                         const sUser = thietBiList[sourceIdx];
                         sUser.hasDevice = false;
@@ -2236,7 +2345,8 @@ async function startApp() {
                         try {
                             const dbSource = mappers.thietBi.toDB(sUser);
                             if (supabaseClient && sUser.id && !String(sUser.id).startsWith('local-')) {
-                                await supabaseClient.from('thiet_bi').update(dbSource).eq('id', sUser.id);
+                                const { error } = await supabaseClient.from('thiet_bi').update(dbSource).eq('id', sUser.id);
+                                if (error) console.error("Lỗi lưu sourceUser lên Supabase:", error);
                             }
                         } catch (e) {
                             console.warn("Lỗi lưu sourceUser lên Supabase:", e);
@@ -2244,19 +2354,14 @@ async function startApp() {
                     }
                 }
 
-                // Reset form thiết bị về "Không cấp"
-                const devAllocNo = document.getElementById('dev-alloc-no');
-                if (devAllocNo) {
-                    devAllocNo.checked = true;
-                    toggleDeviceFields(false);
-                }
-
-                // Lưu LocalStorage & Render lại
+                // Reset form thiết bị và đồng bộ
+                resetFormThietBi();
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
                 renderThietBi();
                 closeTransferModal();
+                switchToTab('tab-cap-phat-list');
 
-                showToast('Thành công', `Đã chuyển thiết bị "${devIdentifier}" sang cho nhân viên ${targetUser.userName} (${targetUser.userId})!`, 'success');
+                showToast('Thành công', `Đã chuyển toàn bộ cấu hình thiết bị "${devIdentifier}" sang cho nhân viên ${targetUser.userName} (${targetUser.userId})!`, 'success');
 
             } else {
                 // CHUYỂN VỀ LƯU KHO (kho_thiet_bi)
@@ -2265,13 +2370,38 @@ async function startApp() {
 
                 const devIdentifier = specs.devId || specs.devType || 'TB-KHO';
                 let specsDetail = [];
+                if (specs.devMain) specsDetail.push(`Main: ${specs.devMain}`);
                 if (specs.devCpu) specsDetail.push(`CPU: ${specs.devCpu}`);
-                if (specs.devRam) specsDetail.push(`RAM: ${specs.devRam}`);
+                if (specs.devRam) specsDetail.push(`RAM: ${specs.devRam}${specs.devRamSlots ? ' (' + specs.devRamSlots + ')' : ''}`);
                 if (specs.devSsd) specsDetail.push(`SSD: ${specs.devSsd}GB`);
                 if (specs.devHdd) specsDetail.push(`HDD: ${specs.devHdd}`);
+                if (specs.devVga) specsDetail.push(`VGA: ${specs.devVga}`);
                 if (specs.devMonitor) specsDetail.push(`Màn hình: ${specs.devMonitor}`);
 
-                const fullNotes = `Cấu hình: ${specsDetail.join(', ')}` + (notes ? `. Ghi chú: ${notes}` : '');
+                // Đóng gói 100% linh kiện chi tiết thành JSON
+                const specsData = {
+                    devType: specs.devType,
+                    devMain: specs.devMain,
+                    devCpu: specs.devCpu,
+                    devRam: specs.devRam,
+                    devRamSlots: specs.devRamSlots,
+                    devSsd: specs.devSsd,
+                    devHdd: specs.devHdd,
+                    devVga: specs.devVga,
+                    devMonitor: specs.devMonitor,
+                    devMonitorSn: specs.devMonitorSn,
+                    devSn: specs.devSn,
+                    devKeyboard: specs.devKeyboard,
+                    devMouse: specs.devMouse,
+                    devCables: specs.devCables,
+                    keyWin: specs.keyWin,
+                    keyOffice: specs.keyOffice,
+                    keyPdf: specs.keyPdf,
+                    devApps: specs.devApps,
+                    devStatus: specs.devStatus
+                };
+
+                const fullNotes = `Cấu hình: ${specsDetail.join(', ')}` + (notes ? `. Ghi chú: ${notes}` : '') + `\n[SPECS_JSON:${JSON.stringify(specsData)}]`;
 
                 const newKhoItem = {
                     code: devIdentifier,
@@ -2308,7 +2438,7 @@ async function startApp() {
 
                 // Cập nhật sourceUser (nếu có)
                 if (specs.sourceUser) {
-                    const sourceIdx = thietBiList.findIndex(u => u.id === specs.sourceUser.id);
+                    const sourceIdx = thietBiList.findIndex(u => (specs.sourceUser.id && u.id === specs.sourceUser.id) || (specs.sourceUser.userId && u.userId.toLowerCase() === specs.sourceUser.userId.toLowerCase()));
                     if (sourceIdx !== -1) {
                         const sUser = thietBiList[sourceIdx];
                         sUser.hasDevice = false;
@@ -2346,7 +2476,8 @@ async function startApp() {
                         try {
                             const dbSource = mappers.thietBi.toDB(sUser);
                             if (supabaseClient && sUser.id && !String(sUser.id).startsWith('local-')) {
-                                await supabaseClient.from('thiet_bi').update(dbSource).eq('id', sUser.id);
+                                const { error } = await supabaseClient.from('thiet_bi').update(dbSource).eq('id', sUser.id);
+                                if (error) console.error("Lỗi lưu sourceUser lên Supabase:", error);
                             }
                         } catch (e) {
                             console.warn("Lỗi lưu sourceUser lên Supabase:", e);
@@ -2356,15 +2487,9 @@ async function startApp() {
                     }
                 }
 
-                // Reset form thiết bị về "Không cấp"
-                const devAllocNo = document.getElementById('dev-alloc-no');
-                if (devAllocNo) {
-                    devAllocNo.checked = true;
-                    toggleDeviceFields(false);
-                }
-
+                resetFormThietBi();
                 closeTransferModal();
-                showToast('Thành công', `Đã chuyển thiết bị "${devIdentifier}" về kho lưu trữ thành công!`, 'success');
+                showToast('Thành công', `Đã chuyển thiết bị "${devIdentifier}" cùng cấu hình đầy đủ về kho lưu trữ!`, 'success');
             }
         });
     }
@@ -2405,7 +2530,10 @@ async function startApp() {
             let html = `<strong>Tên thiết bị:</strong> ${item.name || 'Thiết bị'} | <strong>Số lượng trong kho:</strong> <span style="color:#eab308; font-weight:bold;">${item.quantity || 1}</span><br>`;
             html += `<strong>Lý do lưu kho:</strong> ${item.reason || 'Không có'}<br>`;
             if (item.notes) {
-                html += `<strong>Ghi chú / Cấu hình:</strong> ${item.notes}`;
+                const cleanNotes = item.notes.replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+                if (cleanNotes) {
+                    html += `<strong>Ghi chú / Cấu hình:</strong> ${cleanNotes}`;
+                }
             }
             allocateKhoSummaryDetails.innerHTML = html;
         }
@@ -2487,7 +2615,7 @@ async function startApp() {
         }
     }
 
-    // XỬ LÝ CẤP PHÁT TỪ KHO -> NHÂN VIÊN
+    // XỬ LÝ CẤP PHÁT TỪ KHO -> NHÂN VIÊN (KHÔI PHỤC ĐẦY ĐỦ CẤU HÌNH)
     if (btnSubmitAllocateKho) {
         btnSubmitAllocateKho.addEventListener('click', async () => {
             if (currentSelectedKhoIndex < 0 || currentSelectedKhoIndex >= khoList.length) {
@@ -2512,27 +2640,49 @@ async function startApp() {
             const now = new Date();
             const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-            // 1. Cập nhật targetUser
+            // Trích xuất cấu hình chi tiết từ ghi chú kho
+            const specsObj = extractSpecsFromKhoNotes(khoItem.notes);
+            const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+
+            // 1. Cập nhật ĐẦY ĐỦ CẤU HÌNH cho targetUser
             targetUser.hasDevice = true;
             targetUser.devAllocation = 'yes';
             targetUser.devId = khoItem.code || '';
-            targetUser.devType = khoItem.name || 'Thiết bị';
-            targetUser.devNotes = khoItem.notes ? `Xuất từ kho: ${khoItem.notes}` : 'Xuất từ kho thiết bị';
-            targetUser.devStatus = 'Mới';
+            targetUser.devType = specsObj.devType || khoItem.name || 'PC / Laptop';
+            targetUser.devMain = specsObj.devMain || '';
+            targetUser.devCpu = specsObj.devCpu || '';
+            targetUser.devRam = specsObj.devRam || '';
+            targetUser.devRamSlots = specsObj.devRamSlots || '';
+            targetUser.devSsd = specsObj.devSsd || '';
+            targetUser.devHdd = specsObj.devHdd || '';
+            targetUser.devVga = specsObj.devVga || '';
+            targetUser.devMonitor = specsObj.devMonitor || '';
+            targetUser.devMonitorSn = specsObj.devMonitorSn || '';
+            targetUser.devSn = specsObj.devSn || '';
+            targetUser.devKeyboard = specsObj.devKeyboard || '';
+            targetUser.devMouse = specsObj.devMouse || '';
+            targetUser.devCables = specsObj.devCables || '';
+            targetUser.keyWin = specsObj.keyWin || '';
+            targetUser.keyOffice = specsObj.keyOffice || '';
+            targetUser.keyPdf = specsObj.keyPdf || '';
+            targetUser.devApps = specsObj.devApps || '';
+            targetUser.devStatus = specsObj.devStatus || 'Mới';
+            targetUser.devNotes = cleanNotes ? `Xuất từ kho: ${cleanNotes}` : 'Xuất từ kho thiết bị';
             targetUser.updatedAt = formattedDate;
 
             if (!targetUser.history) targetUser.history = [];
             targetUser.history.push({
                 time: formattedDate,
                 action: 'Nhận cấp phát từ kho',
-                details: `Nhận cấp phát thiết bị <strong>${khoItem.code || khoItem.name}</strong> xuất từ Kho lưu trữ thiết bị.`
+                details: `Nhận cấp phát thiết bị <strong>${khoItem.code || khoItem.name}</strong> (${targetUser.devCpu ? targetUser.devCpu + ', ' : ''}${targetUser.devRam ? 'RAM ' + targetUser.devRam : ''}) xuất từ Kho lưu trữ thiết bị.`
             });
 
             // Lưu targetUser lên Supabase
             try {
                 const dbTarget = mappers.thietBi.toDB(targetUser);
                 if (supabaseClient && targetUser.id && !String(targetUser.id).startsWith('local-')) {
-                    await supabaseClient.from('thiet_bi').update(dbTarget).eq('id', targetUser.id);
+                    const { error } = await supabaseClient.from('thiet_bi').update(dbTarget).eq('id', targetUser.id);
+                    if (error) console.error("Lỗi cập nhật targetUser từ kho lên Supabase:", error);
                 }
             } catch (e) {
                 console.warn("Lỗi cập nhật targetUser lên Supabase:", e);
@@ -2569,7 +2719,7 @@ async function startApp() {
             renderKho();
             closeAllocateKhoModal();
 
-            showToast('Thành công', `Đã xuất cấp thiết bị "${khoItem.code || khoItem.name}" từ kho cho nhân viên ${targetUser.userName} (${targetUser.userId})!`, 'success');
+            showToast('Thành công', `Đã xuất cấp thiết bị "${khoItem.code || khoItem.name}" cùng cấu hình đầy đủ từ kho cho nhân viên ${targetUser.userName} (${targetUser.userId})!`, 'success');
         });
     }
 
@@ -2618,6 +2768,8 @@ async function startApp() {
             const card = document.createElement('div');
             card.style.cssText = 'background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: border-color 0.2s ease;';
 
+            const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+
             card.innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
                     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
@@ -2626,7 +2778,7 @@ async function startApp() {
                         <span style="background: rgba(234, 179, 8, 0.15); color: #eab308; border: 1px solid rgba(234, 179, 8, 0.3); font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px;">SL: ${item.quantity || 1}</span>
                     </div>
                     <div style="font-size: 12px; color: #94a3b8; line-height: 1.4;">
-                        ${item.notes ? `<strong>Ghi chú / Cấu hình:</strong> ${item.notes}<br>` : ''}
+                        ${cleanNotes ? `<strong>Ghi chú / Cấu hình:</strong> ${cleanNotes}<br>` : ''}
                         ${item.reason ? `<strong>Lý do lưu kho:</strong> ${item.reason}` : ''}
                     </div>
                 </div>
@@ -2658,35 +2810,42 @@ async function startApp() {
             toggleDeviceFields(true);
         }
 
-        // 2. Điền thông tin vào form
+        // Trích xuất cấu hình chi tiết từ notes
+        const specsObj = extractSpecsFromKhoNotes(khoItem.notes);
+        const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+
+        // 2. Điền ĐẦY ĐỦ 100% CẤU HÌNH vào form
         if (devIdInput) devIdInput.value = khoItem.code || '';
         const devTypeInput = document.getElementById('dev-type');
-        if (devTypeInput) devTypeInput.value = khoItem.name || '';
+        if (devTypeInput) devTypeInput.value = specsObj.devType || khoItem.name || 'PC / Laptop';
 
-        // Tự động phân tích ghi chú / cấu hình (nếu có)
-        if (khoItem.notes) {
-            const notesText = khoItem.notes;
-            const cpuMatch = notesText.match(/CPU:\s*([^,.\n]+)/i);
-            const ramMatch = notesText.match(/RAM:\s*([^,.\n]+)/i);
-            const ssdMatch = notesText.match(/SSD:\s*([^,.\n]+)/i);
-            const hddMatch = notesText.match(/HDD:\s*([^,.\n]+)/i);
-            const monMatch = notesText.match(/Màn hình:\s*([^,.\n]+)/i);
+        if (document.getElementById('dev-main')) document.getElementById('dev-main').value = specsObj.devMain || '';
+        if (document.getElementById('dev-cpu')) document.getElementById('dev-cpu').value = specsObj.devCpu || '';
+        if (document.getElementById('dev-ram')) document.getElementById('dev-ram').value = specsObj.devRam || '';
+        if (document.getElementById('dev-ram-slots')) document.getElementById('dev-ram-slots').value = specsObj.devRamSlots || '';
+        if (document.getElementById('dev-ssd')) document.getElementById('dev-ssd').value = (specsObj.devSsd || '').toString().replace(/GB/i, '');
+        if (document.getElementById('dev-hdd')) document.getElementById('dev-hdd').value = specsObj.devHdd || '';
+        if (document.getElementById('dev-vga')) document.getElementById('dev-vga').value = specsObj.devVga || '';
+        if (document.getElementById('dev-monitor')) document.getElementById('dev-monitor').value = specsObj.devMonitor || '';
+        if (document.getElementById('dev-monitor-sn')) document.getElementById('dev-monitor-sn').value = specsObj.devMonitorSn || '';
+        if (document.getElementById('dev-sn')) document.getElementById('dev-sn').value = specsObj.devSn || '';
+        if (document.getElementById('dev-keyboard')) document.getElementById('dev-keyboard').value = specsObj.devKeyboard || '';
+        if (document.getElementById('dev-mouse')) document.getElementById('dev-mouse').value = specsObj.devMouse || '';
+        if (document.getElementById('dev-cables')) document.getElementById('dev-cables').value = specsObj.devCables || '';
+        if (document.getElementById('key-win')) document.getElementById('key-win').value = specsObj.keyWin || '';
+        if (document.getElementById('key-office')) document.getElementById('key-office').value = specsObj.keyOffice || '';
+        if (document.getElementById('key-pdf')) document.getElementById('key-pdf').value = specsObj.keyPdf || '';
+        if (document.getElementById('dev-apps')) document.getElementById('dev-apps').value = specsObj.devApps || '';
+        if (document.getElementById('dev-status')) document.getElementById('dev-status').value = specsObj.devStatus || 'Mới';
 
-            if (cpuMatch) document.getElementById('dev-cpu').value = cpuMatch[1].trim();
-            if (ramMatch) document.getElementById('dev-ram').value = ramMatch[1].trim();
-            if (ssdMatch) document.getElementById('dev-ssd').value = ssdMatch[1].trim().replace(/GB/i, '');
-            if (hddMatch) document.getElementById('dev-hdd').value = hddMatch[1].trim();
-            if (monMatch) document.getElementById('dev-monitor').value = monMatch[1].trim();
-
-            const devNotesInput = document.getElementById('dev-notes');
-            if (devNotesInput) devNotesInput.value = `Xuất từ kho: ${khoItem.notes}`;
-        }
+        const devNotesInput = document.getElementById('dev-notes');
+        if (devNotesInput) devNotesInput.value = cleanNotes ? `Xuất từ kho: ${cleanNotes}` : 'Xuất từ kho thiết bị';
 
         // Lưu chỉ số thiết bị kho đang chờ trừ số lượng khi Lưu Form
         pendingKhoIndexToDeduct = index;
 
         closeReceiveFromKhoModal();
-        showToast('Đã chọn thiết bị', `Đã điền thông tin thiết bị "${khoItem.code || khoItem.name}" từ kho vào form!`, 'success');
+        showToast('Đã chọn thiết bị', `Đã điền đầy đủ cấu hình thiết bị "${khoItem.code || khoItem.name}" từ kho vào form!`, 'success');
     }
 
     function processPendingKhoDeduct() {
@@ -5041,6 +5200,13 @@ async function startApp() {
                 reason: document.getElementById('kho-reason').value.trim(),
                 dateStored: dateStoredVal
             };
+
+            if (indexStr !== '') {
+                const existingItem = khoList[parseInt(indexStr)];
+                if (existingItem && existingItem.notes) {
+                    data.notes = existingItem.notes;
+                }
+            }
 
             if (indexStr === '') {
                 try {
