@@ -1591,9 +1591,6 @@ async function startApp() {
         } else {
             const idx = parseInt(indexStr);
             const oldItem = thietBiList[idx];
-            const oldDevId = oldItem ? (oldItem.devId || '') : '';
-            const newDevId = devIdInput ? devIdInput.value.trim() : '';
-            data.devId = newDevId || oldDevId;
             
             // Compare fields cleanly and accurately
             let changes = [];
