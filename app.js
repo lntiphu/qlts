@@ -108,10 +108,14 @@ async function startApp() {
                     devRam: db.dev_ram || db.devRam || '',
                     devRamSlots: db.dev_ram_slots || db.devRamSlots || '',
                     devSsd: db.dev_ssd || db.devSsd || '',
+                    devSsd2: db.dev_ssd_2 || db.devSsd2 || '',
                     devHdd: db.dev_hdd || db.devHdd || '',
+                    devHdd2: db.dev_hdd_2 || db.devHdd2 || '',
                     devVga: db.dev_vga || db.devVga || '',
                     devMonitor: db.dev_monitor || db.devMonitor || '',
+                    devMonitor2: db.dev_monitor_2 || db.devMonitor2 || '',
                     devMonitorSn: db.dev_monitor_sn || db.devMonitorSn || '',
+                    devMonitorSn2: db.dev_monitor_sn_2 || db.devMonitorSn2 || '',
                     devSn: db.dev_sn || db.devSn || '',
                     devKeyboard: kbVal,
                     devMouse: db.dev_mouse || db.devMouse || '',
@@ -124,8 +128,8 @@ async function startApp() {
                     devIssueDesc: db.dev_issue_desc || db.devIssueDesc || '',
                     devIssueFix: db.dev_issue_fix || db.devIssueFix || '',
                     devStatus: devStat,
-                    devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
-                    hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân',
+                    devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' || devStat === 'Cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' || devStat === 'Dùng chung' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
+                    hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân' && devStat !== 'Cá nhân',
                     userDisabled: !!(db.user_disabled || db.userDisabled),
                     updatedAt: db.updated_at || db.updatedAt || '',
                     history: Array.isArray(db.history) ? db.history : []
@@ -157,11 +161,15 @@ async function startApp() {
                     dev_cpu: js.devCpu,
                     dev_ram: js.devRam,
                     dev_ram_slots: js.devRamSlots,
-                    dev_ssd: js.devSsd,
-                    dev_hdd: js.devHdd,
+                    dev_ssd: js.devSsd || '',
+                    dev_ssd_2: js.devSsd2 || '',
+                    dev_hdd: js.devHdd || '',
+                    dev_hdd_2: js.devHdd2 || '',
                     dev_vga: js.devVga,
-                    dev_monitor: js.devMonitor,
-                    dev_monitor_sn: js.devMonitorSn,
+                    dev_monitor: js.devMonitor || '',
+                    dev_monitor_2: js.devMonitor2 || '',
+                    dev_monitor_sn: js.devMonitorSn || '',
+                    dev_monitor_sn_2: js.devMonitorSn2 || '',
                     dev_sn: js.devSn,
                     dev_keyboard: !!js.devKeyboard,
                     dev_mouse: js.devMouse,
@@ -618,8 +626,11 @@ async function startApp() {
             'dev-main',
             'dev-cpu',
             'dev-ssd',
+            'dev-ssd-2',
             'dev-hdd',
+            'dev-hdd-2',
             'dev-monitor',
+            'dev-monitor-2',
             'dev-vga'
         ];
 
@@ -655,8 +666,11 @@ async function startApp() {
                     'dev-main': ['H610M', 'B760M', 'H510M', 'B560M', 'A320M'],
                     'dev-cpu': ['Core i5 12400F', 'Core i7 13700', 'Core i3 12100', 'Core i5 10400', 'Ryzen 5 5600G'],
                     'dev-ssd': ['256GB SSD', '512GB SSD', '1TB SSD', '128GB SSD'],
+                    'dev-ssd-2': ['256GB SSD', '512GB SSD', '1TB SSD', '128GB SSD'],
                     'dev-hdd': ['1TB HDD', '2TB HDD', '500GB HDD', 'Không có HDD'],
+                    'dev-hdd-2': ['1TB HDD', '2TB HDD', '500GB HDD', 'Không có HDD'],
                     'dev-monitor': ['Dell 24 inch', 'HP 21.5 inch', 'LG 24 inch', 'Samsung 27 inch', 'Asus 23.8 inch'],
+                    'dev-monitor-2': ['Dell 24 inch', 'HP 21.5 inch', 'LG 24 inch', 'Samsung 27 inch', 'Asus 23.8 inch'],
                     'dev-vga': ['GTX 1650', 'RTX 3060', 'RTX 2060', 'Intel UHD Graphics', 'Radeon Graphics']
                 };
 
@@ -672,8 +686,11 @@ async function startApp() {
                     else if (fieldId === 'dev-main') val = item.devMain;
                     else if (fieldId === 'dev-cpu') val = item.devCpu;
                     else if (fieldId === 'dev-ssd') val = item.devSsd;
+                    else if (fieldId === 'dev-ssd-2') val = item.devSsd2;
                     else if (fieldId === 'dev-hdd') val = item.devHdd;
+                    else if (fieldId === 'dev-hdd-2') val = item.devHdd2;
                     else if (fieldId === 'dev-monitor') val = item.devMonitor;
+                    else if (fieldId === 'dev-monitor-2') val = item.devMonitor2;
                     else if (fieldId === 'dev-vga') val = item.devVga;
 
                     if (val && val.trim() !== '') {
@@ -1331,14 +1348,18 @@ async function startApp() {
                 ${item.userPhone || ''}
                 ${item.userElement || ''}
                 ${item.userKeyElement || ''}
-                ${item.devType || ''}
-                ${item.devMain || ''}
-                ${item.devCpu || ''}
-                ${item.devRam || ''}
-                ${item.devNotes || ''}
-                ${troubleshootSearch}
-                ${disabledTag}
-                ${recentTag}
+                ${item.devType || ''} 
+                ${item.devMain || ''} 
+                ${item.devCpu || ''} 
+                ${item.devRam || ''} 
+                ${item.devSsd || ''} ${item.devSsd2 || ''}
+                ${item.devHdd || ''} ${item.devHdd2 || ''}
+                ${item.devMonitor || ''} ${item.devMonitor2 || ''}
+                ${item.devMonitorSn || ''} ${item.devMonitorSn2 || ''}
+                ${item.devNotes || ''} 
+                ${troubleshootSearch} 
+                ${disabledTag} 
+                ${recentTag} 
             `.toLowerCase();
             
             return keywords.every(kw => itemText.includes(kw));
@@ -1419,11 +1440,23 @@ async function startApp() {
                 const ramInfo = item.devRamSlots ? `${item.devRam} (${item.devRamSlots})` : item.devRam;
                 configArr.push(`RAM: ${ramInfo}`);
             }
-            if (item.devSsd) configArr.push(`SSD: ${item.devSsd}`);
-            if (item.devHdd) configArr.push(`HDD: ${item.devHdd}`);
+            if (item.devSsd || item.devSsd2) {
+                const ssdParts = [item.devSsd, item.devSsd2].filter(Boolean);
+                configArr.push(`SSD: ${ssdParts.join(' + ')}`);
+            }
+            if (item.devHdd || item.devHdd2) {
+                const hddParts = [item.devHdd, item.devHdd2].filter(Boolean);
+                configArr.push(`HDD: ${hddParts.join(' + ')}`);
+            }
             if (item.devVga) configArr.push(`VGA: ${item.devVga}`);
-            if (item.devMonitor) configArr.push(`Màn hình: ${item.devMonitor}`);
-            if (item.devMonitorSn) configArr.push(`S/N Màn hình: ${item.devMonitorSn}`);
+            if (item.devMonitor || item.devMonitor2) {
+                const monParts = [item.devMonitor, item.devMonitor2].filter(Boolean);
+                configArr.push(`Màn hình: ${monParts.join(' | ')}`);
+            }
+            if (item.devMonitorSn || item.devMonitorSn2) {
+                const monSnParts = [item.devMonitorSn, item.devMonitorSn2].filter(Boolean);
+                configArr.push(`S/N Màn hình: ${monSnParts.join(' | ')}`);
+            }
             if (item.devSn) configArr.push(`S/N Thiết bị: ${item.devSn}`);
             if (item.devKeyboard) {
                 const kbText = (item.devKeyboard === true || item.devKeyboard === 'true') ? 'Bàn phím có dây' : item.devKeyboard;
@@ -1462,20 +1495,20 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${item.devAllocation === 'project' || item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' ? `
+                        ${item.devAllocation === 'project' || item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? `
                             <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); font-weight: 700; width: fit-content; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="fa-solid fa-people-roof"></i> Thiết bị dùng chung dự án
+                                <i class="fa-solid fa-people-roof"></i> Dùng chung
                             </span>
                         ` : ''}
-                        ${item.devId ? `<span class="name"><span class="badge badge-green">${item.devId}</span> ${item.devStatus && item.devStatus !== 'Thiết bị dự án' ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}</span>` : ''}
-                        ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân') && !item.devId ? `
-                            <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);"><i class="fa-solid fa-laptop-code"></i> Sử dụng thiết bị cá nhân</span>
+                        ${item.devId ? `<span class="name"><span class="badge badge-green">${item.devId}</span> ${item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}</span>` : ''}
+                        ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân') && !item.devId ? `
+                            <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
                         ` : ((item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
-                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp thiết bị</span>
+                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>
                         ` : ((item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus) ? `
-                            ${!item.devId && item.devStatus && item.devStatus !== 'Thiết bị dự án' ? `<span class="name"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
+                            ${!item.devId && item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             <span class="details">Loại: ${item.devType || 'Chưa phân loại'}</span>
-                        ` : (!item.devId && item.devAllocation !== 'project' ? `
+                        ` : (!item.devId && item.devAllocation !== 'project' && item.devStatus !== 'Thiết bị dự án' && item.devStatus !== 'Thiết bị dùng chung dự án' && item.devStatus !== 'Dùng chung' ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
                         ` : '')))}
                     </div>
@@ -1701,8 +1734,10 @@ async function startApp() {
             devCpu: hasDevice ? document.getElementById('dev-cpu').value.trim() : '',
             devRam: hasDevice ? document.getElementById('dev-ram').value : '',
             devRamSlots: hasDevice ? document.getElementById('dev-ram-slots').value : '',
-            devSsd: hasDevice ? document.getElementById('dev-ssd').value.trim() : '',
-            devHdd: hasDevice ? document.getElementById('dev-hdd').value.trim() : '',
+            devSsd: hasDevice ? (document.getElementById('dev-ssd') ? document.getElementById('dev-ssd').value.trim() : '') : '',
+            devSsd2: hasDevice ? (document.getElementById('dev-ssd-2') ? document.getElementById('dev-ssd-2').value.trim() : '') : '',
+            devHdd: hasDevice ? (document.getElementById('dev-hdd') ? document.getElementById('dev-hdd').value.trim() : '') : '',
+            devHdd2: hasDevice ? (document.getElementById('dev-hdd-2') ? document.getElementById('dev-hdd-2').value.trim() : '') : '',
             devVga: hasDevice ? document.getElementById('dev-vga').value.trim() : '',
             keyWin: hasDevice ? document.getElementById('key-win').value.trim() : '',
             keyOffice: hasDevice ? document.getElementById('key-office').value.trim() : '',
@@ -1711,8 +1746,10 @@ async function startApp() {
             devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
             ...getTroubleshootDataFromForm(),
             devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (document.getElementById('dev-status').value || (devAllocVal === 'project' ? 'Thiết bị dự án' : 'Mới')),
-            devMonitor: hasDevice ? document.getElementById('dev-monitor').value.trim() : '',
+            devMonitor: hasDevice ? (document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '') : '',
+            devMonitor2: hasDevice ? (document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '') : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
+            devMonitorSn2: (hasDevice && document.getElementById('dev-monitor-sn-2')) ? document.getElementById('dev-monitor-sn-2').value.trim() : '',
             devSn: hasDevice ? document.getElementById('dev-sn').value.trim() : '',
             devKeyboard: (hasDevice && document.getElementById('dev-keyboard')) ? document.getElementById('dev-keyboard').value : '',
             devMouse: (hasDevice && document.getElementById('dev-mouse')) ? document.getElementById('dev-mouse').value : '',
@@ -1816,11 +1853,15 @@ async function startApp() {
                     devCpu: "CPU",
                     devRam: "RAM",
                     devRamSlots: "Số thanh RAM",
-                    devSsd: "SSD",
-                    devHdd: "HDD",
+                    devSsd: "SSD 1",
+                    devSsd2: "SSD 2",
+                    devHdd: "HDD 1",
+                    devHdd2: "HDD 2",
                     devVga: "VGA",
-                    devMonitor: "Tên màn hình",
-                    devMonitorSn: "Serial màn hình",
+                    devMonitor: "Tên màn hình 1",
+                    devMonitor2: "Tên màn hình 2",
+                    devMonitorSn: "Serial màn hình 1",
+                    devMonitorSn2: "Serial màn hình 2",
                     devSn: "Serial thiết bị",
                     devKeyboard: "Bàn phím",
                     devMouse: "Chuột",
@@ -1934,7 +1975,7 @@ async function startApp() {
                 container.style.borderColor = item.userDisabled ? 'rgba(239, 68, 68, 0.3)' : '';
             }
         }
-        const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' ? 'project' : (item.devStatus === 'Không cấp' ? 'project' : 'yes')));
+        const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
         const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
             radioTarget.checked = true;
@@ -1945,18 +1986,22 @@ async function startApp() {
         document.getElementById('dev-cpu').value = item.devCpu;
         document.getElementById('dev-ram').value = item.devRam;
         document.getElementById('dev-ram-slots').value = item.devRamSlots || '';
-        document.getElementById('dev-ssd').value = item.devSsd;
-        document.getElementById('dev-hdd').value = item.devHdd;
-        document.getElementById('dev-vga').value = item.devVga;
-        document.getElementById('key-win').value = item.keyWin;
-        document.getElementById('key-office').value = item.keyOffice;
-        document.getElementById('key-pdf').value = item.keyPdf;
+        document.getElementById('dev-ssd').value = item.devSsd || '';
+        if (document.getElementById('dev-ssd-2')) document.getElementById('dev-ssd-2').value = item.devSsd2 || '';
+        document.getElementById('dev-hdd').value = item.devHdd || '';
+        if (document.getElementById('dev-hdd-2')) document.getElementById('dev-hdd-2').value = item.devHdd2 || '';
+        document.getElementById('dev-vga').value = item.devVga || '';
+        document.getElementById('key-win').value = item.keyWin || '';
+        document.getElementById('key-office').value = item.keyOffice || '';
+        document.getElementById('key-pdf').value = item.keyPdf || '';
         document.getElementById('dev-notes').value = item.devNotes || '';
         document.getElementById('dev-apps').value = item.devApps || '';
         populateTroubleshootForm(item.devIssueDesc, item.devIssueFix);
         document.getElementById('dev-status').value = item.devStatus || '';
         document.getElementById('dev-monitor').value = item.devMonitor || '';
+        if (document.getElementById('dev-monitor-2')) document.getElementById('dev-monitor-2').value = item.devMonitor2 || '';
         if (document.getElementById('dev-monitor-sn')) document.getElementById('dev-monitor-sn').value = item.devMonitorSn || '';
+        if (document.getElementById('dev-monitor-sn-2')) document.getElementById('dev-monitor-sn-2').value = item.devMonitorSn2 || '';
         document.getElementById('dev-sn').value = item.devSn || '';
         if (document.getElementById('dev-keyboard')) {
             let kbVal = item.devKeyboard;
@@ -2148,7 +2193,9 @@ async function startApp() {
                 devRam: u.devRam || '',
                 devRamSlots: u.devRamSlots || '',
                 devSsd: u.devSsd || '',
+                devSsd2: u.devSsd2 || '',
                 devHdd: u.devHdd || '',
+                devHdd2: u.devHdd2 || '',
                 devVga: u.devVga || '',
                 keyWin: u.keyWin || '',
                 keyOffice: u.keyOffice || '',
@@ -2157,7 +2204,9 @@ async function startApp() {
                 devApps: u.devApps || '',
                 devStatus: u.devStatus || 'Mới',
                 devMonitor: u.devMonitor || '',
+                devMonitor2: u.devMonitor2 || '',
                 devMonitorSn: u.devMonitorSn || '',
+                devMonitorSn2: u.devMonitorSn2 || '',
                 devSn: u.devSn || '',
                 devKeyboard: u.devKeyboard || '',
                 devMouse: u.devMouse || '',
@@ -2173,10 +2222,13 @@ async function startApp() {
         let devType = document.getElementById('dev-type').value.trim();
         let devCpu = document.getElementById('dev-cpu').value.trim();
         let devRam = document.getElementById('dev-ram').value;
-        let devSsd = document.getElementById('dev-ssd').value.trim();
-        let devHdd = document.getElementById('dev-hdd').value.trim();
+        let devSsd = document.getElementById('dev-ssd') ? document.getElementById('dev-ssd').value.trim() : '';
+        let devSsd2 = document.getElementById('dev-ssd-2') ? document.getElementById('dev-ssd-2').value.trim() : '';
+        let devHdd = document.getElementById('dev-hdd') ? document.getElementById('dev-hdd').value.trim() : '';
+        let devHdd2 = document.getElementById('dev-hdd-2') ? document.getElementById('dev-hdd-2').value.trim() : '';
         let devMain = document.getElementById('dev-main').value.trim();
-        let devMonitor = document.getElementById('dev-monitor').value.trim();
+        let devMonitor = document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '';
+        let devMonitor2 = document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '';
         let devStatus = document.getElementById('dev-status').value;
 
         // Nếu đang sửa item sẵn có
@@ -2205,7 +2257,9 @@ async function startApp() {
             devRam: devRam,
             devRamSlots: document.getElementById('dev-ram-slots') ? document.getElementById('dev-ram-slots').value : '',
             devSsd: devSsd,
+            devSsd2: devSsd2,
             devHdd: devHdd,
+            devHdd2: devHdd2,
             devVga: document.getElementById('dev-vga') ? document.getElementById('dev-vga').value.trim() : '',
             keyWin: document.getElementById('key-win') ? document.getElementById('key-win').value.trim() : '',
             keyOffice: document.getElementById('key-office') ? document.getElementById('key-office').value.trim() : '',
@@ -2215,7 +2269,9 @@ async function startApp() {
             ...getTroubleshootDataFromForm(),
             devStatus: devStatus || 'Mới',
             devMonitor: devMonitor,
+            devMonitor2: devMonitor2,
             devMonitorSn: document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '',
+            devMonitorSn2: document.getElementById('dev-monitor-sn-2') ? document.getElementById('dev-monitor-sn-2').value.trim() : '',
             devSn: document.getElementById('dev-sn') ? document.getElementById('dev-sn').value.trim() : '',
             devKeyboard: document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '',
             devMouse: document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '',
@@ -2428,7 +2484,9 @@ async function startApp() {
                 targetUser.devRam = specs.devRam;
                 targetUser.devRamSlots = specs.devRamSlots;
                 targetUser.devSsd = specs.devSsd;
+                targetUser.devSsd2 = specs.devSsd2 || '';
                 targetUser.devHdd = specs.devHdd;
+                targetUser.devHdd2 = specs.devHdd2 || '';
                 targetUser.devVga = specs.devVga;
                 targetUser.keyWin = specs.keyWin;
                 targetUser.keyOffice = specs.keyOffice;
@@ -2437,7 +2495,9 @@ async function startApp() {
                 targetUser.devApps = specs.devApps;
                 targetUser.devStatus = specs.devStatus || 'Mới';
                 targetUser.devMonitor = specs.devMonitor;
+                targetUser.devMonitor2 = specs.devMonitor2 || '';
                 targetUser.devMonitorSn = specs.devMonitorSn;
+                targetUser.devMonitorSn2 = specs.devMonitorSn2 || '';
                 targetUser.devSn = specs.devSn;
                 targetUser.devKeyboard = specs.devKeyboard;
                 targetUser.devMouse = specs.devMouse;
@@ -2476,7 +2536,9 @@ async function startApp() {
                         sUser.devRam = '';
                         sUser.devRamSlots = '';
                         sUser.devSsd = '';
+                        sUser.devSsd2 = '';
                         sUser.devHdd = '';
+                        sUser.devHdd2 = '';
                         sUser.devVga = '';
                         sUser.keyWin = '';
                         sUser.keyOffice = '';
@@ -2485,7 +2547,9 @@ async function startApp() {
                         sUser.devApps = '';
                         sUser.devStatus = 'Không cấp';
                         sUser.devMonitor = '';
+                        sUser.devMonitor2 = '';
                         sUser.devMonitorSn = '';
+                        sUser.devMonitorSn2 = '';
                         sUser.devSn = '';
                         sUser.devKeyboard = '';
                         sUser.devMouse = '';
@@ -2530,10 +2594,19 @@ async function startApp() {
                 if (specs.devMain) specsDetail.push(`Main: ${specs.devMain}`);
                 if (specs.devCpu) specsDetail.push(`CPU: ${specs.devCpu}`);
                 if (specs.devRam) specsDetail.push(`RAM: ${specs.devRam}${specs.devRamSlots ? ' (' + specs.devRamSlots + ')' : ''}`);
-                if (specs.devSsd) specsDetail.push(`SSD: ${specs.devSsd}GB`);
-                if (specs.devHdd) specsDetail.push(`HDD: ${specs.devHdd}`);
+                if (specs.devSsd || specs.devSsd2) {
+                    const ssdParts = [specs.devSsd, specs.devSsd2].filter(Boolean);
+                    specsDetail.push(`SSD: ${ssdParts.join(' + ')}`);
+                }
+                if (specs.devHdd || specs.devHdd2) {
+                    const hddParts = [specs.devHdd, specs.devHdd2].filter(Boolean);
+                    specsDetail.push(`HDD: ${hddParts.join(' + ')}`);
+                }
                 if (specs.devVga) specsDetail.push(`VGA: ${specs.devVga}`);
-                if (specs.devMonitor) specsDetail.push(`Màn hình: ${specs.devMonitor}`);
+                if (specs.devMonitor || specs.devMonitor2) {
+                    const monParts = [specs.devMonitor, specs.devMonitor2].filter(Boolean);
+                    specsDetail.push(`Màn hình: ${monParts.join(' | ')}`);
+                }
 
                 // Đóng gói 100% linh kiện chi tiết thành JSON
                 const specsData = {
@@ -2543,10 +2616,14 @@ async function startApp() {
                     devRam: specs.devRam,
                     devRamSlots: specs.devRamSlots,
                     devSsd: specs.devSsd,
+                    devSsd2: specs.devSsd2 || '',
                     devHdd: specs.devHdd,
+                    devHdd2: specs.devHdd2 || '',
                     devVga: specs.devVga,
                     devMonitor: specs.devMonitor,
+                    devMonitor2: specs.devMonitor2 || '',
                     devMonitorSn: specs.devMonitorSn,
+                    devMonitorSn2: specs.devMonitorSn2 || '',
                     devSn: specs.devSn,
                     devKeyboard: specs.devKeyboard,
                     devMouse: specs.devMouse,
@@ -2607,7 +2684,9 @@ async function startApp() {
                         sUser.devRam = '';
                         sUser.devRamSlots = '';
                         sUser.devSsd = '';
+                        sUser.devSsd2 = '';
                         sUser.devHdd = '';
+                        sUser.devHdd2 = '';
                         sUser.devVga = '';
                         sUser.keyWin = '';
                         sUser.keyOffice = '';
@@ -2616,7 +2695,9 @@ async function startApp() {
                         sUser.devApps = '';
                         sUser.devStatus = 'Không cấp';
                         sUser.devMonitor = '';
+                        sUser.devMonitor2 = '';
                         sUser.devMonitorSn = '';
+                        sUser.devMonitorSn2 = '';
                         sUser.devSn = '';
                         sUser.devKeyboard = '';
                         sUser.devMouse = '';
@@ -2811,10 +2892,14 @@ async function startApp() {
             targetUser.devRam = specsObj.devRam || '';
             targetUser.devRamSlots = specsObj.devRamSlots || '';
             targetUser.devSsd = specsObj.devSsd || '';
+            targetUser.devSsd2 = specsObj.devSsd2 || '';
             targetUser.devHdd = specsObj.devHdd || '';
+            targetUser.devHdd2 = specsObj.devHdd2 || '';
             targetUser.devVga = specsObj.devVga || '';
             targetUser.devMonitor = specsObj.devMonitor || '';
+            targetUser.devMonitor2 = specsObj.devMonitor2 || '';
             targetUser.devMonitorSn = specsObj.devMonitorSn || '';
+            targetUser.devMonitorSn2 = specsObj.devMonitorSn2 || '';
             targetUser.devSn = specsObj.devSn || '';
             targetUser.devKeyboard = specsObj.devKeyboard || '';
             targetUser.devMouse = specsObj.devMouse || '';
@@ -2981,10 +3066,14 @@ async function startApp() {
         if (document.getElementById('dev-ram')) document.getElementById('dev-ram').value = specsObj.devRam || '';
         if (document.getElementById('dev-ram-slots')) document.getElementById('dev-ram-slots').value = specsObj.devRamSlots || '';
         if (document.getElementById('dev-ssd')) document.getElementById('dev-ssd').value = (specsObj.devSsd || '').toString().replace(/GB/i, '');
+        if (document.getElementById('dev-ssd-2')) document.getElementById('dev-ssd-2').value = (specsObj.devSsd2 || '').toString().replace(/GB/i, '');
         if (document.getElementById('dev-hdd')) document.getElementById('dev-hdd').value = specsObj.devHdd || '';
+        if (document.getElementById('dev-hdd-2')) document.getElementById('dev-hdd-2').value = specsObj.devHdd2 || '';
         if (document.getElementById('dev-vga')) document.getElementById('dev-vga').value = specsObj.devVga || '';
         if (document.getElementById('dev-monitor')) document.getElementById('dev-monitor').value = specsObj.devMonitor || '';
+        if (document.getElementById('dev-monitor-2')) document.getElementById('dev-monitor-2').value = specsObj.devMonitor2 || '';
         if (document.getElementById('dev-monitor-sn')) document.getElementById('dev-monitor-sn').value = specsObj.devMonitorSn || '';
+        if (document.getElementById('dev-monitor-sn-2')) document.getElementById('dev-monitor-sn-2').value = specsObj.devMonitorSn2 || '';
         if (document.getElementById('dev-sn')) document.getElementById('dev-sn').value = specsObj.devSn || '';
         if (document.getElementById('dev-keyboard')) document.getElementById('dev-keyboard').value = specsObj.devKeyboard || '';
         if (document.getElementById('dev-mouse')) document.getElementById('dev-mouse').value = specsObj.devMouse || '';
@@ -6516,16 +6605,27 @@ async function startApp() {
             const ramSlotsVal = document.getElementById('dev-ram-slots').value || '';
             document.getElementById('receipt-dev-ram').innerText = ramVal ? `${ramVal} ${ramSlotsVal ? `(${ramSlotsVal})` : ''}` : '—';
             
-            const ssdVal = document.getElementById('dev-ssd').value.trim() || '';
-            const hddVal = document.getElementById('dev-hdd').value.trim() || '';
-            let diskStr = '';
-            if (ssdVal) diskStr += `SSD: ${ssdVal}`;
-            if (hddVal) diskStr += (diskStr ? ' / ' : '') + `HDD: ${hddVal}`;
-            document.getElementById('receipt-dev-disk').innerText = diskStr || '—';
+            const ssdVal = document.getElementById('dev-ssd') ? document.getElementById('dev-ssd').value.trim() : '';
+            const ssdVal2 = document.getElementById('dev-ssd-2') ? document.getElementById('dev-ssd-2').value.trim() : '';
+            const hddVal = document.getElementById('dev-hdd') ? document.getElementById('dev-hdd').value.trim() : '';
+            const hddVal2 = document.getElementById('dev-hdd-2') ? document.getElementById('dev-hdd-2').value.trim() : '';
+            let diskParts = [];
+            const ssdFull = [ssdVal, ssdVal2].filter(Boolean).join(' + ');
+            if (ssdFull) diskParts.push(`SSD: ${ssdFull}`);
+            const hddFull = [hddVal, hddVal2].filter(Boolean).join(' + ');
+            if (hddFull) diskParts.push(`HDD: ${hddFull}`);
+            document.getElementById('receipt-dev-disk').innerText = diskParts.join(' / ') || '—';
             
-            document.getElementById('receipt-dev-monitor').innerText = document.getElementById('dev-monitor').value.trim() || '—';
+            const monVal = document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '';
+            const monVal2 = document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '';
+            const monFull = [monVal, monVal2].filter(Boolean).join(' | ');
+            document.getElementById('receipt-dev-monitor').innerText = monFull || '—';
+
             if (document.getElementById('receipt-dev-monitor-sn')) {
-                document.getElementById('receipt-dev-monitor-sn').innerText = document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() || '—' : '—';
+                const monSnVal = document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '';
+                const monSnVal2 = document.getElementById('dev-monitor-sn-2') ? document.getElementById('dev-monitor-sn-2').value.trim() : '';
+                const monSnFull = [monSnVal, monSnVal2].filter(Boolean).join(' | ');
+                document.getElementById('receipt-dev-monitor-sn').innerText = monSnFull || '—';
             }
             document.getElementById('receipt-dev-sn').innerText = document.getElementById('dev-sn').value.trim() || '—';
             
