@@ -340,7 +340,8 @@ body {
 }
 
 .form-group input, 
-.form-group select {
+.form-group select,
+.form-group textarea {
     padding: 10px 14px;
     font-family: inherit;
     font-size: 14px;
@@ -353,12 +354,20 @@ body {
     width: 100%;
 }
 
-.form-group input::placeholder {
+.form-group textarea {
+    resize: vertical;
+    min-height: 75px;
+    line-height: 1.5;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
     color: var(--text-muted);
 }
 
 .form-group input:focus, 
-.form-group select:focus {
+.form-group select:focus,
+.form-group textarea:focus {
     border-color: var(--border-focus);
     box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
 }
@@ -1572,3 +1581,172 @@ body {
         transform: translateY(0);
     }
 }
+
+/* =========================================================================
+   12. TROUBLESHOOTING 10-ROW TABLE MODERN STYLING
+   ========================================================================= */
+.troubleshoot-wrapper {
+    background: linear-gradient(145deg, #15181c 0%, #101215 100%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+.troubleshoot-header {
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 14px 20px;
+    display: grid;
+    grid-template-columns: 46px 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 680px;
+}
+
+.troubleshoot-header .th-stt {
+    text-align: center;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.troubleshoot-header .th-issue {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #fbbf24;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.troubleshoot-header .th-fix {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #4ade80;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.troubleshoot-body {
+    padding: 12px 16px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    min-width: 680px;
+}
+
+.troubleshoot-row-card {
+    display: grid;
+    grid-template-columns: 46px 1fr 1fr;
+    gap: 16px;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.troubleshoot-row-card:hover {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.troubleshoot-num-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    margin: 0 auto;
+    font-size: 12px;
+    font-weight: 800;
+    color: #94a3b8;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+}
+
+.troubleshoot-row-card:hover .troubleshoot-num-pill {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border-color: rgba(249, 115, 22, 0.4);
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.2);
+}
+
+.troubleshoot-input-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.troubleshoot-input-box .input-icon {
+    position: absolute;
+    left: 12px;
+    font-size: 13px;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.troubleshoot-input-box.issue-box .input-icon {
+    color: #fbbf24;
+    opacity: 0.8;
+}
+
+.troubleshoot-input-box.fix-box .input-icon {
+    color: #4ade80;
+    opacity: 0.8;
+}
+
+.troubleshoot-input-box input {
+    width: 100%;
+    padding: 10px 14px 10px 36px;
+    font-size: 13.5px;
+    font-family: inherit;
+    border-radius: 7px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.troubleshoot-input-box.issue-box input {
+    background: rgba(245, 158, 11, 0.035);
+    border: 1px solid rgba(245, 158, 11, 0.18);
+    color: #f8fafc;
+}
+
+.troubleshoot-input-box.issue-box input:focus {
+    background: rgba(245, 158, 11, 0.08);
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+.troubleshoot-input-box.fix-box input {
+    background: rgba(34, 197, 94, 0.035);
+    border: 1px solid rgba(34, 197, 94, 0.18);
+    color: #f8fafc;
+}
+
+.troubleshoot-input-box.fix-box input:focus {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.troubleshoot-input-box input::placeholder {
+    color: rgba(148, 163, 184, 0.4);
+    font-size: 12.5px;
+}
+

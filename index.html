@@ -367,11 +367,11 @@
                                         </label>
                                         <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #06b6d4;">
                                             <input type="radio" name="dev-allocation" id="dev-alloc-project" value="project" style="width: 15px; height: 15px; accent-color: #06b6d4; cursor: pointer;">
-                                            <span><i class="fa-solid fa-people-roof"></i> Thiết bị dùng chung của dự án</span>
+                                            <span><i class="fa-solid fa-people-roof"></i> Dùng chung</span>
                                         </label>
                                         <label style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; font-weight: 600; color: #c084fc;">
                                             <input type="radio" name="dev-allocation" id="dev-alloc-personal" value="personal" style="width: 15px; height: 15px; accent-color: #a855f7; cursor: pointer;">
-                                            <span><i class="fa-solid fa-laptop-code"></i> Sử dụng thiết bị cá nhân</span>
+                                            <span><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
                                         </label>
                                     </div>
                                 </div>
@@ -495,6 +495,160 @@
                                         <div class="form-group col-span-3-lg">
                                             <label for="dev-apps">Các app bản quyền đã trang bị trên máy đó</label>
                                             <input type="text" id="dev-apps" placeholder="VD: Photoshop, AutoCad, SolidWorks...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subsection 3: Các lỗi thường gặp -->
+                            <div class="form-subsection" id="troubleshooting-subsection">
+                                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-bottom: 14px;">
+                                    <h4 class="subsection-title" style="margin-bottom: 0;">
+                                        <i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24; margin-right: 6px;"></i> 3. Các lỗi thường gặp & Hướng dẫn fix
+                                    </h4>
+                                    <span style="font-size: 12.5px; color: var(--text-secondary); background: rgba(255, 255, 255, 0.04); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.08);">
+                                        <i class="fa-solid fa-list-check" style="color: var(--primary-color); margin-right: 5px;"></i> Danh sách 10 mục thường gặp
+                                    </span>
+                                </div>
+                                <div class="troubleshoot-wrapper">
+                                    <div class="troubleshoot-header">
+                                        <div class="th-stt">STT</div>
+                                        <div class="th-issue">
+                                            <i class="fa-solid fa-bug"></i> Thông tin lỗi hay gặp
+                                        </div>
+                                        <div class="th-fix">
+                                            <i class="fa-solid fa-circle-check"></i> Hướng dẫn cách fix
+                                        </div>
+                                    </div>
+                                    <div class="troubleshoot-body">
+                                        <!-- Row 1 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">01</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-1" placeholder="VD: Lỗi mất kết nối mạng LAN / Wifi...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-1" placeholder="VD: Kiểm tra đầu cáp RJ45, đặt lại IP tĩnh...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 2 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">02</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-2" placeholder="VD: Không in được qua máy in mạng...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-2" placeholder="VD: Khởi động lại Print Spooler, add lại driver...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 3 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">03</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-3" placeholder="Nhập lỗi hay gặp #3...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-3" placeholder="Nhập cách fix lỗi #3...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 4 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">04</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-4" placeholder="Nhập lỗi hay gặp #4...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-4" placeholder="Nhập cách fix lỗi #4...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 5 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">05</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-5" placeholder="Nhập lỗi hay gặp #5...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-5" placeholder="Nhập cách fix lỗi #5...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 6 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">06</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-6" placeholder="Nhập lỗi hay gặp #6...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-6" placeholder="Nhập cách fix lỗi #6...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 7 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">07</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-7" placeholder="Nhập lỗi hay gặp #7...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-7" placeholder="Nhập cách fix lỗi #7...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 8 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">08</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-8" placeholder="Nhập lỗi hay gặp #8...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-8" placeholder="Nhập cách fix lỗi #8...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 9 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">09</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-9" placeholder="Nhập lỗi hay gặp #9...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-9" placeholder="Nhập cách fix lỗi #9...">
+                                            </div>
+                                        </div>
+
+                                        <!-- Row 10 -->
+                                        <div class="troubleshoot-row-card">
+                                            <div class="troubleshoot-num-pill">10</div>
+                                            <div class="troubleshoot-input-box issue-box">
+                                                <i class="fa-solid fa-triangle-exclamation input-icon"></i>
+                                                <input type="text" id="dev-issue-desc-10" placeholder="Nhập lỗi hay gặp #10...">
+                                            </div>
+                                            <div class="troubleshoot-input-box fix-box">
+                                                <i class="fa-solid fa-wrench input-icon"></i>
+                                                <input type="text" id="dev-issue-fix-10" placeholder="Nhập cách fix lỗi #10...">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

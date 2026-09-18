@@ -121,6 +121,8 @@ async function startApp() {
                     keyPdf: db.key_pdf || db.keyPdf || '',
                     devNotes: db.dev_notes || db.devNotes || '',
                     devApps: db.dev_apps || db.devApps || '',
+                    devIssueDesc: db.dev_issue_desc || db.devIssueDesc || '',
+                    devIssueFix: db.dev_issue_fix || db.devIssueFix || '',
                     devStatus: devStat,
                     devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
                     hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân',
@@ -169,6 +171,8 @@ async function startApp() {
                     key_pdf: js.keyPdf,
                     dev_notes: js.devNotes,
                     dev_apps: js.devApps,
+                    dev_issue_desc: js.devIssueDesc || '',
+                    dev_issue_fix: js.devIssueFix || '',
                     dev_status: js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : (js.devStatus || (js.devAllocation === 'project' ? 'Thiết bị dự án' : 'Mới')),
                     updated_at: new Date().toISOString(),
                     history: js.history
@@ -1173,6 +1177,71 @@ async function startApp() {
         }
     }
 
+    // Helpers to manage Section 3 (Troubleshooting 10 rows x 2 cols)
+    function parseTroubleshootList(rawVal) {
+        if (!rawVal) return [];
+        if (Array.isArray(rawVal)) return rawVal;
+        try {
+            const parsed = JSON.parse(rawVal);
+            if (Array.isArray(parsed)) return parsed;
+            return [rawVal];
+        } catch (e) {
+            return String(rawVal).split('\n').filter(Boolean);
+        }
+    }
+
+    function getTroubleshootDataFromForm() {
+        const issueDescs = [];
+        const issueFixes = [];
+        for (let i = 1; i <= 10; i++) {
+            const dEl = document.getElementById(`dev-issue-desc-${i}`);
+            const fEl = document.getElementById(`dev-issue-fix-${i}`);
+            issueDescs.push(dEl ? dEl.value.trim() : '');
+            issueFixes.push(fEl ? fEl.value.trim() : '');
+        }
+        const hasDesc = issueDescs.some(x => x !== '');
+        const hasFix = issueFixes.some(x => x !== '');
+        return {
+            devIssueDesc: hasDesc ? JSON.stringify(issueDescs) : '',
+            devIssueFix: hasFix ? JSON.stringify(issueFixes) : ''
+        };
+    }
+
+    function populateTroubleshootForm(issueDescRaw, issueFixRaw) {
+        const descs = parseTroubleshootList(issueDescRaw);
+        const fixes = parseTroubleshootList(issueFixRaw);
+        for (let i = 1; i <= 10; i++) {
+            const dEl = document.getElementById(`dev-issue-desc-${i}`);
+            const fEl = document.getElementById(`dev-issue-fix-${i}`);
+            if (dEl) dEl.value = descs[i - 1] || '';
+            if (fEl) fEl.value = fixes[i - 1] || '';
+        }
+    }
+
+    function resetTroubleshootForm() {
+        for (let i = 1; i <= 10; i++) {
+            const dEl = document.getElementById(`dev-issue-desc-${i}`);
+            const fEl = document.getElementById(`dev-issue-fix-${i}`);
+            if (dEl) dEl.value = '';
+            if (fEl) fEl.value = '';
+        }
+    }
+
+    function formatTroubleshootForDisplay(descRaw, fixRaw) {
+        const descs = parseTroubleshootList(descRaw);
+        const fixes = parseTroubleshootList(fixRaw);
+        const pairs = [];
+        const maxLen = Math.max(descs.length, fixes.length);
+        for (let i = 0; i < maxLen; i++) {
+            const d = descs[i] || '';
+            const f = fixes[i] || '';
+            if (d || f) {
+                pairs.push({ index: i + 1, desc: d, fix: f });
+            }
+        }
+        return pairs;
+    }
+
     function renderThietBi(filterText = '') {
         tbodyThietBi.innerHTML = '';
         
@@ -1252,6 +1321,7 @@ async function startApp() {
 
             const disabledTag = item.userDisabled ? 'offline disable user nghỉ việc đã vô hiệu hóa' : 'online đang hoạt động';
             const recentTag = (isCreatedRecent ? 'mới thêm mới tạo mới gần đây ' : '') + (isUpdatedRecent ? 'mới cập nhật gần đây recent' : '');
+            const troubleshootSearch = parseTroubleshootList(item.devIssueDesc).join(' ') + ' ' + parseTroubleshootList(item.devIssueFix).join(' ');
             const itemText = `
                 ${item.userId || ''} 
                 ${item.userName || ''} 
@@ -1266,6 +1336,7 @@ async function startApp() {
                 ${item.devCpu || ''}
                 ${item.devRam || ''}
                 ${item.devNotes || ''}
+                ${troubleshootSearch}
                 ${disabledTag}
                 ${recentTag}
             `.toLowerCase();
@@ -1283,49 +1354,40 @@ async function startApp() {
         const elTotal = document.getElementById('pag-total') || document.getElementById('pag-total-thietbi');
         const elCurrent = document.getElementById('pag-current') || document.getElementById('pag-current-thietbi');
 
-        if (elStart) elStart.innerText = totalItems > 0 ? (currentPageThietBi - 1) * itemsPerPageThietBi + 1 : 0;
+        if (elStart) elStart.innerText = totalItems === 0 ? '0' : ((currentPageThietBi - 1) * itemsPerPageThietBi + 1);
         if (elEnd) elEnd.innerText = Math.min(currentPageThietBi * itemsPerPageThietBi, totalItems);
         if (elTotal) elTotal.innerText = totalItems;
         if (elCurrent) elCurrent.innerText = `Trang ${currentPageThietBi} / ${totalPages}`;
 
         const btnPrev = document.getElementById('btn-prev-page') || document.getElementById('btn-prev-page-thietbi');
         const btnNext = document.getElementById('btn-next-page') || document.getElementById('btn-next-page-thietbi');
+        if (btnPrev) btnPrev.disabled = (currentPageThietBi <= 1);
+        if (btnNext) btnNext.disabled = (currentPageThietBi >= totalPages);
 
-        if (btnPrev) {
-            btnPrev.disabled = currentPageThietBi === 1;
-            btnPrev.style.opacity = currentPageThietBi === 1 ? '0.5' : '1';
-            btnPrev.style.cursor = currentPageThietBi === 1 ? 'not-allowed' : 'pointer';
-        }
-        if (btnNext) {
-            btnNext.disabled = currentPageThietBi === totalPages;
-            btnNext.style.opacity = currentPageThietBi === totalPages ? '0.5' : '1';
-            btnNext.style.cursor = currentPageThietBi === totalPages ? 'not-allowed' : 'pointer';
-        }
+        tbodyThietBi.innerHTML = '';
 
-        if (totalItems === 0) {
+        if (filtered.length === 0) {
             tbodyThietBi.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="7" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát thiết bị!</td>
+                    <td colspan="6" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát phù hợp!</td>
                 </tr>
             `;
             return;
         }
 
         const startIndex = (currentPageThietBi - 1) * itemsPerPageThietBi;
-        const endIndex = Math.min(startIndex + itemsPerPageThietBi, totalItems);
-        const pageItems = filtered.slice(startIndex, endIndex);
+        const pageItems = filtered.slice(startIndex, startIndex + itemsPerPageThietBi);
 
-        pageItems.forEach((rawItem) => {
-            const item = (typeof mappers !== 'undefined' && mappers.thietBi) ? mappers.thietBi.fromDB(rawItem) : rawItem;
-            const originalIndex = thietBiList.indexOf(rawItem);
+        pageItems.forEach(item => {
+            const originalIndex = thietBiList.indexOf(item);
             const tr = document.createElement('tr');
 
-            let keyArr = [];
-            if (item.keyWin) keyArr.push(`<div class="key-item"><i class="fa-brands fa-windows text-primary"></i> <span>${item.keyWin}</span></div>`);
-            if (item.keyOffice) keyArr.push(`<div class="key-item"><i class="fa-solid fa-file-word text-success"></i> <span>${item.keyOffice}</span></div>`);
-            if (item.keyPdf) keyArr.push(`<div class="key-item"><i class="fa-solid fa-file-pdf text-danger"></i> <span>${item.keyPdf}</span></div>`);
-            if (item.devApps) keyArr.push(`<div class="key-item" title="App bản quyền"><i class="fa-solid fa-cubes text-warning"></i> <span>${item.devApps}</span></div>`);
-            const keysText = keyArr.length > 0 ? keyArr.join('') : '<span class="text-muted">Không có key</span>';
+            const keysArr = [];
+            if (item.keyWin) keysArr.push(`<span class="key-badge" title="Key Windows">Win: ${item.keyWin}</span>`);
+            if (item.keyOffice) keysArr.push(`<span class="key-badge" title="Key Office">Office: ${item.keyOffice}</span>`);
+            if (item.keyPdf) keysArr.push(`<span class="key-badge" title="Key PDF">PDF: ${item.keyPdf}</span>`);
+            if (item.devApps) keysArr.push(`<span class="key-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);" title="Phần mềm bản quyền khác">${item.devApps}</span>`);
+            const keysText = keysArr.length > 0 ? keysArr.join(' ') : '—';
 
             const createdTs = getItemCreatedTimestamp(item);
             const updatedTs = getItemUpdatedTimestamp(item);
@@ -1370,6 +1432,8 @@ async function startApp() {
             if (item.devMouse) configArr.push(`Chuột: ${item.devMouse}`);
             if (item.devCables) configArr.push(`Dây kết nối: ${item.devCables}`);
             const configText = configArr.length > 0 ? configArr.join('<br>') : 'Chưa nhập cấu hình';
+
+            const troubleshootPairs = formatTroubleshootForDisplay(item.devIssueDesc, item.devIssueFix);
 
             tr.innerHTML = `
                 <td>
@@ -1425,7 +1489,19 @@ async function startApp() {
                     </div>
                 </td>
                 <td>
-                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic;">${item.devNotes || '—'}</span>
+                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
+                        ${item.devNotes ? `<div><span style="font-style: italic;">${item.devNotes}</span></div>` : ''}
+                        ${troubleshootPairs.length > 0 ? `
+                            <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                                ${troubleshootPairs.map(p => `
+                                    <div style="padding: 3px 8px; background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 11.5px;">
+                                        ${p.desc ? `<div style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> #${p.index}: ${p.desc}</div>` : ''}
+                                        ${p.fix ? `<div style="color: #4ade80; margin-top: 1px;"><i class="fa-solid fa-wrench"></i> Fix: ${p.fix}</div>` : ''}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : (!item.devNotes ? '—' : '')}
+                    </div>
                 </td>
                 <td>
                     <div class="actions-cell">
@@ -1558,6 +1634,7 @@ async function startApp() {
             keyPdf: hasDevice ? document.getElementById('key-pdf').value.trim() : '',
             devNotes: hasDevice ? document.getElementById('dev-notes').value.trim() : '',
             devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
+            ...getTroubleshootDataFromForm(),
             devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (document.getElementById('dev-status').value || (devAllocVal === 'project' ? 'Thiết bị dự án' : 'Mới')),
             devMonitor: hasDevice ? document.getElementById('dev-monitor').value.trim() : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
@@ -1633,7 +1710,9 @@ async function startApp() {
                 userEmail: "Email",
                 userPhone: "Số điện thoại",
                 userElement: "Element",
-                userKeyElement: "Key Element"
+                userKeyElement: "Key Element",
+                devIssueDesc: "Thông tin lỗi hay gặp",
+                devIssueFix: "Cách fix lỗi"
             };
             for (const key in userFields) {
                 let oldVal = (oldItem[key] || '').toString().trim() || "Trống";
@@ -1799,6 +1878,7 @@ async function startApp() {
         document.getElementById('key-pdf').value = item.keyPdf;
         document.getElementById('dev-notes').value = item.devNotes || '';
         document.getElementById('dev-apps').value = item.devApps || '';
+        populateTroubleshootForm(item.devIssueDesc, item.devIssueFix);
         document.getElementById('dev-status').value = item.devStatus || '';
         document.getElementById('dev-monitor').value = item.devMonitor || '';
         if (document.getElementById('dev-monitor-sn')) document.getElementById('dev-monitor-sn').value = item.devMonitorSn || '';
@@ -1867,6 +1947,7 @@ async function startApp() {
         pendingKhoIndexToDeduct = null;
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới';
         formCapPhat.reset();
+        resetTroubleshootForm();
         const devAllocYes = document.getElementById('dev-alloc-yes');
         if (devAllocYes) {
             devAllocYes.checked = true;
@@ -2056,6 +2137,7 @@ async function startApp() {
             keyPdf: document.getElementById('key-pdf') ? document.getElementById('key-pdf').value.trim() : '',
             devNotes: document.getElementById('dev-notes') ? document.getElementById('dev-notes').value.trim() : '',
             devApps: document.getElementById('dev-apps') ? document.getElementById('dev-apps').value.trim() : '',
+            ...getTroubleshootDataFromForm(),
             devStatus: devStatus || 'Mới',
             devMonitor: devMonitor,
             devMonitorSn: document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '',
