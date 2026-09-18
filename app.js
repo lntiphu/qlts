@@ -1489,19 +1489,7 @@ async function startApp() {
                     </div>
                 </td>
                 <td>
-                    <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.4;">
-                        ${item.devNotes ? `<div><span style="font-style: italic;">${item.devNotes}</span></div>` : ''}
-                        ${troubleshootPairs.length > 0 ? `
-                            <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
-                                ${troubleshootPairs.map(p => `
-                                    <div style="padding: 3px 8px; background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b; border-radius: 4px; font-size: 11.5px;">
-                                        ${p.desc ? `<div style="color: #f59e0b; font-weight: 600;"><i class="fa-solid fa-triangle-exclamation"></i> #${p.index}: ${p.desc}</div>` : ''}
-                                        ${p.fix ? `<div style="color: #4ade80; margin-top: 1px;"><i class="fa-solid fa-wrench"></i> Fix: ${p.fix}</div>` : ''}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        ` : (!item.devNotes ? '—' : '')}
-                    </div>
+                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word;">${item.devNotes || '—'}</span>
                 </td>
                 <td>
                     <div class="actions-cell">
@@ -1510,6 +1498,9 @@ async function startApp() {
                                 <i class="fa-solid fa-right-left"></i>
                             </button>
                         ` : ''}
+                        <button class="btn-icon-only btn-troubleshoot-row-thietbi" data-index="${originalIndex}" title="Xem danh sách các lỗi thường gặp & Cách fix" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                            <i class="fa-solid fa-wrench"></i>
+                        </button>
                         <button class="btn-icon-only history btn-history-thietbi" data-index="${originalIndex}" title="Xem ngày cập nhật">
                             <i class="fa-solid fa-clock-rotate-left"></i>
                         </button>
@@ -1527,6 +1518,12 @@ async function startApp() {
             btn.addEventListener('click', function() {
                 const idx = parseInt(this.getAttribute('data-index'));
                 openTransferModalForUser(idx);
+            });
+        });
+        document.querySelectorAll('.btn-troubleshoot-row-thietbi').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                openTroubleshootModal(idx);
             });
         });
         document.querySelectorAll('.btn-edit-thietbi').forEach(btn => {
@@ -1572,9 +1569,9 @@ async function startApp() {
                         div.className = 'timeline-item';
                         div.innerHTML = `
                             <div class="timeline-dot"></div>
-                            <div class="timeline-time">${log.time}</div>
-                            <div class="timeline-action">${log.action}</div>
-                            <div class="timeline-details">${log.details}</div>
+                            <div class="timeline-time">${log.time || '—'}</div>
+                            <div class="timeline-action">${log.action || 'Cập nhật'}</div>
+                            <div class="timeline-details">${log.details || '—'}</div>
                         `;
                         histTimeline.appendChild(div);
                     });
@@ -1583,6 +1580,84 @@ async function startApp() {
                 // Show modal
                 historyModal.classList.add('show');
             });
+        });
+    }
+
+    // Modal Troubleshoot Preview logic
+    const modalTroubleshootView = document.getElementById('modal-troubleshoot-view');
+    const btnCloseTroubleshootModal = document.getElementById('btn-close-troubleshoot-modal');
+    const btnFooterCloseTroubleshootModal = document.getElementById('btn-footer-close-troubleshoot-modal');
+
+    function openTroubleshootModal(index) {
+        const item = thietBiList[index];
+        if (!item) return;
+
+        const userEl = document.getElementById('tbview-user');
+        const devEl = document.getElementById('tbview-device');
+        const deptEl = document.getElementById('tbview-dept');
+        const listEl = document.getElementById('tbview-content-list');
+
+        if (userEl) userEl.innerText = `${item.userName} (${item.userId})`;
+        if (devEl) devEl.innerText = item.devId ? `${item.devId} - ${item.devType || 'Thiết bị'}` : 'Chưa cấp ID thiết bị';
+        if (deptEl) deptEl.innerText = item.userDept || '—';
+
+        const pairs = formatTroubleshootForDisplay(item.devIssueDesc, item.devIssueFix);
+
+        if (pairs.length === 0) {
+            listEl.innerHTML = `
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-muted); background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px dashed var(--border-color);">
+                    <i class="fa-solid fa-circle-check" style="font-size: 36px; color: #22c55e; margin-bottom: 12px; display: block;"></i>
+                    <div style="font-size: 15px; font-weight: 700; color: var(--text-primary);">Chưa ghi nhận lỗi thường gặp</div>
+                    <div style="font-size: 13px; margin-top: 6px; color: var(--text-secondary);">Thiết bị hoặc nhân sự này chưa có mục sự cố nào được lưu trong Mục 3.</div>
+                </div>
+            `;
+        } else {
+            listEl.innerHTML = `
+                <div class="troubleshoot-wrapper" style="box-shadow: none;">
+                    <div class="troubleshoot-header" style="background: rgba(255, 255, 255, 0.04);">
+                        <div class="th-stt">STT</div>
+                        <div class="th-issue"><i class="fa-solid fa-bug"></i> Thông tin lỗi hay gặp</div>
+                        <div class="th-fix"><i class="fa-solid fa-circle-check"></i> Hướng dẫn cách fix</div>
+                    </div>
+                    <div class="troubleshoot-body" style="padding: 10px;">
+                        ${pairs.map(p => `
+                            <div class="troubleshoot-row-card" style="background: rgba(255, 255, 255, 0.02);">
+                                <div class="troubleshoot-num-pill" style="width: 32px; height: 32px; font-size: 12px;">${String(p.index).padStart(2, '0')}</div>
+                                <div style="padding: 9px 14px; background: rgba(245, 158, 11, 0.06); border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 6px; font-size: 13px; color: #fef3c7; word-break: break-word;">
+                                    <i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24; margin-right: 6px;"></i>
+                                    ${p.desc || '<span style="color: var(--text-muted); font-style: italic;">Chưa nhập thông tin lỗi</span>'}
+                                </div>
+                                <div style="padding: 9px 14px; background: rgba(34, 197, 94, 0.06); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 6px; font-size: 13px; color: #dcfce7; word-break: break-word;">
+                                    <i class="fa-solid fa-wrench" style="color: #4ade80; margin-right: 6px;"></i>
+                                    ${p.fix || '<span style="color: var(--text-muted); font-style: italic;">Chưa nhập hướng dẫn fix</span>'}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        if (modalTroubleshootView) modalTroubleshootView.classList.remove('hidden');
+    }
+
+    if (btnCloseTroubleshootModal) {
+        btnCloseTroubleshootModal.addEventListener('click', () => {
+            if (modalTroubleshootView) modalTroubleshootView.classList.add('hidden');
+        });
+    }
+
+    if (btnFooterCloseTroubleshootModal) {
+        btnFooterCloseTroubleshootModal.addEventListener('click', () => {
+            if (modalTroubleshootView) modalTroubleshootView.classList.add('hidden');
+        });
+    }
+
+    if (modalTroubleshootView) {
+        modalTroubleshootView.addEventListener('click', (e) => {
+            if (e.target === modalTroubleshootView) {
+                modalTroubleshootView.classList.add('hidden');
+            }
         });
     }
 
