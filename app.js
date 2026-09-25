@@ -1526,6 +1526,9 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="actions-cell">
+                        <button class="btn-icon-only btn-export-row-thietbi" data-index="${originalIndex}" title="Xuất thông tin nhân viên" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </button>
                         ${item.hasDevice || item.devId || item.devCpu || item.devRam ? `
                             <button class="btn-icon-only btn-transfer-row-thietbi" data-index="${originalIndex}" title="Chuyển thiết bị cho nhân viên khác hoặc về Kho" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
                                 <i class="fa-solid fa-right-left"></i>
@@ -1547,6 +1550,13 @@ async function startApp() {
         });
 
         // Bind events to action buttons inside the table
+        document.querySelectorAll('.btn-export-row-thietbi').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                openExportModalForUser(idx);
+            });
+        });
         document.querySelectorAll('.btn-transfer-row-thietbi').forEach(btn => {
             btn.addEventListener('click', function() {
                 const idx = parseInt(this.getAttribute('data-index'));
@@ -6497,37 +6507,275 @@ async function startApp() {
     const modalUserPreview = document.getElementById('modal-user-preview');
     const btnCloseUserModal = document.getElementById('btn-close-user-modal');
     const btnExportUserCardPngIcon = document.getElementById('btn-export-user-card-png-icon');
+    const btnSwitchToHandover = document.getElementById('btn-switch-to-handover');
 
     const btnShowHandoverModal = document.getElementById('btn-show-handover-modal');
     const modalHandoverPreview = document.getElementById('modal-handover-preview');
     const btnCloseHandoverModal = document.getElementById('btn-close-handover-modal');
     const btnExportHandoverPngIcon = document.getElementById('btn-export-handover-png-icon');
+    const btnSwitchToUserCard = document.getElementById('btn-switch-to-user-card');
 
-    // 1. Click title to show User Info Card Preview popup
-    if (titleUserInfo) {
-        titleUserInfo.addEventListener('click', () => {
-            const userId = document.getElementById('user-id').value.trim();
-            const userName = document.getElementById('user-name').value.trim();
-            const userTitle = document.getElementById('user-title').value.trim();
-            const userDept = document.getElementById('user-dept').value.trim();
-            const userEmail = document.getElementById('user-email').value.trim();
-            const userPhone = document.getElementById('user-phone').value.trim();
+    const modalExportUserOptions = document.getElementById('modal-export-user-options');
+    const btnCloseModalExportUser = document.getElementById('btn-close-modal-export-user');
+    const optExportHandover = document.getElementById('opt-export-handover');
+    const optExportCard = document.getElementById('opt-export-card');
+
+    let currentExportItem = null;
+    let currentExportUserId = '';
+
+    // Function mở modal lựa chọn mẫu xuất thông tin cho nhân viên từ bảng
+    function openExportModalForUser(index) {
+        if (index < 0 || index >= thietBiList.length) return;
+        const item = thietBiList[index];
+        currentExportItem = item;
+        currentExportUserId = (item.userId || '').trim();
+
+        if (modalExportUserOptions) {
+            const nameEl = document.getElementById('export-modal-user-name');
+            const idEl = document.getElementById('export-modal-user-id');
+            if (nameEl) nameEl.innerText = item.userName || 'Chưa cập nhật';
+            if (idEl) idEl.innerText = item.userId ? `(${item.userId})` : '';
+            modalExportUserOptions.style.display = 'flex';
+        }
+    }
+
+    function closeExportUserModal() {
+        if (modalExportUserOptions) {
+            modalExportUserOptions.style.display = 'none';
+        }
+    }
+
+    if (btnCloseModalExportUser) {
+        btnCloseModalExportUser.addEventListener('click', closeExportUserModal);
+    }
+    if (modalExportUserOptions) {
+        modalExportUserOptions.addEventListener('click', (e) => {
+            if (e.target === modalExportUserOptions) closeExportUserModal();
+        });
+    }
+
+    if (optExportHandover) {
+        optExportHandover.addEventListener('click', () => {
+            closeExportUserModal();
+            showHandoverModal(currentExportItem);
+        });
+    }
+
+    if (optExportCard) {
+        optExportCard.addEventListener('click', () => {
+            closeExportUserModal();
+            showUserCardModal(currentExportItem);
+        });
+    }
+
+    // Function hiển thị Thẻ Thông Tin Nhân Viên
+    function showUserCardModal(item = null) {
+        currentExportItem = item;
+        let userId = '';
+        let userName = '';
+        let userTitle = '';
+        let userDept = '';
+        let userEmail = '';
+        let userPhone = '';
+
+        if (item) {
+            userId = (item.userId || '').trim();
+            userName = (item.userName || '').trim();
+            userTitle = item.userTitle || 'Chưa cập nhật chức danh';
+            userDept = item.userDept || 'Chưa cập nhật phòng ban';
+            userEmail = item.userEmail || '—';
+            userPhone = item.userPhone || '—';
+        } else {
+            userId = (document.getElementById('user-id') ? document.getElementById('user-id').value.trim() : '');
+            userName = (document.getElementById('user-name') ? document.getElementById('user-name').value.trim() : '');
+            userTitle = (document.getElementById('user-title') ? document.getElementById('user-title').value.trim() : '') || 'Chưa cập nhật chức danh';
+            userDept = (document.getElementById('user-dept') ? document.getElementById('user-dept').value.trim() : '') || 'Chưa cập nhật phòng ban';
+            userEmail = (document.getElementById('user-email') ? document.getElementById('user-email').value.trim() : '') || '—';
+            userPhone = (document.getElementById('user-phone') ? document.getElementById('user-phone').value.trim() : '') || '—';
 
             if (!userId || !userName) {
                 showToast('Thông báo', 'Vui lòng nhập ít nhất ID và Họ và Tên của nhân viên để xem thẻ!', 'warning');
                 return;
             }
+        }
 
-            document.getElementById('preview-user-id').innerText = userId;
-            document.getElementById('preview-user-name').innerText = userName;
-            document.getElementById('preview-user-title').innerText = userTitle || 'Chưa cập nhật chức danh';
-            document.getElementById('preview-user-dept').innerText = userDept || 'Chưa cập nhật phòng ban';
-            document.getElementById('preview-user-email').innerText = userEmail || '—';
-            document.getElementById('preview-user-phone').innerText = userPhone || '—';
+        currentExportUserId = userId || 'user';
 
-            if (modalUserPreview) {
-                modalUserPreview.classList.remove('hidden');
+        if (document.getElementById('preview-user-id')) document.getElementById('preview-user-id').innerText = userId;
+        if (document.getElementById('preview-user-name')) document.getElementById('preview-user-name').innerText = userName || '—';
+        if (document.getElementById('preview-user-title')) document.getElementById('preview-user-title').innerText = userTitle;
+        if (document.getElementById('preview-user-dept')) document.getElementById('preview-user-dept').innerText = userDept;
+        if (document.getElementById('preview-user-email')) document.getElementById('preview-user-email').innerText = userEmail;
+        if (document.getElementById('preview-user-phone')) document.getElementById('preview-user-phone').innerText = userPhone;
+
+        if (modalUserPreview) {
+            modalUserPreview.classList.remove('hidden');
+        }
+    }
+
+    // Function hiển thị Biên Bản Bàn Giao Thiết Bị
+    function showHandoverModal(item = null) {
+        currentExportItem = item;
+        let userId = '';
+        let userName = '';
+        let userTitle = '';
+        let userDept = '';
+        let userEmail = '';
+
+        let devName = '';
+        let devMain = '';
+        let devCpu = '';
+        let devRamText = '—';
+        let devDiskText = '—';
+        let devMonitorText = '—';
+        let devMonitorSnText = '—';
+        let devSn = '—';
+        let devKeyboard = '—';
+        let devMouse = '—';
+        let keyWin = '—';
+        let keyOffice = '—';
+        let keyPdf = '—';
+        let devApps = '—';
+        let devNotes = '—';
+
+        if (item) {
+            userId = (item.userId || '').trim();
+            userName = (item.userName || '').trim();
+            userTitle = item.userTitle || '—';
+            userDept = item.userDept || '—';
+            userEmail = item.userEmail || '—';
+
+            devName = item.devType || item.devName || '—';
+            devMain = item.devMain || '—';
+            devCpu = item.devCpu || '—';
+
+            const ramVal = item.devRam || '';
+            const ramSlotsVal = item.devRamSlots || '';
+            devRamText = ramVal ? `${ramVal} ${ramSlotsVal ? `(${ramSlotsVal})` : ''}` : '—';
+
+            const ssdVal = item.devSsd || '';
+            const ssdVal2 = item.devSsd2 || '';
+            const hddVal = item.devHdd || '';
+            const hddVal2 = item.devHdd2 || '';
+            let diskParts = [];
+            const ssdFull = [ssdVal, ssdVal2].filter(Boolean).join(' + ');
+            if (ssdFull) diskParts.push(`SSD: ${ssdFull}`);
+            const hddFull = [hddVal, hddVal2].filter(Boolean).join(' + ');
+            if (hddFull) diskParts.push(`HDD: ${hddFull}`);
+            devDiskText = diskParts.join(' / ') || '—';
+
+            const monVal = item.devMonitor || '';
+            const monVal2 = item.devMonitor2 || '';
+            devMonitorText = [monVal, monVal2].filter(Boolean).join(' | ') || '—';
+
+            const monSnVal = item.devMonitorSn || '';
+            const monSnVal2 = item.devMonitorSn2 || '';
+            devMonitorSnText = [monSnVal, monSnVal2].filter(Boolean).join(' | ') || '—';
+
+            devSn = item.devSn || '—';
+            devKeyboard = item.devKeyboard || '—';
+            devMouse = item.devMouse || '—';
+
+            keyWin = item.keyWin || '—';
+            keyOffice = item.keyOffice || '—';
+            keyPdf = item.keyPdf || '—';
+
+            devApps = item.devApps || '—';
+            devNotes = item.devNotes || '—';
+        } else {
+            userId = (document.getElementById('user-id') ? document.getElementById('user-id').value.trim() : '');
+            userName = (document.getElementById('user-name') ? document.getElementById('user-name').value.trim() : '');
+
+            if (!userId || !userName) {
+                showToast('Thông báo', 'Vui lòng nhập ID và Họ tên người sử dụng trước khi xem thông tin bàn giao!', 'warning');
+                return;
             }
+
+            userTitle = (document.getElementById('user-title') ? document.getElementById('user-title').value.trim() : '') || '—';
+            userDept = (document.getElementById('user-dept') ? document.getElementById('user-dept').value.trim() : '') || '—';
+            userEmail = (document.getElementById('user-email') ? document.getElementById('user-email').value.trim() : '') || '—';
+
+            devName = (document.getElementById('dev-type') ? document.getElementById('dev-type').value.trim() : '') || '—';
+            devMain = (document.getElementById('dev-main') ? document.getElementById('dev-main').value.trim() : '') || '—';
+            devCpu = (document.getElementById('dev-cpu') ? document.getElementById('dev-cpu').value.trim() : '') || '—';
+
+            const ramVal = document.getElementById('dev-ram') ? document.getElementById('dev-ram').value : '';
+            const ramSlotsVal = document.getElementById('dev-ram-slots') ? document.getElementById('dev-ram-slots').value : '';
+            devRamText = ramVal ? `${ramVal} ${ramSlotsVal ? `(${ramSlotsVal})` : ''}` : '—';
+
+            const ssdVal = document.getElementById('dev-ssd') ? document.getElementById('dev-ssd').value.trim() : '';
+            const ssdVal2 = document.getElementById('dev-ssd-2') ? document.getElementById('dev-ssd-2').value.trim() : '';
+            const hddVal = document.getElementById('dev-hdd') ? document.getElementById('dev-hdd').value.trim() : '';
+            const hddVal2 = document.getElementById('dev-hdd-2') ? document.getElementById('dev-hdd-2').value.trim() : '';
+            let diskParts = [];
+            const ssdFull = [ssdVal, ssdVal2].filter(Boolean).join(' + ');
+            if (ssdFull) diskParts.push(`SSD: ${ssdFull}`);
+            const hddFull = [hddVal, hddVal2].filter(Boolean).join(' + ');
+            if (hddFull) diskParts.push(`HDD: ${hddFull}`);
+            devDiskText = diskParts.join(' / ') || '—';
+
+            const monVal = document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '';
+            const monVal2 = document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '';
+            devMonitorText = [monVal, monVal2].filter(Boolean).join(' | ') || '—';
+
+            const monSnVal = document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '';
+            const monSnVal2 = document.getElementById('dev-monitor-sn-2') ? document.getElementById('dev-monitor-sn-2').value.trim() : '';
+            devMonitorSnText = [monSnVal, monSnVal2].filter(Boolean).join(' | ') || '—';
+
+            devSn = (document.getElementById('dev-sn') ? document.getElementById('dev-sn').value.trim() : '') || '—';
+            devKeyboard = (document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '') || '—';
+            devMouse = (document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '') || '—';
+
+            keyWin = (document.getElementById('key-win') ? document.getElementById('key-win').value.trim() : '') || '—';
+            keyOffice = (document.getElementById('key-office') ? document.getElementById('key-office').value.trim() : '') || '—';
+            keyPdf = (document.getElementById('key-pdf') ? document.getElementById('key-pdf').value.trim() : '') || '—';
+
+            devApps = (document.getElementById('dev-apps') ? document.getElementById('dev-apps').value.trim() : '') || '—';
+            devNotes = (document.getElementById('dev-notes') ? document.getElementById('dev-notes').value.trim() : '') || '—';
+        }
+
+        currentExportUserId = userId || 'user';
+
+        if (document.getElementById('receipt-user-name')) document.getElementById('receipt-user-name').innerText = userName || '—';
+        if (document.getElementById('receipt-user-title')) document.getElementById('receipt-user-title').innerText = userTitle;
+        if (document.getElementById('receipt-user-dept')) document.getElementById('receipt-user-dept').innerText = userDept;
+        if (document.getElementById('receipt-user-email')) document.getElementById('receipt-user-email').innerText = userEmail;
+
+        if (document.getElementById('receipt-dev-name')) document.getElementById('receipt-dev-name').innerText = devName;
+        if (document.getElementById('receipt-dev-main')) document.getElementById('receipt-dev-main').innerText = devMain;
+        if (document.getElementById('receipt-dev-cpu')) document.getElementById('receipt-dev-cpu').innerText = devCpu;
+        if (document.getElementById('receipt-dev-ram')) document.getElementById('receipt-dev-ram').innerText = devRamText;
+        if (document.getElementById('receipt-dev-disk')) document.getElementById('receipt-dev-disk').innerText = devDiskText;
+        if (document.getElementById('receipt-dev-monitor')) document.getElementById('receipt-dev-monitor').innerText = devMonitorText;
+        if (document.getElementById('receipt-dev-monitor-sn')) document.getElementById('receipt-dev-monitor-sn').innerText = devMonitorSnText;
+        if (document.getElementById('receipt-dev-sn')) document.getElementById('receipt-dev-sn').innerText = devSn;
+        if (document.getElementById('receipt-dev-keyboard')) document.getElementById('receipt-dev-keyboard').innerText = devKeyboard;
+        if (document.getElementById('receipt-dev-mouse')) document.getElementById('receipt-dev-mouse').innerText = devMouse;
+
+        if (document.getElementById('receipt-key-win')) document.getElementById('receipt-key-win').innerText = keyWin;
+        if (document.getElementById('receipt-key-office')) document.getElementById('receipt-key-office').innerText = keyOffice;
+        if (document.getElementById('receipt-key-pdf')) document.getElementById('receipt-key-pdf').innerText = keyPdf;
+
+        if (document.getElementById('receipt-dev-apps')) document.getElementById('receipt-dev-apps').innerText = devApps;
+        if (document.getElementById('receipt-dev-notes')) document.getElementById('receipt-dev-notes').innerText = devNotes;
+
+        if (document.getElementById('receipt-user-sign-name')) document.getElementById('receipt-user-sign-name').innerText = userName || '—';
+
+        const today = new Date();
+        const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
+        if (document.getElementById('receipt-handover-date')) {
+            document.getElementById('receipt-handover-date').innerText = `Ngày bàn giao: ${dateStr}`;
+        }
+
+        if (modalHandoverPreview) {
+            modalHandoverPreview.classList.remove('hidden');
+        }
+    }
+
+    // 1. Click title to show User Info Card Preview popup from form
+    if (titleUserInfo) {
+        titleUserInfo.addEventListener('click', () => {
+            showUserCardModal(null);
         });
     }
 
@@ -6546,6 +6794,14 @@ async function startApp() {
         });
     }
 
+    // Switch from User Card to Handover modal
+    if (btnSwitchToHandover) {
+        btnSwitchToHandover.addEventListener('click', () => {
+            if (modalUserPreview) modalUserPreview.classList.add('hidden');
+            showHandoverModal(currentExportItem);
+        });
+    }
+
     // 2. Export User Info Card as PNG (Print Icon)
     if (btnExportUserCardPngIcon) {
         btnExportUserCardPngIcon.addEventListener('click', () => {
@@ -6555,7 +6811,7 @@ async function startApp() {
             }
 
             const target = document.getElementById('user-card-export-target');
-            const userId = document.getElementById('user-id').value.trim() || 'user';
+            const userId = currentExportUserId || (document.getElementById('user-id') ? document.getElementById('user-id').value.trim() : '') || 'user';
             
             showToast('Đang tạo ảnh', 'Đang kết xuất hình ảnh thẻ nhân viên...', 'info');
 
@@ -6580,80 +6836,10 @@ async function startApp() {
         });
     }
 
-    // 3. Show Handover Receipt Modal
+    // 3. Show Handover Receipt Modal from form
     if (btnShowHandoverModal) {
         btnShowHandoverModal.addEventListener('click', () => {
-            const userId = document.getElementById('user-id').value.trim();
-            const userName = document.getElementById('user-name').value.trim();
-            
-            if (!userId || !userName) {
-                showToast('Thông báo', 'Vui lòng nhập ID và Họ tên người sử dụng trước khi xem thông tin bàn giao!', 'warning');
-                return;
-            }
-
-            // Populate handover template
-            document.getElementById('receipt-user-name').innerText = userName;
-            document.getElementById('receipt-user-title').innerText = document.getElementById('user-title').value.trim() || '—';
-            document.getElementById('receipt-user-dept').innerText = document.getElementById('user-dept').value.trim() || '—';
-            document.getElementById('receipt-user-email').innerText = document.getElementById('user-email').value.trim() || '—';
-            
-            document.getElementById('receipt-dev-name').innerText = document.getElementById('dev-type').value.trim() || '—';
-            document.getElementById('receipt-dev-main').innerText = document.getElementById('dev-main').value.trim() || '—';
-            document.getElementById('receipt-dev-cpu').innerText = document.getElementById('dev-cpu').value.trim() || '—';
-            
-            const ramVal = document.getElementById('dev-ram').value || '';
-            const ramSlotsVal = document.getElementById('dev-ram-slots').value || '';
-            document.getElementById('receipt-dev-ram').innerText = ramVal ? `${ramVal} ${ramSlotsVal ? `(${ramSlotsVal})` : ''}` : '—';
-            
-            const ssdVal = document.getElementById('dev-ssd') ? document.getElementById('dev-ssd').value.trim() : '';
-            const ssdVal2 = document.getElementById('dev-ssd-2') ? document.getElementById('dev-ssd-2').value.trim() : '';
-            const hddVal = document.getElementById('dev-hdd') ? document.getElementById('dev-hdd').value.trim() : '';
-            const hddVal2 = document.getElementById('dev-hdd-2') ? document.getElementById('dev-hdd-2').value.trim() : '';
-            let diskParts = [];
-            const ssdFull = [ssdVal, ssdVal2].filter(Boolean).join(' + ');
-            if (ssdFull) diskParts.push(`SSD: ${ssdFull}`);
-            const hddFull = [hddVal, hddVal2].filter(Boolean).join(' + ');
-            if (hddFull) diskParts.push(`HDD: ${hddFull}`);
-            document.getElementById('receipt-dev-disk').innerText = diskParts.join(' / ') || '—';
-            
-            const monVal = document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '';
-            const monVal2 = document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '';
-            const monFull = [monVal, monVal2].filter(Boolean).join(' | ');
-            document.getElementById('receipt-dev-monitor').innerText = monFull || '—';
-
-            if (document.getElementById('receipt-dev-monitor-sn')) {
-                const monSnVal = document.getElementById('dev-monitor-sn') ? document.getElementById('dev-monitor-sn').value.trim() : '';
-                const monSnVal2 = document.getElementById('dev-monitor-sn-2') ? document.getElementById('dev-monitor-sn-2').value.trim() : '';
-                const monSnFull = [monSnVal, monSnVal2].filter(Boolean).join(' | ');
-                document.getElementById('receipt-dev-monitor-sn').innerText = monSnFull || '—';
-            }
-            document.getElementById('receipt-dev-sn').innerText = document.getElementById('dev-sn').value.trim() || '—';
-            
-            const kbVal = document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '';
-            const mouseVal = document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '';
-            if (document.getElementById('receipt-dev-keyboard')) {
-                document.getElementById('receipt-dev-keyboard').innerText = kbVal || '—';
-            }
-            if (document.getElementById('receipt-dev-mouse')) {
-                document.getElementById('receipt-dev-mouse').innerText = mouseVal || '—';
-            }
-            
-            document.getElementById('receipt-key-win').innerText = document.getElementById('key-win').value.trim() || '—';
-            document.getElementById('receipt-key-office').innerText = document.getElementById('key-office').value.trim() || '—';
-            document.getElementById('receipt-key-pdf').innerText = document.getElementById('key-pdf').value.trim() || '—';
-            
-            document.getElementById('receipt-dev-apps').innerText = document.getElementById('dev-apps').value.trim() || '—';
-            document.getElementById('receipt-dev-notes').innerText = document.getElementById('dev-notes').value.trim() || '—';
-            
-            document.getElementById('receipt-user-sign-name').innerText = userName;
-            
-            const today = new Date();
-            const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
-            document.getElementById('receipt-handover-date').innerText = `Ngày bàn giao: ${dateStr}`;
-
-            if (modalHandoverPreview) {
-                modalHandoverPreview.classList.remove('hidden');
-            }
+            showHandoverModal(null);
         });
     }
 
@@ -6672,6 +6858,14 @@ async function startApp() {
         });
     }
 
+    // Switch from Handover to User Card modal
+    if (btnSwitchToUserCard) {
+        btnSwitchToUserCard.addEventListener('click', () => {
+            if (modalHandoverPreview) modalHandoverPreview.classList.add('hidden');
+            showUserCardModal(currentExportItem);
+        });
+    }
+
     // 4. Export Handover Receipt as PNG (Print Icon)
     if (btnExportHandoverPngIcon) {
         btnExportHandoverPngIcon.addEventListener('click', () => {
@@ -6681,7 +6875,7 @@ async function startApp() {
             }
 
             const target = document.getElementById('handover-receipt-target');
-            const userId = document.getElementById('user-id').value.trim() || 'user';
+            const userId = currentExportUserId || (document.getElementById('user-id') ? document.getElementById('user-id').value.trim() : '') || 'user';
             
             showToast('Đang kết xuất', 'Đang tạo biên bản bàn giao thiết bị dạng hình ảnh...', 'info');
 
