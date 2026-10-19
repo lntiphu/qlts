@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Tra Cứu Hồ Sơ Tài Sản - ERAS GROUP</title>
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+    <link rel="shortcut icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #25338d;
+            --primary-dark: #192368;
+            --primary-light: #3d4eb8;
+            --accent: #7bca0f;
+            --accent-dark: #63a50a;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-sub: #162032;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --radius-sm: 6px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0b1120 0%, #0f172a 50%, #1e1b4b 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 16px 12px 60px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 680px;
+            margin: 0 auto;
+        }
+
+        /* Top Brand Bar */
+        .brand-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius-lg);
+            padding: 12px 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .brand-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-logo {
+            height: 32px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .brand-title {
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: #ffffff;
+            text-transform: uppercase;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .brand-badge {
+            background: rgba(123, 202, 15, 0.15);
+            color: var(--accent);
+            border: 1px solid rgba(123, 202, 15, 0.3);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Search Bar */
+        .search-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 6px 8px;
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+        }
+
+        .search-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 14px;
+            padding: 8px 10px;
+            font-family: 'JetBrains Mono', monospace;
+            text-transform: uppercase;
+        }
+
+        .search-input::placeholder {
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+            text-transform: none;
+            font-size: 13px;
+        }
+
+        .btn-search {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-search:active {
+            opacity: 0.85;
+        }
+
+        /* Card Component */
+        .asset-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+            margin-bottom: 16px;
+        }
+
+        .asset-hero {
+            background: linear-gradient(135deg, rgba(37, 51, 141, 0.6) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 18px;
+            position: relative;
+        }
+
+        .asset-meta-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .tag-pill {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.3px;
+        }
+
+        .tag-code {
+            background: rgba(37, 51, 141, 0.8);
+            color: #93c5fd;
+            border: 1px solid rgba(147, 197, 253, 0.3);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+        }
+
+        .tag-group {
+            background: rgba(123, 202, 15, 0.2);
+            color: #bef264;
+            border: 1px solid rgba(190, 242, 100, 0.3);
+        }
+
+        .tag-status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #6ee7b7;
+            border: 1px solid rgba(110, 231, 183, 0.3);
+        }
+
+        .tag-status-kho {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fde68a;
+            border: 1px solid rgba(253, 230, 138, 0.3);
+        }
+
+        .asset-main-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #ffffff;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .asset-sub-id {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .asset-sub-id span {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        /* Section Block */
+        .section-block {
+            padding: 16px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .section-block:last-child {
+            border-bottom: none;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #93c5fd;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Specs Grid */
+        .specs-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .specs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .spec-item {
+            background: var(--card-sub);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .spec-item.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .spec-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .spec-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        .spec-value.mono {
+            font-family: 'JetBrains Mono', monospace;
+            color: #a5f3fc;
+        }
+
+        /* User Info Box */
+        .user-box {
+            background: linear-gradient(135deg, rgba(37, 51, 141, 0.15) 0%, rgba(16, 24, 39, 0.4) 100%);
+            border: 1px solid rgba(37, 51, 141, 0.3);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .user-avatar {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 800;
+            color: #ffffff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .user-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .user-dept {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .user-date {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* Action Buttons */
+        .action-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-call {
+            background: #25338d;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-call:hover {
+            background: #1d2770;
+        }
+
+        .btn-zalo {
+            background: #0068ff;
+            color: #ffffff;
+        }
+
+        .btn-print {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        /* Loading / Error / Empty States */
+        .state-container {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .state-icon {
+            font-size: 40px;
+            margin-bottom: 14px;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .state-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 6px;
+        }
+
+        .state-desc {
+            font-size: 13px;
+            color: var(--text-muted);
+            max-width: 380px;
+            margin: 0 auto 16px auto;
+            line-height: 1.5;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .footer strong {
+            color: var(--accent);
+        }
+
+        /* Copy Button */
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-muted);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 6px;
+        }
+
+        .btn-copy:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Brand Header -->
+        <header class="brand-header">
+            <div class="brand-left">
+                <img src="eras-logo.png" alt="ERAS GROUP" class="brand-logo" onerror="this.src='logo.png';">
+                <div>
+                    <div class="brand-title">ERAS GROUP</div>
+                    <div class="brand-subtitle">Tra cứu hồ sơ tài sản IT</div>
+                </div>
+            </div>
+            <div class="brand-badge">
+                <i class="fa-solid fa-shield-halved"></i> Chính chủ ERG
+            </div>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="search-box">
+            <input type="text" id="input-search-code" class="search-input" placeholder="Nhập mã TS hoặc ID máy (VD: ERG-CCDC-PC-001)...">
+            <button type="button" id="btn-do-search" class="btn-search">
+                <i class="fa-solid fa-magnifying-glass"></i> Tra cứu
+            </button>
+        </div>
+
+        <!-- Dynamic Content Mount Point -->
+        <main id="app-view">
+            <!-- Loading default -->
+            <div class="state-container" id="state-loading">
+                <div class="spinner"></div>
+                <div class="state-title">Đang tải thông tin tài sản...</div>
+                <div class="state-desc">Hệ thống đang truy xuất dữ liệu từ máy chủ ERAS GROUP. Vui lòng chờ giây lát.</div>
+            </div>
+        </main>
+
+        <!-- Action Center -->
+        <div class="action-row">
+            <a href="tel:0988000000" class="btn-action btn-call" id="btn-call-it">
+                <i class="fa-solid fa-phone-volume"></i> Gọi IT ERAS
+            </a>
+            <button type="button" class="btn-action btn-print" onclick="window.print();">
+                <i class="fa-solid fa-print"></i> In Thông Tin
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div>Hệ Thống Quản Lý Tài Sản & Thiết Bị CNTT &bull; <strong>ERAS GROUP</strong></div>
+            <div>Bản quyền nội bộ &copy; 2026. Mọi hành vi tự ý tráo đổi linh kiện đều được ghi nhận.</div>
+        </footer>
+    </div>
+
+    <!-- Supabase JS Client Library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- QRCode Generator Library -->
+    <script src="qrcode-gen.min.js"></script>
+    <script>
+        const SUPABASE_URL = 'http://172.16.20.21:8000';
+        const SUPABASE_KEY = 'sb_publishable_nonpHrymDEEjJ9MFcDQajq_Nho7Bijj';
+        let supabaseClient = null;
+
+        try {
+            if (typeof supabase !== 'undefined') {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            }
+        } catch (e) {
+            console.warn('Supabase init warning:', e);
+        }
+
+        // Format Date DMY Helper
+        function formatDate(val) {
+            if (!val || val === '-' || val === '—') return '—';
+            if (typeof val === 'string') {
+                const s = val.trim();
+                if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+                const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+                if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+            }
+            try {
+                const d = new Date(val);
+                if (!isNaN(d.getTime())) {
+                    return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                }
+            } catch (e) {}
+            return val;
+        }
+
+        // Copy Helper
+        function copyText(txt) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(txt).then(() => {
+                    alert('Đã sao chép: ' + txt);
+                }).catch(() => {});
+            } else {
+                alert('Mã: ' + txt);
+            }
+        }
+
+        // Get Code from URL Query or Path
+        function getQueryCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let code = urlParams.get('code') || urlParams.get('asset') || urlParams.get('id') || urlParams.get('sn');
+            if (!code) {
+                // Check if path is /tai-san/{code}
+                const pathParts = window.location.pathname.split('/').filter(Boolean);
+                const lastPart = pathParts[pathParts.length - 1];
+                if (lastPart && lastPart !== 'tai-san.html' && lastPart !== 'tai-san') {
+                    code = decodeURIComponent(lastPart);
+                }
+            }
+            // Check hash
+            if (!code && window.location.hash) {
+                const h = window.location.hash.replace('#', '').trim();
+                if (h.startsWith('code=')) code = decodeURIComponent(h.split('=')[1]);
+                else if (h.length > 2 && !h.includes('&')) code = decodeURIComponent(h);
+            }
+            return code ? code.trim() : '';
+        }
+
+        // Search Device In Server API / Supabase / Fallback
+        async function fetchDeviceData(queryCode) {
+            if (!queryCode) return null;
+            const qClean = queryCode.trim();
+            const qNoSpace = qClean.replace(/\s+/g, '');
+            const qNormHyphen = qClean.replace(/\s*-\s*/g, '-');
+            const searchTerms = Array.from(new Set([qClean, qNoSpace, qNormHyphen].filter(Boolean)));
+
+            // 1. Try Local Server API (Same-Origin http://172.16.70.29:8080/api/asset?code=...)
+            try {
+                const apiRes = await fetch(`/api/asset?code=${encodeURIComponent(qClean)}`);
+                if (apiRes.ok) {
+                    const json = await apiRes.json();
+                    if (json.success && json.result && json.result.data) {
+                        return json.result;
+                    }
+                }
+            } catch (apiErr) {
+                console.warn('Server API lookup error, falling back:', apiErr);
+            }
+
+            // 2. Try Supabase directly (fallback if server API is unavailable)
+            if (supabaseClient) {
+                try {
+                    const conditions = [];
+                    searchTerms.forEach(t => {
+                        const enc = encodeURIComponent(t);
+                        conditions.push(`asset_code.ilike.%${t}%`);
+                        conditions.push(`dev_id.ilike.%${t}%`);
+                        conditions.push(`dev_sn.ilike.%${t}%`);
+                        conditions.push(`user_name.ilike.%${t}%`);
+                        conditions.push(`user_id.ilike.%${t}%`);
+                    });
+
+                    // Note: table thiet_bi uses asset_code (ma_tai_san column does not exist)
+                    const { data: tbData, error: tbError } = await supabaseClient
+                        .from('thiet_bi')
+                        .select('*')
+                        .or(conditions.join(','))
+                        .limit(5);
+
+                    if (!tbError && tbData && tbData.length > 0) {
+                        const exact = tbData.find(d => 
+                            searchTerms.some(t => 
+                                (d.dev_id && d.dev_id.toLowerCase() === t.toLowerCase()) ||
+                                (d.asset_code && d.asset_code.toLowerCase() === t.toLowerCase()) ||
+                                (d.user_name && d.user_name.toLowerCase() === t.toLowerCase()) ||
+                                (d.user_id && d.user_id.toLowerCase() === t.toLowerCase())
+                            )
+                        ) || tbData[0];
+                        return { type: 'thiet_bi', data: exact };
+                    }
+
+                    // Try table: kho_thiet_bi (Inventory)
+                    const khoConditions = [];
+                    searchTerms.forEach(t => {
+                        khoConditions.push(`asset_code.ilike.%${t}%`);
+                        khoConditions.push(`code.ilike.%${t}%`);
+                        khoConditions.push(`dev_sn.ilike.%${t}%`);
+                        khoConditions.push(`name.ilike.%${t}%`);
+                    });
+
+                    const { data: khoData, error: khoError } = await supabaseClient
+                        .from('kho_thiet_bi')
+                        .select('*')
+                        .or(khoConditions.join(','))
+                        .limit(5);
+
+                    if (!khoError && khoData && khoData.length > 0) {
+                        return { type: 'kho_thiet_bi', data: khoData[0] };
+                    }
+                } catch (err) {
+                    console.warn('Lỗi truy vấn Supabase:', err);
+                }
+            }
+
+            // 3. Try LocalStorage Fallback (if on same browser)
+            try {
+                const localTb = localStorage.getItem('fallback_thiet_bi');
+                if (localTb) {
+                    const parsed = JSON.parse(localTb);
+                    const found = parsed.find(item => 
+                        searchTerms.some(t => {
+                            const tl = t.toLowerCase();
+                            return (item.maTaiSan && item.maTaiSan.toLowerCase() === tl) ||
+                                (item.assetCode && item.assetCode.toLowerCase() === tl) ||
+                                (item.devId && item.devId.toLowerCase() === tl) ||
+                                (item.userName && item.userName.toLowerCase().includes(tl)) ||
+                                (item.userId && item.userId.toLowerCase() === tl) ||
+                                (item.devSn && item.devSn.toLowerCase() === tl);
+                        })
+                    );
+                    if (found) return { type: 'thiet_bi_local', data: found };
+                }
+
+                const localKho = localStorage.getItem('fallback_kho_thiet_bi');
+                const khoSource = (localKho && JSON.parse(localKho).length > 0) 
+                    ? JSON.parse(localKho) 
+                    : [{"id":2,"code":"PC Văn phòng","assetCode":"PC Văn phòng","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (I5-12400)","quantity":1,"reason":"Thu hồi thiết bị (PC Văn phòng) từ nhân viên Đoàn Văn Trường","dateStored":"05/08/2026","notes":"Cấu hình: CPU: I5-12400, RAM: 16GB DDR4, SSD: 500GB, HDD: 1TB, Màn hình: LG 24","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"I5-12400","devRam":"16GB DDR4","devRamSlots":"","devSsd":"500GB","devHdd":"1TB","devVga":"","devMain":"","devMonitor":"LG 24","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":4,"code":"PC Văn phòng","assetCode":"PC Văn phòng","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (Ryzen7 5700G)","quantity":1,"reason":"Thu hồi thiết bị (PC Văn phòng) từ nhân viên Thắng ĐT","dateStored":"06/08/2026","notes":"Cấu hình: CPU: Ryzen7 5700G, RAM: 16GB DDR4, SSD: 500GB, Màn hình: LG 24","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"Ryzen7 5700G","devRam":"16GB DDR4","devRamSlots":"","devSsd":"500GB","devHdd":"","devVga":"","devMain":"","devMonitor":"LG 24","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":7,"code":"BAOTOAN-DTHAU","assetCode":"BAOTOAN-DTHAU","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (I5-12400)","quantity":1,"reason":"Thu hồi thiết bị (BAOTOAN-DTHAU) từ nhân viên Nguyễn Hữu Bảo Toàn","dateStored":"10/09/2026","notes":"Cấu hình: CPU: I5-12400, RAM: 16GB DDR4, SSD: 500GB, HDD: 1TB, Màn hình: LG 24","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"I5-12400","devRam":"16GB DDR4","devRamSlots":"","devSsd":"500GB","devHdd":"1TB","devVga":"","devMain":"","devMonitor":"LG 24","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":9,"code":"ERGPC-HCNS002","assetCode":"ERGPC-HCNS002","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (I3-4170)","quantity":1,"reason":"Thu hồi thiết bị (ERGPC-HCNS002) từ nhân viên Nguyễn Thị Mai Huyên","dateStored":"11/09/2026","notes":"Cấu hình: CPU: I3-4170, RAM: 16GB DDR3, SSD: 480GB, HDD: 500, Màn hình: Dell 24","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"I3-4170","devRam":"16GB DDR3","devRamSlots":"","devSsd":"480GB","devHdd":"500","devVga":"","devMain":"","devMonitor":"Dell 24","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":10,"code":"MINHDUC-PTC","assetCode":"MINHDUC-PTC","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (I5-12400)","quantity":1,"reason":"Thu hồi thiết bị (MINHDUC-PTC) từ nhân viên Nguyễn Minh Đức","dateStored":"21/09/2026","notes":"Cấu hình: Main: Asus Prime H610M-K D4, CPU: I5-12400, RAM: 16GB DDR4 (2 thanh), SSD: 500, HDD: 1TB, Màn hình: LG 24\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"Asus Prime H610M-K D4\",\"devCpu\":\"I5-12400\",\"devRam\":\"16GB DDR4\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"500\",\"devSsd2\":\"\",\"devHdd\":\"1TB\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"LG 24\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"HDMI và nguồn nhỏ\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"I5-12400","devRam":"16GB DDR4","devRamSlots":"2 thanh","devSsd":"500","devHdd":"1TB","devVga":"","devMain":"Asus Prime H610M-K D4","devMonitor":"LG 24","devMonitorSn":"","monitorSize":"","devCables":"HDMI và nguồn nhỏ","warrantyEndDate":""},{"id":11,"code":"ERGLAP-QLDA001","assetCode":"ERGLAP-QLDA001","maTaiSan":"","assetCompany":"ERG","name":"Laptop - Lenovo (R7 8845HS)","quantity":1,"reason":"Thu hồi thiết bị (ERGLAP-QLDA001) từ nhân viên Lê Hữu Chiến","dateStored":"26/09/2026","notes":"Cấu hình: Main: Lenovo161216, CPU: R7 8845HS, RAM: 16GB DDR5 (4 thanh), SSD: 512\n[SPECS_JSON:{\"devType\":\"Laptop - Lenovo\",\"devMain\":\"Lenovo161216\",\"devCpu\":\"R7 8845HS\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"4 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Trung bình\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"R7 8845HS","devRam":"16GB DDR5","devRamSlots":"4 thanh","devSsd":"512","devHdd":"","devVga":"","devMain":"Lenovo161216","devMonitor":"","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":12,"code":"ERGPC-GDHCNS","assetCode":"ERGPC-GDHCNS","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (R7 5700G)","quantity":1,"reason":"Thu hồi thiết bị (ERGPC-GDHCNS) từ nhân viên Nguyễn Ngọc Trâm","dateStored":"29/09/2026","notes":"Cấu hình: Main: Asus Prime A520M-R, CPU: R7 5700G, RAM: 16GB DDR4 (2 thanh), SSD: 512, Màn hình: LG 24 inch\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"Asus Prime A520M-R\",\"devCpu\":\"R7 5700G\",\"devRam\":\"16GB DDR4\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"LG 24 inch\",\"devMonitor2\":\"\",\"devMonitorSn\":\"507BODG0T130\",\"devMonitorSn2\":\"\",\"devSn\":\"PC39677TAM0KK06M060DYM\",\"devKeyboard\":\"Bàn phím có dây\",\"devMouse\":\"Chuột có dây\",\"devCables\":\"HDMI và nguồn nhỏ\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"PC39677TAM0KK06M060DYM","devCpu":"R7 5700G","devRam":"16GB DDR4","devRamSlots":"2 thanh","devSsd":"512","devHdd":"","devVga":"","devMain":"Asus Prime A520M-R","devMonitor":"LG 24 inch","devMonitorSn":"507BODG0T130","monitorSize":"","devCables":"HDMI và nguồn nhỏ","warrantyEndDate":""},{"id":14,"code":"Laptop Lenovo","assetCode":"Laptop Lenovo","maTaiSan":"","assetCompany":"ERG","name":"Laptop Lenovo","quantity":1,"reason":"Thu hồi thiết bị (Laptop Lenovo) từ nhân viên Nguyễn Anh Tú","dateStored":"02/10/2026","notes":"Cấu hình: RAM: 16GB DDR5 (2 thanh), SSD: 512\n[SPECS_JSON:{\"devType\":\"Laptop Lenovo\",\"devMain\":\"\",\"devCpu\":\"\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"Chuột có dây\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"","devRam":"16GB DDR5","devRamSlots":"2 thanh","devSsd":"512","devHdd":"","devVga":"","devMain":"","devMonitor":"","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":16,"code":"IOM-LETAN","assetCode":"IOM-LETAN","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng","quantity":1,"reason":"Thu hồi thiết bị (IOM-LETAN) từ nhân viên Lê Nguyễn Thúy Điền","dateStored":"13/10/2026","notes":"Cấu hình: RAM: 16GB DDR3 (2 thanh), Màn hình: Dell 24\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"\",\"devCpu\":\"\",\"devRam\":\"16GB DDR3\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"Dell 24\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"VGA và nguồn lớn\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Xem xét thay thế\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"","devRam":"16GB DDR3","devRamSlots":"2 thanh","devSsd":"","devHdd":"","devVga":"","devMain":"","devMonitor":"Dell 24","devMonitorSn":"","monitorSize":"","devCables":"VGA và nguồn lớn","warrantyEndDate":""},{"id":17,"code":"IOMLAP-CHEF","assetCode":"IOMLAP-CHEF","maTaiSan":"","assetCompany":"ERG","name":"Laptop - Lenovo IdeaPad Slim 5 14IRH10R (Core 5 210H)","quantity":1,"reason":"Thu hồi thiết bị (IOMLAP-CHEF) từ nhân viên Phan Thanh Tùng","dateStored":"13/10/2026","notes":"Cấu hình: Main: Lenovo161216, CPU: Core 5 210H, RAM: 16GB DDR5 (2 thanh), SSD: 512\n[SPECS_JSON:{\"devType\":\"Laptop - Lenovo IdeaPad Slim 5 14IRH10R\",\"devMain\":\"Lenovo161216\",\"devCpu\":\"Core 5 210H\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"YX0HXSTN\",\"devKeyboard\":\"\",\"devMouse\":\"Chuột không dây\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"YX0HXSTN","devCpu":"Core 5 210H","devRam":"16GB DDR5","devRamSlots":"2 thanh","devSsd":"512","devHdd":"","devVga":"","devMain":"Lenovo161216","devMonitor":"","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""},{"id":18,"code":"ERGPC-KT005","assetCode":"ERGPC-KT005","maTaiSan":"","assetCompany":"ERG","name":"PC Văn phòng (Core i5 12400)","quantity":1,"reason":"Thu hồi thiết bị (ERGPC-KT005) từ nhân viên Nguyễn Thanh Huyền","dateStored":"15/10/2026","notes":"Cấu hình: Main: Asus Prime H610M-K D4, CPU: Core i5 12400, RAM: 16GB (2 thanh), SSD: 256, HDD: 1T, Màn hình: LG 24\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"Asus Prime H610M-K D4\",\"devCpu\":\"Core i5 12400\",\"devRam\":\"16GB\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"256\",\"devSsd2\":\"\",\"devHdd\":\"1T\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"LG 24\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"Bàn phím có dây\",\"devMouse\":\"Chuột có dây\",\"devCables\":\"HDMI và nguồn nhỏ\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"Core i5 12400","devRam":"16GB","devRamSlots":"2 thanh","devSsd":"256","devHdd":"1T","devVga":"","devMain":"Asus Prime H610M-K D4","devMonitor":"LG 24","devMonitorSn":"","monitorSize":"","devCables":"HDMI và nguồn nhỏ","warrantyEndDate":""},{"id":19,"code":"ERGLAP-QLTC02","assetCode":"ERGLAP-QLTC02","maTaiSan":"","assetCompany":"ERG","name":"Laptop Acer (Ryzen 5 6600H)","quantity":1,"reason":"Thu hồi thiết bị (ERGLAP-QLTC02) từ nhân viên Lê Đình Dụ","dateStored":"15/10/2026","notes":"Cấu hình: Main: Nitro ANV15-41, CPU: Ryzen 5 6600H, RAM: 16GB DDR5 (2 thanh), SSD: 512, VGA: RTX 3050\n[SPECS_JSON:{\"devType\":\"Laptop Acer\",\"devMain\":\"Nitro ANV15-41\",\"devCpu\":\"Ryzen 5 6600H\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"RTX 3050\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]","status":"Sẵn sàng cấp phát","location":"","storedBy":"","assetGroup":"CCDC","currentAssetGroup":"CCDC","assetType":"LT","devSn":"","devCpu":"Ryzen 5 6600H","devRam":"16GB DDR5","devRamSlots":"2 thanh","devSsd":"512","devHdd":"","devVga":"RTX 3050","devMain":"Nitro ANV15-41","devMonitor":"","devMonitorSn":"","monitorSize":"","devCables":"","warrantyEndDate":""}];
+                if (khoSource && khoSource.length > 0) {
+                    const foundKho = khoSource.find(item => 
+                        searchTerms.some(t => {
+                            const tl = t.toLowerCase();
+                            return (item.maTaiSan && item.maTaiSan.toLowerCase() === tl) ||
+                                (item.assetCode && item.assetCode.toLowerCase() === tl) ||
+                                (item.code && item.code.toLowerCase() === tl) ||
+                                (item.name && item.name.toLowerCase().includes(tl)) ||
+                                (item.devSn && item.devSn.toLowerCase() === tl) ||
+                                (item.reason && item.reason.toLowerCase().includes(tl));
+                        })
+                    );
+                    if (foundKho) return { type: 'kho_thiet_bi_local', data: foundKho };
+                }
+            } catch (e) {
+                console.warn('LocalStorage fallback error:', e);
+            }
+
+            // 4. Fallback: Parse URL Hash Payload if available (#data=...)
+            if (window.location.hash && window.location.hash.includes('spec=')) {
+                try {
+                    const rawJson = decodeURIComponent(window.location.hash.split('spec=')[1]);
+                    const parsed = JSON.parse(rawJson);
+                    return { type: 'hash_data', data: parsed };
+                } catch (e) {}
+            }
+
+            return null;
+        }
+
+        // Render Loaded Asset View
+        function renderAssetView(record) {
+            const appView = document.getElementById('app-view');
+            if (!record) {
+                appView.innerHTML = `
+                    <div class="state-container">
+                        <div class="state-icon" style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <div class="state-title">Không Tìm Thấy Tài Sản</div>
+                        <div class="state-desc">Không có dữ liệu cho mã vừa tra cứu. Vui lòng kiểm tra lại mã trên tem hoặc liên hệ bộ phận IT để được hỗ trợ.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            const isKho = record.type === 'kho_thiet_bi' || record.type === 'kho_thiet_bi_local';
+            const d = record.data;
+
+            // Normalize fields across DB and Local structures
+            const devId = d.dev_id || d.devId || d.code || '';
+            const maTaiSan = d.asset_code || d.assetCode || d.ma_tai_san || d.maTaiSan || devId || '—';
+            const assetGroup = d.asset_group || d.assetGroup || 'CCDC';
+            const assetCompany = d.asset_company || d.assetCompany || 'ERG';
+            const assetType = d.asset_type || d.assetType || (d.dev_type || d.devType || 'PC');
+            
+            // Device name
+            let devName = d.name || [d.dev_type || d.devType, d.dev_main || d.devMain, d.dev_cpu || d.devCpu].filter(Boolean).join(' ') || 'Máy tính làm việc';
+            
+            // Specs
+            const cpu = d.dev_cpu || d.devCpu || '—';
+            const ram = d.dev_ram || d.devRam || '—';
+            const ssd = [d.dev_ssd || d.devSsd, d.dev_ssd_2 || d.devSsd2].filter(Boolean).join(' + ') || '—';
+            const hdd = [d.dev_hdd || d.devHdd, d.dev_hdd_2 || d.devHdd2].filter(Boolean).join(' + ') || '';
+            const vga = d.dev_vga || d.devVga || 'Onboard / Tích hợp';
+            const mainboard = d.dev_main || d.devMain || '—';
+            const monitor = [d.dev_monitor || d.devMonitor, d.dev_monitor_2 || d.devMonitor2].filter(Boolean).join(' | ') || (d.monitor_size || d.monitorSize ? `Màn hình ${d.monitor_size || d.monitorSize}` : '—');
+            const sn = d.dev_sn || d.devSn || d.serial || '—';
+            const keyboard = d.dev_keyboard || d.devKeyboard ? 'Có' : 'Theo máy';
+            const mouse = d.dev_mouse || d.devMouse || 'Theo máy';
+
+            // Management Info
+            const userName = isKho ? 'LƯU KHO' : (d.user_name || d.userName || 'Chưa cấp phát');
+            const userDept = isKho ? (d.location ? `Vị trí kho: ${d.location}` : 'Kho thiết bị IT') : (d.user_dept || d.userDept || 'ERAS GROUP');
+            const userId = d.user_id || d.userId || '';
+            const userTitle = d.user_title || d.userTitle || '';
+            const handoverDate = formatDate(d.purchase_date || d.purchaseDate || d.date_stored || d.dateStored || d.updated_at);
+            const warrantyDate = formatDate(d.warranty_date || d.warrantyDate || d.warranty_end_date || d.warrantyEndDate);
+            const status = isKho ? (d.status || 'Trong kho') : (d.dev_status || d.devStatus || 'Đang sử dụng');
+
+            // Format Group Label
+            const groupBadge = assetGroup === 'TSCD' ? 'TS CỐ ĐỊNH (TSCD)' : 'CÔNG CỤ DỤNG CỤ (CCDC)';
+
+            appView.innerHTML = `
+                <!-- The Exact Printable Sticker Label Card (Matching reference) -->
+                <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-id-card"></i> Tem Nhãn Nhận Diện Thiết Bị
+                    </div>
+
+                    <div id="tai-san-sticker-target" style="width: 100%; max-width: 440px; background: #ffffff; color: #0f172a; border: 2px solid #25338d; border-radius: 8px; padding: 12px 14px; font-family: 'Inter', sans-serif; box-shadow: 0 10px 25px rgba(0,0,0,0.3); position: relative; overflow: hidden; box-sizing: border-box;">
+                        <!-- Top Banner with ERAS Logo -->
+                        <div style="display: flex; justify-content: flex-start; align-items: center; border-bottom: 1.5px solid #25338d; padding-bottom: 6px; margin-bottom: 8px;">
+                            <img src="eras-logo.png" alt="ERAS GROUP" style="height: 22px; object-fit: contain;" onerror="this.src='logo.png';">
+                        </div>
+
+                        <!-- Middle Body: QR Code on Left, Enriched Specs on Right -->
+                        <div style="display: flex; gap: 12px; align-items: center;">
+                            <!-- QR Column -->
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; width: 104px;">
+                                <div id="tai-san-card-qr" style="width: 104px; height: 104px; background: #fff; padding: 3px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;"></div>
+                            </div>
+
+                            <!-- Info & Hardware Specs Column -->
+                            <div style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; flex: 1; min-width: 0; text-align: left; overflow: hidden;">
+                                <div style="display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap;">
+                                    <span style="font-weight: 800; font-size: 14px; color: #25338d; letter-spacing: 0.5px; font-family: monospace;">${maTaiSan}</span>
+                                    ${devId && devId !== maTaiSan ? `<span style="font-size: 11px; font-weight: 700; color: #64748b;">(${devId})</span>` : ''}
+                                </div>
+
+                                <!-- Hardware Specs Box -->
+                                <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px 8px; font-size: 10px; line-height: 1.45; color: #334155; margin: 1px 0;">
+                                    <div><strong style="color: #25338d;">CPU:</strong> <span>${cpu}</span> &bull; <strong style="color: #25338d;">RAM:</strong> <span>${ram}</span></div>
+                                    <div><strong style="color: #25338d;">Ổ cứng:</strong> <span>${ssd}</span> &bull; <strong style="color: #25338d;">Màn hình:</strong> <span>${monitor}</span></div>
+                                </div>
+
+                                <div style="color: #475569; font-size: 10.5px; line-height: 1.35;"><strong style="color: #1e293b;">Sử dụng:</strong> <span style="color: #0f172a; font-weight: 700;">${userName}</span></div>
+                                <div style="color: #475569; font-size: 10px; line-height: 1.35;"><strong style="color: #1e293b;">Bộ phận:</strong> <span>${userDept}</span></div>
+                                <div style="color: #64748b; font-size: 9.5px; line-height: 1.35;"><strong style="color: #1e293b;">Cấp phát:</strong> <span>${handoverDate}</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Footer -->
+                        <div style="margin-top: 8px; padding-top: 5px; border-top: 1px dashed #cbd5e1; display: flex; justify-content: flex-end; align-items: center; font-size: 9px; color: #64748b;">
+                            <span style="font-weight: 700; color: #7bca0f;">erasgroup.vn</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="asset-card">
+                    <!-- Hero Banner -->
+                    <div class="asset-hero">
+                        <div class="asset-meta-tags">
+                            <span class="tag-pill tag-code">
+                                <i class="fa-solid fa-barcode"></i> ${maTaiSan}
+                                <button class="btn-copy" onclick="copyText('${maTaiSan}')" title="Sao chép mã"><i class="fa-regular fa-copy"></i></button>
+                            </span>
+                            <span class="tag-pill tag-group">
+                                <i class="fa-solid fa-building"></i> ${assetCompany} &bull; ${groupBadge}
+                            </span>
+                            <span class="tag-pill ${isKho ? 'tag-status-kho' : 'tag-status-active'}">
+                                <i class="fa-solid fa-circle-check"></i> ${status}
+                            </span>
+                        </div>
+                        <h1 class="asset-main-title">${devName}</h1>
+                        <div class="asset-sub-id">
+                            <div>Mã thiết bị: <span>${devId}</span></div>
+                            <div>Serial No: <span class="mono">${sn}</span></div>
+                            <div>Loại: <span>${assetType}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- User / Location Block -->
+                    <div class="section-block">
+                        <div class="section-header">
+                            <div class="section-title"><i class="fa-solid fa-user-check"></i> ${isKho ? 'Thông Tin Lưu Kho' : 'Người Đang Sử Dụng'}</div>
+                        </div>
+                        <div class="user-box">
+                            <div class="user-avatar">
+                                ${isKho ? '<i class="fa-solid fa-boxes-stacked"></i>' : (userName ? userName.charAt(0).toUpperCase() : 'U')}
+                            </div>
+                            <div class="user-details">
+                                <div class="user-name">${userName} ${userId ? `<span style="font-size: 11px; color: var(--text-muted); font-weight: 500;">(${userId})</span>` : ''}</div>
+                                <div class="user-dept">${userDept} ${userTitle ? `&bull; ${userTitle}` : ''}</div>
+                                <div class="user-date">
+                                    <i class="fa-regular fa-calendar-check"></i> ${isKho ? 'Ngày nhập kho' : 'Ngày cấp phát'}: <strong>${handoverDate}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Specifications Block -->
+                    <div class="section-block">
+                        <div class="section-header">
+                            <div class="section-title"><i class="fa-solid fa-microchip"></i> Cấu Hình Phần Cứng Chi Tiết</div>
+                        </div>
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-microchip"></i> Vi xử lý (CPU)</span>
+                                <span class="spec-value">${cpu}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-memory"></i> Bộ nhớ RAM</span>
+                                <span class="spec-value">${ram}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-hard-drive"></i> Ổ cứng chính (SSD)</span>
+                                <span class="spec-value">${ssd}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-floppy-disk"></i> Ổ cứng phụ (HDD/SSD 2)</span>
+                                <span class="spec-value">${hdd || 'Không có'}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-tv"></i> Card đồ họa (VGA)</span>
+                                <span class="spec-value">${vga}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-desktop"></i> Màn hình hiển thị</span>
+                                <span class="spec-value">${monitor}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-diagram-project"></i> Mainboard</span>
+                                <span class="spec-value">${mainboard}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-barcode"></i> Số Serial (S/N)</span>
+                                <span class="spec-value mono">${sn}</span>
+                            </div>
+                            <div class="spec-item full-width">
+                                <span class="spec-label"><i class="fa-solid fa-keyboard"></i> Ngoại vi & Phụ kiện kèm theo</span>
+                                <span class="spec-value">Phím: ${keyboard} &bull; Chuột: ${mouse} ${d.dev_cables || d.devCables ? `&bull; Cáp: ${d.dev_cables || d.devCables}` : ''}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Warranty & Software Block -->
+                    <div class="section-block">
+                        <div class="section-header">
+                            <div class="section-title"><i class="fa-solid fa-shield-halved"></i> Bảo Hành & Bản Quyền Phần Mềm</div>
+                        </div>
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-clock-rotate-left"></i> Hạn bảo hành</span>
+                                <span class="spec-value">${warrantyDate}</span>
+                            </div>
+                            <div class="spec-item">
+                                <span class="spec-label"><i class="fa-solid fa-building-circle-check"></i> Đơn vị quản lý</span>
+                                <span class="spec-value">${assetCompany} - ERAS GROUP</span>
+                            </div>
+                            <div class="spec-item full-width">
+                                <span class="spec-label"><i class="fa-brands fa-windows"></i> Hệ điều hành & Văn phòng</span>
+                                <span class="spec-value">
+                                    Win: ${d.key_win || d.keyWin ? 'Bản quyền theo máy' : 'Chuẩn Doanh nghiệp'} &bull; 
+                                    Office: ${d.key_office || d.keyOffice || 'Office 365'} &bull; 
+                                    PDF: ${d.key_pdf || d.keyPdf || 'Acrobat / Foxit'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${d.notes || d.dev_notes || d.devNotes ? `
+                    <div class="section-block">
+                        <div class="section-header">
+                            <div class="section-title"><i class="fa-solid fa-clipboard-list"></i> Ghi Chú Quản Trị</div>
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-muted); line-height: 1.5; background: var(--card-sub); padding: 10px 12px; border-radius: var(--radius-sm);">
+                            ${(d.notes || d.dev_notes || d.devNotes).replace(/\[SPECS_JSON:.*?\]/s, '')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+
+            // Render QR Code inside the sticker card
+            const qrCardTarget = document.getElementById('tai-san-card-qr');
+            if (qrCardTarget && typeof qrcode !== 'undefined') {
+                try {
+                    const qr = qrcode(0, 'M');
+                    qr.addData(window.location.href);
+                    qr.make();
+                    const dataUrl = qr.createDataURL(4, 1);
+                    qrCardTarget.innerHTML = `<img src="${dataUrl}" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; display: block;" alt="QR Code">`;
+                } catch (e) {
+                    console.warn('QR render error:', e);
+                }
+            }
+        }
+
+        // Execute Search Function
+        async function doSearch(code) {
+            const trimmed = (code || '').trim();
+            const appView = document.getElementById('app-view');
+            
+            if (!trimmed) {
+                appView.innerHTML = `
+                    <div class="state-container">
+                        <div class="state-icon" style="color: var(--accent);"><i class="fa-solid fa-qrcode"></i></div>
+                        <div class="state-title">Sẵn Sàng Tra Cứu Tài Sản</div>
+                        <div class="state-desc">Hãy quét mã QR dán trên thân máy hoặc nhập Mã Tài Sản / ID máy (ví dụ: MYHAU-HCNS hoặc tên nhân viên) vào ô tìm kiếm ở trên để xem đầy đủ hồ sơ thiết bị.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            appView.innerHTML = `
+                <div class="state-container" id="state-loading">
+                    <div class="spinner"></div>
+                    <div class="state-title">Đang tra cứu tài sản...</div>
+                    <div class="state-desc">Đang truy xuất thông tin "${trimmed}" từ hệ thống ERAS GROUP...</div>
+                </div>
+            `;
+
+            try {
+                const record = await fetchDeviceData(trimmed);
+                renderAssetView(record);
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', `?code=${encodeURIComponent(trimmed)}`);
+                }
+            } catch (err) {
+                console.error('Search error:', err);
+                renderAssetView(null);
+            }
+        }
+
+        // Initialize Lookup
+        async function initLookup() {
+            const code = getQueryCode();
+            const inputSearch = document.getElementById('input-search-code');
+            if (inputSearch && code) {
+                inputSearch.value = code;
+            }
+            await doSearch(code);
+        }
+
+        // Bind Search Button & Enter Key
+        document.getElementById('btn-do-search').addEventListener('click', () => {
+            const inputVal = document.getElementById('input-search-code').value.trim();
+            doSearch(inputVal);
+        });
+
+        document.getElementById('input-search-code').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const inputVal = document.getElementById('input-search-code').value.trim();
+                doSearch(inputVal);
+            }
+        });
+
+        // Run on load
+        window.addEventListener('DOMContentLoaded', initLookup);
+    </script>
+</body>
+</html>

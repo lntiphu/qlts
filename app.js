@@ -1,5 +1,5 @@
 /**
- * ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản
+ * ERAS GROUP - Hệ Thống Quản Lý Thiết Bị & Tài Sản
  * File: app.js
  */
 
@@ -31,31 +31,426 @@ async function startApp() {
     let cameraList = [];
     let tipsList = [];
     let giaHanList = [];
-    let khoList = [];
+    // Dữ liệu thiết bị lưu kho phục hồi an toàn (Initial Seed)
+    const initialKhoSeed = [
+    {
+        "id": 2,
+        "code": "PC Văn phòng",
+        "assetCode": "PC Văn phòng",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (I5-12400)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (PC Văn phòng) từ nhân viên Đoàn Văn Trường",
+        "dateStored": "05/08/2026",
+        "notes": "Cấu hình: CPU: I5-12400, RAM: 16GB DDR4, SSD: 500GB, HDD: 1TB, Màn hình: LG 24",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "I5-12400",
+        "devRam": "16GB DDR4",
+        "devRamSlots": "",
+        "devSsd": "500GB",
+        "devHdd": "1TB",
+        "devVga": "",
+        "devMain": "",
+        "devMonitor": "LG 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 4,
+        "code": "PC Văn phòng",
+        "assetCode": "PC Văn phòng",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (Ryzen7 5700G)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (PC Văn phòng) từ nhân viên Thắng ĐT",
+        "dateStored": "06/08/2026",
+        "notes": "Cấu hình: CPU: Ryzen7 5700G, RAM: 16GB DDR4, SSD: 500GB, Màn hình: LG 24",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "Ryzen7 5700G",
+        "devRam": "16GB DDR4",
+        "devRamSlots": "",
+        "devSsd": "500GB",
+        "devHdd": "",
+        "devVga": "",
+        "devMain": "",
+        "devMonitor": "LG 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 7,
+        "code": "BAOTOAN-DTHAU",
+        "assetCode": "BAOTOAN-DTHAU",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (I5-12400)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (BAOTOAN-DTHAU) từ nhân viên Nguyễn Hữu Bảo Toàn",
+        "dateStored": "10/09/2026",
+        "notes": "Cấu hình: CPU: I5-12400, RAM: 16GB DDR4, SSD: 500GB, HDD: 1TB, Màn hình: LG 24",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "I5-12400",
+        "devRam": "16GB DDR4",
+        "devRamSlots": "",
+        "devSsd": "500GB",
+        "devHdd": "1TB",
+        "devVga": "",
+        "devMain": "",
+        "devMonitor": "LG 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 9,
+        "code": "ERGPC-HCNS002",
+        "assetCode": "ERGPC-HCNS002",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (I3-4170)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (ERGPC-HCNS002) từ nhân viên Nguyễn Thị Mai Huyên",
+        "dateStored": "11/09/2026",
+        "notes": "Cấu hình: CPU: I3-4170, RAM: 16GB DDR3, SSD: 480GB, HDD: 500, Màn hình: Dell 24",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "I3-4170",
+        "devRam": "16GB DDR3",
+        "devRamSlots": "",
+        "devSsd": "480GB",
+        "devHdd": "500",
+        "devVga": "",
+        "devMain": "",
+        "devMonitor": "Dell 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 10,
+        "code": "MINHDUC-PTC",
+        "assetCode": "MINHDUC-PTC",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (I5-12400)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (MINHDUC-PTC) từ nhân viên Nguyễn Minh Đức",
+        "dateStored": "21/09/2026",
+        "notes": "Cấu hình: Main: Asus Prime H610M-K D4, CPU: I5-12400, RAM: 16GB DDR4 (2 thanh), SSD: 500, HDD: 1TB, Màn hình: LG 24\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"Asus Prime H610M-K D4\",\"devCpu\":\"I5-12400\",\"devRam\":\"16GB DDR4\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"500\",\"devSsd2\":\"\",\"devHdd\":\"1TB\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"LG 24\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"HDMI và nguồn nhỏ\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "I5-12400",
+        "devRam": "16GB DDR4",
+        "devRamSlots": "2 thanh",
+        "devSsd": "500",
+        "devHdd": "1TB",
+        "devVga": "",
+        "devMain": "Asus Prime H610M-K D4",
+        "devMonitor": "LG 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "HDMI và nguồn nhỏ",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 11,
+        "code": "ERGLAP-QLDA001",
+        "assetCode": "ERGLAP-QLDA001",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "Laptop - Lenovo (R7 8845HS)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (ERGLAP-QLDA001) từ nhân viên Lê Hữu Chiến",
+        "dateStored": "26/09/2026",
+        "notes": "Cấu hình: Main: Lenovo161216, CPU: R7 8845HS, RAM: 16GB DDR5 (4 thanh), SSD: 512\n[SPECS_JSON:{\"devType\":\"Laptop - Lenovo\",\"devMain\":\"Lenovo161216\",\"devCpu\":\"R7 8845HS\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"4 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Trung bình\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "R7 8845HS",
+        "devRam": "16GB DDR5",
+        "devRamSlots": "4 thanh",
+        "devSsd": "512",
+        "devHdd": "",
+        "devVga": "",
+        "devMain": "Lenovo161216",
+        "devMonitor": "",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 12,
+        "code": "ERGPC-GDHCNS",
+        "assetCode": "ERGPC-GDHCNS",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (R7 5700G)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (ERGPC-GDHCNS) từ nhân viên Nguyễn Ngọc Trâm",
+        "dateStored": "29/09/2026",
+        "notes": "Cấu hình: Main: Asus Prime A520M-R, CPU: R7 5700G, RAM: 16GB DDR4 (2 thanh), SSD: 512, Màn hình: LG 24 inch\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"Asus Prime A520M-R\",\"devCpu\":\"R7 5700G\",\"devRam\":\"16GB DDR4\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"LG 24 inch\",\"devMonitor2\":\"\",\"devMonitorSn\":\"507BODG0T130\",\"devMonitorSn2\":\"\",\"devSn\":\"PC39677TAM0KK06M060DYM\",\"devKeyboard\":\"Bàn phím có dây\",\"devMouse\":\"Chuột có dây\",\"devCables\":\"HDMI và nguồn nhỏ\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "PC39677TAM0KK06M060DYM",
+        "devCpu": "R7 5700G",
+        "devRam": "16GB DDR4",
+        "devRamSlots": "2 thanh",
+        "devSsd": "512",
+        "devHdd": "",
+        "devVga": "",
+        "devMain": "Asus Prime A520M-R",
+        "devMonitor": "LG 24 inch",
+        "devMonitorSn": "507BODG0T130",
+        "monitorSize": "",
+        "devCables": "HDMI và nguồn nhỏ",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 14,
+        "code": "Laptop Lenovo",
+        "assetCode": "Laptop Lenovo",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "Laptop Lenovo",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (Laptop Lenovo) từ nhân viên Nguyễn Anh Tú",
+        "dateStored": "02/10/2026",
+        "notes": "Cấu hình: RAM: 16GB DDR5 (2 thanh), SSD: 512\n[SPECS_JSON:{\"devType\":\"Laptop Lenovo\",\"devMain\":\"\",\"devCpu\":\"\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"Chuột có dây\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "",
+        "devRam": "16GB DDR5",
+        "devRamSlots": "2 thanh",
+        "devSsd": "512",
+        "devHdd": "",
+        "devVga": "",
+        "devMain": "",
+        "devMonitor": "",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 16,
+        "code": "IOM-LETAN",
+        "assetCode": "IOM-LETAN",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (IOM-LETAN) từ nhân viên Lê Nguyễn Thúy Điền",
+        "dateStored": "13/10/2026",
+        "notes": "Cấu hình: RAM: 16GB DDR3 (2 thanh), Màn hình: Dell 24\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"\",\"devCpu\":\"\",\"devRam\":\"16GB DDR3\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"Dell 24\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"VGA và nguồn lớn\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Xem xét thay thế\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "",
+        "devRam": "16GB DDR3",
+        "devRamSlots": "2 thanh",
+        "devSsd": "",
+        "devHdd": "",
+        "devVga": "",
+        "devMain": "",
+        "devMonitor": "Dell 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "VGA và nguồn lớn",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 17,
+        "code": "IOMLAP-CHEF",
+        "assetCode": "IOMLAP-CHEF",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "Laptop - Lenovo IdeaPad Slim 5 14IRH10R (Core 5 210H)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (IOMLAP-CHEF) từ nhân viên Phan Thanh Tùng",
+        "dateStored": "13/10/2026",
+        "notes": "Cấu hình: Main: Lenovo161216, CPU: Core 5 210H, RAM: 16GB DDR5 (2 thanh), SSD: 512\n[SPECS_JSON:{\"devType\":\"Laptop - Lenovo IdeaPad Slim 5 14IRH10R\",\"devMain\":\"Lenovo161216\",\"devCpu\":\"Core 5 210H\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"YX0HXSTN\",\"devKeyboard\":\"\",\"devMouse\":\"Chuột không dây\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "YX0HXSTN",
+        "devCpu": "Core 5 210H",
+        "devRam": "16GB DDR5",
+        "devRamSlots": "2 thanh",
+        "devSsd": "512",
+        "devHdd": "",
+        "devVga": "",
+        "devMain": "Lenovo161216",
+        "devMonitor": "",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 18,
+        "code": "ERGPC-KT005",
+        "assetCode": "ERGPC-KT005",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "PC Văn phòng (Core i5 12400)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (ERGPC-KT005) từ nhân viên Nguyễn Thanh Huyền",
+        "dateStored": "15/10/2026",
+        "notes": "Cấu hình: Main: Asus Prime H610M-K D4, CPU: Core i5 12400, RAM: 16GB (2 thanh), SSD: 256, HDD: 1T, Màn hình: LG 24\n[SPECS_JSON:{\"devType\":\"PC Văn phòng\",\"devMain\":\"Asus Prime H610M-K D4\",\"devCpu\":\"Core i5 12400\",\"devRam\":\"16GB\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"256\",\"devSsd2\":\"\",\"devHdd\":\"1T\",\"devHdd2\":\"\",\"devVga\":\"\",\"devMonitor\":\"LG 24\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"Bàn phím có dây\",\"devMouse\":\"Chuột có dây\",\"devCables\":\"HDMI và nguồn nhỏ\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "Core i5 12400",
+        "devRam": "16GB",
+        "devRamSlots": "2 thanh",
+        "devSsd": "256",
+        "devHdd": "1T",
+        "devVga": "",
+        "devMain": "Asus Prime H610M-K D4",
+        "devMonitor": "LG 24",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "HDMI và nguồn nhỏ",
+        "warrantyEndDate": ""
+    },
+    {
+        "id": 19,
+        "code": "ERGLAP-QLTC02",
+        "assetCode": "ERGLAP-QLTC02",
+        "maTaiSan": "",
+        "assetCompany": "ERG",
+        "name": "Laptop Acer (Ryzen 5 6600H)",
+        "quantity": 1,
+        "reason": "Thu hồi thiết bị (ERGLAP-QLTC02) từ nhân viên Lê Đình Dụ",
+        "dateStored": "15/10/2026",
+        "notes": "Cấu hình: Main: Nitro ANV15-41, CPU: Ryzen 5 6600H, RAM: 16GB DDR5 (2 thanh), SSD: 512, VGA: RTX 3050\n[SPECS_JSON:{\"devType\":\"Laptop Acer\",\"devMain\":\"Nitro ANV15-41\",\"devCpu\":\"Ryzen 5 6600H\",\"devRam\":\"16GB DDR5\",\"devRamSlots\":\"2 thanh\",\"devSsd\":\"512\",\"devSsd2\":\"\",\"devHdd\":\"\",\"devHdd2\":\"\",\"devVga\":\"RTX 3050\",\"devMonitor\":\"\",\"devMonitor2\":\"\",\"devMonitorSn\":\"\",\"devMonitorSn2\":\"\",\"devSn\":\"\",\"devKeyboard\":\"\",\"devMouse\":\"\",\"devCables\":\"\",\"keyWin\":\"\",\"keyOffice\":\"\",\"keyPdf\":\"\",\"devApps\":\"\",\"devStatus\":\"Mới\"}]",
+        "status": "Sẵn sàng cấp phát",
+        "location": "",
+        "storedBy": "",
+        "assetGroup": "CCDC",
+        "currentAssetGroup": "CCDC",
+        "assetType": "LT",
+        "devSn": "",
+        "devCpu": "Ryzen 5 6600H",
+        "devRam": "16GB DDR5",
+        "devRamSlots": "2 thanh",
+        "devSsd": "512",
+        "devHdd": "",
+        "devVga": "RTX 3050",
+        "devMain": "Nitro ANV15-41",
+        "devMonitor": "",
+        "devMonitorSn": "",
+        "monitorSize": "",
+        "devCables": "",
+        "warrantyEndDate": ""
+    }
+];
+
+    let khoList = JSON.parse(JSON.stringify(initialKhoSeed));
 
     // Fallback helper functions for local storage
     function loadFromLocalStorageFallback(key, list, renderFn) {
         try {
             const data = localStorage.getItem('fallback_' + key);
             if (data) {
-                list.length = 0;
                 const parsed = JSON.parse(data);
-                const items = parsed.map(item => {
-                    if (key === 'thiet_bi' && typeof mappers !== 'undefined' && mappers.thietBi) {
-                        return mappers.thietBi.fromDB(item);
-                    }
-                    return item;
-                });
-                list.push(...items);
-                if (renderFn) renderFn();
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    list.length = 0;
+                    const items = parsed.map(item => {
+                        if (key === 'thiet_bi' && typeof mappers !== 'undefined' && mappers.thietBi) {
+                            return mappers.thietBi.fromDB(item);
+                        }
+                        return item;
+                    });
+                    list.push(...items);
+                } else if (key === 'kho_thiet_bi' && initialKhoSeed.length > 0) {
+                    list.length = 0;
+                    list.push(...JSON.parse(JSON.stringify(initialKhoSeed)));
+                    localStorage.setItem('fallback_kho_thiet_bi', JSON.stringify(list));
+                }
+            } else if (key === 'kho_thiet_bi' && initialKhoSeed.length > 0) {
+                list.length = 0;
+                list.push(...JSON.parse(JSON.stringify(initialKhoSeed)));
+                localStorage.setItem('fallback_kho_thiet_bi', JSON.stringify(list));
             }
+            if (renderFn) renderFn();
         } catch (e) {
             console.error("Error loading local storage fallback for " + key, e);
+            if (key === 'kho_thiet_bi' && initialKhoSeed.length > 0) {
+                list.length = 0;
+                list.push(...JSON.parse(JSON.stringify(initialKhoSeed)));
+                if (renderFn) renderFn();
+            }
         }
     }
 
     function saveToLocalStorageFallback(key, list) {
         try {
+            if (key === 'kho_thiet_bi' && (!Array.isArray(list) || list.length === 0) && initialKhoSeed.length > 0) {
+                // Bảo vệ chống ghi đè danh sách rỗng làm mất dữ liệu kho
+                return;
+            }
             localStorage.setItem('fallback_' + key, JSON.stringify(list));
         } catch (e) {
             console.error("Error saving local storage fallback for " + key, e);
@@ -71,6 +466,34 @@ async function startApp() {
         camera: () => {},
         tips: () => {}
     };
+
+        // =========================================================================
+    // FEATURE HELPERS: STORAGE FOR DEVICE EXTRAS (DEPRECIATION & MAINTENANCE)
+    // =========================================================================
+    function getDeviceExtrasMap() {
+        try {
+            return JSON.parse(localStorage.getItem('eras_device_extras') || '{}');
+        } catch (e) {
+            return {};
+        }
+    }
+
+    function getDeviceExtras(key) {
+        if (!key) return {};
+        const map = getDeviceExtrasMap();
+        return map[key] || {};
+    }
+
+    function saveDeviceExtras(key, extrasObj) {
+        if (!key) return;
+        try {
+            const map = getDeviceExtrasMap();
+            map[key] = { ...(map[key] || {}), ...extrasObj };
+            localStorage.setItem('eras_device_extras', JSON.stringify(map));
+        } catch (e) {
+            console.error("Error saving device extras:", e);
+        }
+    }
 
     // Mappers to translate between Javascript camelCase and PostgreSQL snake_case
     const mappers = {
@@ -132,7 +555,19 @@ async function startApp() {
                     hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân' && devStat !== 'Cá nhân',
                     userDisabled: !!(db.user_disabled || db.userDisabled),
                     updatedAt: db.updated_at || db.updatedAt || '',
-                    history: Array.isArray(db.history) ? db.history : []
+                    history: Array.isArray(db.history) ? db.history : [],
+                    purchasePrice: db.purchase_price || db.purchasePrice || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).purchasePrice) || '',
+                    purchaseDate: db.purchase_date || db.purchaseDate || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).purchaseDate) || '',
+                    depreciationYears: db.depreciation_years || db.depreciationYears || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).depreciationYears) || '3',
+                    maintenanceLogs: Array.isArray(db.maintenance_logs) ? db.maintenance_logs : (Array.isArray(db.maintenanceLogs) ? db.maintenanceLogs : (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).maintenanceLogs || [])),
+                    maTaiSan: db.ma_tai_san || db.maTaiSan || db.asset_code || db.assetCode || '',
+                    assetCode: db.asset_code || db.assetCode || db.ma_tai_san || db.maTaiSan || '',
+                    assetCompany: db.asset_company || db.assetCompany || 'ERG',
+                    assetGroup: db.asset_group || db.assetGroup || 'CCDC',
+                    currentAssetGroup: db.current_asset_group || db.currentAssetGroup || db.asset_group || db.assetGroup || 'CCDC',
+                    assetType: db.asset_type || db.assetType || 'LT',
+                    monitorSize: db.monitor_size || db.monitorSize || '',
+                    warrantyEndDate: db.warranty_end_date || db.warrantyEndDate || ''
                 };
             },
             toDB: (js) => {
@@ -183,7 +618,14 @@ async function startApp() {
                     dev_issue_fix: js.devIssueFix || '',
                     dev_status: js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : (js.devStatus || (js.devAllocation === 'project' ? 'Thiết bị dự án' : 'Mới')),
                     updated_at: new Date().toISOString(),
-                    history: js.history
+                    history: js.history,
+                    asset_code: js.maTaiSan || js.assetCode || null,
+                    asset_company: js.assetCompany || null,
+                    asset_group: js.assetGroup || null,
+                    current_asset_group: js.currentAssetGroup || js.assetGroup || null,
+                    asset_type: js.assetType || null,
+                    monitor_size: js.monitorSize || null,
+                    warranty_end_date: js.warrantyEndDate || null
                 };
             }
         },
@@ -302,22 +744,65 @@ async function startApp() {
             })
         },
         khoThietBi: {
-            fromDB: (db) => ({
-                id: db.id,
-                code: db.code || '',
-                name: db.name || '',
-                quantity: db.quantity !== undefined && db.quantity !== null ? parseInt(db.quantity) : 1,
-                reason: db.reason || '',
-                dateStored: db.date_stored ? formatDateDMY(db.date_stored) : '',
-                notes: db.notes || ''
-            }),
+            fromDB: (db) => {
+                let specs = {};
+                if (db.notes && db.notes.includes('[SPECS_JSON:')) {
+                    const match = db.notes.match(/\[SPECS_JSON:(.*?)\]/s);
+                    if (match && match[1]) {
+                        try { specs = JSON.parse(match[1]); } catch (e) {}
+                    }
+                }
+                return {
+                    id: db.id,
+                    code: db.code || db.asset_code || specs.code || '',
+                    assetCode: db.asset_code || db.assetCode || specs.maTaiSan || specs.assetCode || db.code || '',
+                    maTaiSan: db.asset_code || db.assetCode || specs.maTaiSan || specs.assetCode || '',
+                    assetCompany: db.asset_company || db.assetCompany || specs.assetCompany || 'ERG',
+                    name: db.name || specs.name || '',
+                    quantity: db.quantity !== undefined && db.quantity !== null ? parseInt(db.quantity) : (specs.quantity || 1),
+                    reason: db.reason || specs.reason || '',
+                    dateStored: db.date_stored ? formatDateDMY(db.date_stored) : (specs.dateStored || ''),
+                    notes: db.notes || '',
+                    status: db.status || specs.status || 'Sẵn sàng cấp phát',
+                    location: db.location || specs.location || '',
+                    storedBy: db.stored_by || db.storedBy || specs.storedBy || '',
+                    assetGroup: db.asset_group || db.assetGroup || specs.assetGroup || 'CCDC',
+                    currentAssetGroup: db.current_asset_group || db.currentAssetGroup || db.asset_group || specs.currentAssetGroup || specs.assetGroup || 'CCDC',
+                    assetType: db.asset_type || db.assetType || specs.assetType || 'LT',
+                    devSn: db.dev_sn || db.devSn || db.serial || specs.devSn || specs.serial || '',
+                    devCpu: db.dev_cpu || db.devCpu || specs.devCpu || '',
+                    devRam: db.dev_ram || db.devRam || specs.devRam || '',
+                    devRamSlots: db.dev_ram_slots || db.devRamSlots || specs.devRamSlots || '',
+                    devSsd: db.dev_ssd || db.devSsd || specs.devSsd || '',
+                    devHdd: db.dev_hdd || db.devHdd || specs.devHdd || '',
+                    devVga: db.dev_vga || db.devVga || specs.devVga || '',
+                    devMain: db.dev_main || db.devMain || specs.devMain || '',
+                    devMonitor: db.dev_monitor || db.devMonitor || specs.devMonitor || '',
+                    devMonitorSn: db.dev_monitor_sn || db.devMonitorSn || specs.devMonitorSn || '',
+                    monitorSize: db.monitor_size || db.monitorSize || specs.monitorSize || '',
+                    devCables: db.dev_cables || db.devCables || specs.devCables || '',
+                    warrantyEndDate: db.warranty_end_date || db.warrantyEndDate || specs.warrantyEndDate || ''
+                };
+            },
             toDB: (js) => ({
-                code: js.code,
+                code: js.code || js.assetCode || js.maTaiSan,
+                asset_code: js.maTaiSan || js.assetCode || js.code,
+                asset_company: js.assetCompany || 'ERG',
                 name: js.name,
                 quantity: parseInt(js.quantity) || 1,
                 reason: js.reason,
                 date_stored: dateToISO(js.dateStored),
-                notes: js.notes
+                notes: js.notes,
+                status: js.status || 'Sẵn sàng cấp phát',
+                asset_group: js.assetGroup || 'CCDC',
+                current_asset_group: js.currentAssetGroup || js.assetGroup || 'CCDC',
+                asset_type: js.assetType || 'LT',
+                dev_sn: js.devSn || '',
+                dev_cpu: js.devCpu || '',
+                dev_ram: js.devRam || '',
+                dev_ssd: js.devSsd || '',
+                monitor_size: js.monitorSize || '',
+                warranty_end_date: js.warrantyEndDate || ''
             })
         }
     };
@@ -348,7 +833,7 @@ async function startApp() {
     }
 
     function hideAllTabForms() {
-        const tabs = ['tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han'];
+        const tabs = ['tab-kho-thiet-bi', 'tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han'];
         tabs.forEach(tabId => showTabTableOnly(tabId));
     }
 
@@ -391,11 +876,13 @@ async function startApp() {
             else tabName = 'Trang chủ';
         }
         if (pageTitle) {
-            pageTitle.innerHTML = `ERG Asset - Hệ Thống Quản Lý Thiết Bị & Tài Sản <small style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 10px;">/ ${tabName}</small>`;
+            pageTitle.innerHTML = `<img src="favicon-32x32.png" alt="ERAS" style="width: 18px; height: 18px; object-fit: contain; margin-right: 8px; vertical-align: middle; flex-shrink: 0;">ERAS GROUP - Hệ Thống Quản Lý Thiết Bị & Tài Sản <small style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 10px;">/ ${tabName}</small>`;
         }
 
         if (targetTabId === 'tab-trang-chu') {
             renderDashboard();
+        } else if (targetTabId === 'tab-kho-thiet-bi') {
+            renderKho();
         }
 
         // Persist active tab so F5 stays on the same page
@@ -478,17 +965,22 @@ async function startApp() {
     }
 
     // -------------------------------------------------------------------------
-    // 4. PASSWORD VISIBILITY TOGGLER
+    // 4. PASSWORD VISIBILITY TOGGLER (General Modals & Forms)
     // -------------------------------------------------------------------------
     document.querySelectorAll('.btn-toggle-password').forEach(button => {
-        button.addEventListener('click', function() {
+        if (button.id === 'btn-toggle-login-pass') return; // Handled separately by dedicated toggleLoginPassword
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
             const input = this.previousElementSibling;
+            if (!input) return;
             if (input.type === 'password') {
                 input.type = 'text';
-                this.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+                this.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+                this.classList.add('active');
             } else {
                 input.type = 'password';
-                this.innerHTML = '<i class="fa-regular fa-eye"></i>';
+                this.innerHTML = '<i class="fa-solid fa-eye"></i>';
+                this.classList.remove('active');
             }
         });
     });
@@ -526,6 +1018,10 @@ async function startApp() {
     // Realtime inline validation triggers
     userIdInput.addEventListener('input', () => validateDuplicateUser(editIndexThietBi.value));
     devIdInput.addEventListener('input', () => validateDuplicateDevice(editIndexThietBi.value));
+    const devSnInput = document.getElementById('dev-sn');
+    if (devSnInput) {
+        devSnInput.addEventListener('input', () => validateDeviceSerial(editIndexThietBi.value));
+    }
 
     function validateDuplicateUser(excludeIndex = "") {
         const val = userIdInput.value.trim().toLowerCase();
@@ -729,7 +1225,7 @@ async function startApp() {
                 // Thiết lập CSS inline trực tiếp để chống cache CSS của trình duyệt
                 dropdown.style.position = 'absolute';
                 dropdown.style.background = '#1a2230'; // Màu tối Slate 900
-                dropdown.style.border = '1px solid rgba(249, 115, 22, 0.4)'; // Viền cam thương hiệu
+                dropdown.style.border = '1px solid rgba(37, 51, 141, 0.5)'; // Viền xanh ERAS
                 dropdown.style.borderRadius = '8px';
                 dropdown.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)';
                 dropdown.style.maxHeight = '200px';
@@ -756,7 +1252,7 @@ async function startApp() {
 
                     // Hiệu ứng hover giả lập bằng JS để chống lỗi cache CSS
                     item.addEventListener('mouseenter', () => {
-                        item.style.background = 'rgba(249, 115, 22, 0.15)';
+                        item.style.background = 'rgba(37, 51, 141, 0.35)';
                         item.style.color = '#fff';
                         item.style.paddingLeft = '18px';
                     });
@@ -959,6 +1455,32 @@ async function startApp() {
         if (elTotalKho) elTotalKho.innerText = totalKhoItems;
         if (elKhoReady) elKhoReady.innerText = `${readyKhoItems} Sẵn sàng cấp phát`;
 
+        // Executive Card 6: Depreciation & Residual Asset Value
+        let totalResidual = 0;
+        let totalOriginal = 0;
+        thietBiList.forEach(item => {
+            const dep = calculateDeviceDepreciation(item);
+            totalResidual += dep.residualValue;
+            totalOriginal += dep.originalPrice;
+        });
+
+        const overallDepPct = totalOriginal > 0 ? Math.round(((totalOriginal - totalResidual) / totalOriginal) * 100) : 0;
+        const elDashResidual = document.getElementById('dash-residual-value');
+        const elDashTotalCost = document.getElementById('dash-total-cost');
+        const elDashDepPct = document.getElementById('dash-depreciation-pct');
+        const cardDashDep = document.getElementById('card-dash-depreciation');
+
+        if (elDashResidual) elDashResidual.innerText = totalResidual > 0 ? (new Intl.NumberFormat('vi-VN').format(totalResidual) + ' đ') : '0 đ';
+        if (elDashTotalCost) elDashTotalCost.innerText = totalOriginal > 0 ? (new Intl.NumberFormat('vi-VN').format(totalOriginal) + ' đ') : '0 đ';
+        if (elDashDepPct) elDashDepPct.innerText = `${overallDepPct}% khấu hao`;
+
+        if (cardDashDep && !cardDashDep.dataset.boundClick) {
+            cardDashDep.dataset.boundClick = 'true';
+            cardDashDep.addEventListener('click', () => {
+                switchToTab('tab-cap-phat-list');
+            });
+        }
+
         // 2. Department User Distribution Breakdown
         const elDeptList = document.getElementById('dash-dept-list');
         const elDeptCount = document.getElementById('dash-dept-count');
@@ -998,7 +1520,7 @@ async function startApp() {
                             <span style="font-weight: 700; color: var(--primary-color);">${count} nhân sự</span>
                         </div>
                         <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden;">
-                            <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, var(--primary-color), #f97316); border-radius: 4px; transition: width 0.5s ease;"></div>
+                            <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--primary-color)); border-radius: 4px; transition: width 0.5s ease;"></div>
                         </div>
                     `;
                     elDeptList.appendChild(div);
@@ -1022,7 +1544,7 @@ async function startApp() {
 
             const statusColors = {
                 'Mới': '#22c55e',
-                'Trung bình': '#3b82f6',
+                'Trung bình': '#38bdf8',
                 'Cũ': '#eab308',
                 'Xem xét thay thế': '#ef4444'
             };
@@ -1030,7 +1552,7 @@ async function startApp() {
             for (const st in statusCounts) {
                 const count = statusCounts[st];
                 const pct = totalAllocatedWithStatus > 0 ? Math.round((count / totalAllocatedWithStatus) * 100) : 0;
-                const color = statusColors[st] || '#3b82f6';
+                const color = statusColors[st] || '#38bdf8';
                 const div = document.createElement('div');
                 div.style.cssText = 'display: flex; flex-direction: column; gap: 4px; cursor: pointer; padding: 6px 8px; border-radius: 6px; transition: background 0.2s ease, transform 0.15s ease; user-select: none;';
                 div.title = `Click để xem danh sách thiết bị tình trạng "${st}"`;
@@ -1420,7 +1942,7 @@ async function startApp() {
             if (isCreatedRecentBadge) {
                 statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);" title="Mới tạo trong 7 ngày gần đây"><i class="fa-solid fa-sparkles"></i> Mới thêm</span>`;
             } else if (isUpdatedRecentBadge) {
-                statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);" title="Mới cập nhật thông tin trong 7 ngày gần đây"><i class="fa-solid fa-rotate"></i> Mới cập nhật</span>`;
+                statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);" title="Mới cập nhật thông tin trong 7 ngày gần đây"><i class="fa-solid fa-rotate"></i> Mới cập nhật</span>`;
             }
 
             const getStatusBadgeClass = (status) => {
@@ -1500,7 +2022,15 @@ async function startApp() {
                                 <i class="fa-solid fa-people-roof"></i> Dùng chung
                             </span>
                         ` : ''}
-                        ${item.devId ? `<span class="name"><span class="badge badge-green">${item.devId}</span> ${item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}</span>` : ''}
+                        ${item.devId || item.maTaiSan || item.assetCode ? `
+                            <span class="name" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+                                ${item.devId ? `<span class="badge badge-green" title="ID Thiết bị">${item.devId}</span>` : ''}
+                                ${(item.maTaiSan || item.assetCode) && (item.maTaiSan || item.assetCode) !== item.devId ? `
+                                    <span class="badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); font-family: monospace; font-weight: 700; font-size: 11px;" title="Mã Tài Sản">${item.maTaiSan || item.assetCode}</span>
+                                ` : ''}
+                                ${item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}
+                            </span>
+                        ` : ''}
                         ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân') && !item.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
                         ` : ((item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
@@ -1525,24 +2055,43 @@ async function startApp() {
                     <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word;">${item.devNotes || '—'}</span>
                 </td>
                 <td>
-                    <div class="actions-cell">
-                        <button class="btn-icon-only btn-export-row-thietbi" data-index="${originalIndex}" title="Xuất thông tin nhân viên" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
-                            <i class="fa-solid fa-file-invoice"></i>
-                        </button>
-                        ${item.hasDevice || item.devId || item.devCpu || item.devRam ? `
-                            <button class="btn-icon-only btn-transfer-row-thietbi" data-index="${originalIndex}" title="Chuyển thiết bị cho nhân viên khác hoặc về Kho" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">
-                                <i class="fa-solid fa-right-left"></i>
+                    <div class="actions-cell actions-cell-grid">
+                        <div class="actions-row">
+                            <button class="btn-icon-only btn-export-row-thietbi" data-index="${originalIndex}" title="Xuất thông tin nhân viên" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
+                                <i class="fa-solid fa-file-invoice"></i>
                             </button>
-                        ` : ''}
-                        <button class="btn-icon-only btn-troubleshoot-row-thietbi" data-index="${originalIndex}" title="Xem danh sách các lỗi thường gặp & Cách fix" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
-                            <i class="fa-solid fa-wrench"></i>
-                        </button>
-                        <button class="btn-icon-only history btn-history-thietbi" data-index="${originalIndex}" title="Xem ngày cập nhật">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                        </button>
-                        <button class="btn-icon-only delete btn-delete-thietbi" data-index="${originalIndex}" title="Xóa">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                            ${item.hasDevice || item.devId || item.devCpu || item.devRam ? `
+                                <button class="btn-icon-only btn-transfer-row-thietbi" data-index="${originalIndex}" title="Chuyển thiết bị cho nhân viên khác hoặc về Kho" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
+                                    <i class="fa-solid fa-right-left"></i>
+                                </button>
+                            ` : ''}
+                            ${item.devId ? `
+                                <button class="btn-icon-only btn-qrcode-tag-thietbi" data-index="${originalIndex}" title="Tạo mã QR Code & Tem dán tài sản" style="background: rgba(123, 202, 15, 0.15); color: #7bca0f; border: 1px solid rgba(123, 202, 15, 0.3);">
+                                    <i class="fa-solid fa-qrcode"></i>
+                                </button>
+                            ` : ''}
+                            ${item.devId || item.hasDevice || item.devCpu ? `
+                                <button class="btn-icon-only btn-maintenance-log-thietbi" data-index="${originalIndex}" title="Sổ nhật ký bảo trì & Nâng cấp thiết bị" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3);">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                        <div class="actions-row">
+                            ${item.hasDevice || item.devId || item.devCpu || item.userDisabled ? `
+                                <button class="btn-icon-only btn-offboard-thietbi" data-index="${originalIndex}" title="Quy trình thu hồi thiết bị nghỉ việc (Offboarding)" style="background: ${item.userDisabled ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.12)'}; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35);">
+                                    <i class="fa-solid fa-user-xmark"></i>
+                                </button>
+                            ` : ''}
+                            <button class="btn-icon-only btn-troubleshoot-row-thietbi" data-index="${originalIndex}" title="Xem danh sách các lỗi thường gặp & Cách fix" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                <i class="fa-solid fa-wrench"></i>
+                            </button>
+                            <button class="btn-icon-only history btn-history-thietbi" data-index="${originalIndex}" title="Xem ngày cập nhật">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </button>
+                            <button class="btn-icon-only delete btn-delete-thietbi" data-index="${originalIndex}" title="Xóa">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                 </td>
             `;
@@ -1567,6 +2116,30 @@ async function startApp() {
             btn.addEventListener('click', function() {
                 const idx = parseInt(this.getAttribute('data-index'));
                 openTroubleshootModal(idx);
+            });
+        });
+
+        document.querySelectorAll('.btn-qrcode-tag-thietbi').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                openQrTagModal(idx);
+            });
+        });
+
+        document.querySelectorAll('.btn-maintenance-log-thietbi').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                openMaintenanceModal(idx);
+            });
+        });
+
+        document.querySelectorAll('.btn-offboard-thietbi').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                openOffboardModal(idx);
             });
         });
         document.querySelectorAll('.btn-edit-thietbi').forEach(btn => {
@@ -1712,9 +2285,10 @@ async function startApp() {
         // Perform validation
         const userOk = validateDuplicateUser(indexStr);
         const devOk = validateDuplicateDevice(indexStr);
+        const snOk = validateDeviceSerial(indexStr);
 
-        if (!userOk || !devOk) {
-            showToast('Lỗi nhập liệu', 'Vui lòng kiểm tra lại thông tin bị trùng lắp!', 'error');
+        if (!userOk || !devOk || !snOk) {
+            showToast('Lỗi nhập liệu', 'Vui lòng kiểm tra lại thông tin mã/serial hoặc trường bắt buộc!', 'error');
             return;
         }
 
@@ -1729,7 +2303,7 @@ async function startApp() {
         const data = {
             devAllocation: devAllocVal,
             hasDevice: hasDevice,
-            userDisabled: document.getElementById('user-disabled') ? document.getElementById('user-disabled').checked : false,
+            userDisabled: (indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false,
             userId: userIdInput.value.trim(),
             userName: document.getElementById('user-name').value.trim(),
             userTitle: document.getElementById('user-title').value.trim(),
@@ -1764,8 +2338,33 @@ async function startApp() {
             devKeyboard: (hasDevice && document.getElementById('dev-keyboard')) ? document.getElementById('dev-keyboard').value : '',
             devMouse: (hasDevice && document.getElementById('dev-mouse')) ? document.getElementById('dev-mouse').value : '',
             devCables: hasDevice ? document.getElementById('dev-cables').value : '',
-            updatedAt: formattedDate
+            updatedAt: formattedDate,
+            purchasePrice: (document.getElementById('device-purchase-price') ? document.getElementById('device-purchase-price').value.trim() : ''),
+            purchaseDate: (document.getElementById('device-purchase-date') ? document.getElementById('device-purchase-date').value.trim() : ''),
+            depreciationYears: (document.getElementById('device-depreciation-years') ? document.getElementById('device-depreciation-years').value : '3'),
+            maintenanceLogs: (indexStr !== '' && thietBiList[parseInt(indexStr)]) ? (thietBiList[parseInt(indexStr)].maintenanceLogs || []) : [],
+            devId: devIdInput ? devIdInput.value.trim() : '',
+            maTaiSan: document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : '',
+            assetCode: document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : '',
+            assetCompany: document.getElementById('dev-asset-company') ? (document.getElementById('dev-asset-company').value.trim().toUpperCase() || 'ERG') : 'ERG',
+            assetGroup: document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC',
+            currentAssetGroup: document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC',
+            assetType: document.getElementById('dev-asset-type') ? document.getElementById('dev-asset-type').value : 'LT',
+            monitorSize: document.getElementById('dev-monitor-size') ? document.getElementById('dev-monitor-size').value.trim() : '',
+            warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : ''
         };
+
+        if (indexStr === '') {
+            // Commit sequence when saving brand new asset
+            commitAssetSequence(data.assetCompany, data.assetGroup, data.assetType, data.maTaiSan);
+        }
+
+        saveDeviceExtras(data.devId || data.userId, {
+            purchasePrice: data.purchasePrice,
+            purchaseDate: data.purchaseDate,
+            depreciationYears: data.depreciationYears,
+            maintenanceLogs: data.maintenanceLogs
+        });
 
         if (indexStr === '') {
             data.history = [{
@@ -1972,19 +2571,6 @@ async function startApp() {
         document.getElementById('user-phone').value = item.userPhone || '';
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
-        const userDisabledBox = document.getElementById('user-disabled-box');
-        if (userDisabledBox) {
-            userDisabledBox.style.display = 'inline-flex';
-        }
-        const userDisabledCb = document.getElementById('user-disabled');
-        if (userDisabledCb) {
-            userDisabledCb.checked = !!item.userDisabled;
-            const container = document.getElementById('user-info-subsection');
-            if (container) {
-                container.style.background = item.userDisabled ? 'rgba(239, 68, 68, 0.05)' : '';
-                container.style.borderColor = item.userDisabled ? 'rgba(239, 68, 68, 0.3)' : '';
-            }
-        }
         const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
         const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
@@ -2021,9 +2607,57 @@ async function startApp() {
         }
         if (document.getElementById('dev-mouse')) document.getElementById('dev-mouse').value = item.devMouse || '';
         document.getElementById('dev-cables').value = item.devCables || '';
+        if (document.getElementById('device-purchase-price')) document.getElementById('device-purchase-price').value = item.purchasePrice || '';
+        if (document.getElementById('device-purchase-date')) document.getElementById('device-purchase-date').value = item.purchaseDate || '';
+        if (document.getElementById('device-depreciation-years')) document.getElementById('device-depreciation-years').value = item.depreciationYears || '3';
+        
+        // Asset Code & Device ID Fields Population & Immutability lock
+        if (devIdInput) {
+            devIdInput.value = item.devId || '';
+            devIdInput.readOnly = false;
+            devIdInput.title = 'ID Thiết bị trong hệ thống';
+        }
+        const selAssetCompany = document.getElementById('dev-asset-company');
+        if (selAssetCompany) {
+            selAssetCompany.value = item.assetCompany || getAssetPrefix() || 'ERG';
+            selAssetCompany.readOnly = false;
+            selAssetCompany.disabled = false;
+        }
+        const selAssetGroup = document.getElementById('dev-asset-group');
+        if (selAssetGroup) {
+            selAssetGroup.value = item.assetGroup || 'CCDC';
+            selAssetGroup.disabled = false;
+        }
+
+        const selAssetType = document.getElementById('dev-asset-type');
+        if (selAssetType) {
+            selAssetType.value = item.assetType || 'LT';
+            selAssetType.disabled = false;
+        }
+
+        const devMaTaiSan = document.getElementById('dev-ma-tai-san');
+        if (devMaTaiSan) {
+            devMaTaiSan.value = item.maTaiSan || item.assetCode || '';
+            devMaTaiSan.readOnly = false;
+        }
+        const btnRegenCode = document.getElementById('btn-regen-asset-code');
+        if (btnRegenCode) btnRegenCode.style.display = 'inline-flex';
+
+
+
+        if (document.getElementById('dev-monitor-size')) document.getElementById('dev-monitor-size').value = item.monitorSize || '';
+        if (document.getElementById('dev-warranty-exp')) document.getElementById('dev-warranty-exp').value = item.warrantyEndDate || '';
 
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Cấp Phát';
         btnCancelThietBi.classList.remove('hidden');
+
+        const badgeMode = document.getElementById('badge-form-mode');
+        if (badgeMode) {
+            badgeMode.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Đang chỉnh sửa: ${item.maTaiSan || item.devId || item.userName || '#' + (index + 1)}`;
+            badgeMode.style.background = 'rgba(249, 115, 22, 0.15)';
+            badgeMode.style.color = '#fb923c';
+            badgeMode.style.borderColor = 'rgba(249, 115, 22, 0.35)';
+        }
 
         // Scroll to top of tab view to see form
         document.querySelector('.tab-container').scrollTop = 0;
@@ -2036,6 +2670,7 @@ async function startApp() {
         document.getElementById('err-dev-id').style.display = 'none';
         userIdInput.style.borderColor = '';
         devIdInput.style.borderColor = '';
+
     }
 
     async function deleteThietBi(index) {
@@ -2047,6 +2682,9 @@ async function startApp() {
                     .delete()
                     .eq('id', item.id);
                 if (error) throw error;
+                if (item.devId || item.assetCode) {
+                    recordDeletedAssetCode(item.devId || item.assetCode, 'Đã xóa cấp phát');
+                }
                 thietBiList.splice(index, 1);
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
                 updateDeptFilterThietBi();
@@ -2076,6 +2714,13 @@ async function startApp() {
         editIndexThietBi.value = '';
         pendingKhoIndexToDeduct = null;
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới';
+        const badgeMode = document.getElementById('badge-form-mode');
+        if (badgeMode) {
+            badgeMode.innerHTML = '<i class="fa-solid fa-plus"></i> Thêm cấp phát mới';
+            badgeMode.style.background = 'rgba(123, 202, 15, 0.15)';
+            badgeMode.style.color = 'var(--brand-green)';
+            badgeMode.style.borderColor = 'rgba(123, 202, 15, 0.3)';
+        }
         formCapPhat.reset();
         resetTroubleshootForm();
         const devAllocYes = document.getElementById('dev-alloc-yes');
@@ -2083,24 +2728,60 @@ async function startApp() {
             devAllocYes.checked = true;
             toggleDeviceFields(true);
         }
-        const userDisabledBox = document.getElementById('user-disabled-box');
-        if (userDisabledBox) {
-            userDisabledBox.style.display = 'none';
-        }
-        const userDisabledCb = document.getElementById('user-disabled');
-        if (userDisabledCb) {
-            userDisabledCb.checked = false;
-            const container = document.getElementById('user-info-subsection');
-            if (container) {
-                container.style.background = '';
-                container.style.borderColor = '';
-            }
+        const container = document.getElementById('user-info-subsection');
+        if (container) {
+            container.style.background = '';
+            container.style.borderColor = '';
         }
 
         document.getElementById('err-user-id').style.display = 'none';
         document.getElementById('err-dev-id').style.display = 'none';
         userIdInput.style.borderColor = '';
         devIdInput.style.borderColor = '';
+        if (document.getElementById('device-purchase-price')) document.getElementById('device-purchase-price').value = '';
+        if (document.getElementById('device-purchase-date')) document.getElementById('device-purchase-date').value = '';
+        if (document.getElementById('device-depreciation-years')) document.getElementById('device-depreciation-years').value = '3';
+
+        // Unlock Asset Code and regenerate next preview code
+        if (devIdInput) {
+            devIdInput.value = '';
+            devIdInput.readOnly = false;
+            devIdInput.title = 'Nhập ID Thiết bị của hệ thống (VD: PC-01, LT-01...)';
+        }
+        const selAssetCompany = document.getElementById('dev-asset-company');
+        if (selAssetCompany) {
+            selAssetCompany.readOnly = false;
+            selAssetCompany.value = getAssetPrefix() || 'ERG';
+        }
+        const btnRegenCode = document.getElementById('btn-regen-asset-code');
+        if (btnRegenCode) btnRegenCode.style.display = 'inline-flex';
+
+        const selAssetGroup = document.getElementById('dev-asset-group');
+        if (selAssetGroup) {
+            selAssetGroup.disabled = false;
+            selAssetGroup.value = 'CCDC';
+        }
+        const selAssetType = document.getElementById('dev-asset-type');
+        if (selAssetType) {
+            selAssetType.disabled = false;
+            selAssetType.value = 'LT';
+        }
+        const devMaTaiSan = document.getElementById('dev-ma-tai-san');
+        if (devMaTaiSan) {
+            devMaTaiSan.value = '';
+        }
+
+
+        if (document.getElementById('dev-monitor-size')) document.getElementById('dev-monitor-size').value = '';
+        if (document.getElementById('dev-warranty-exp')) document.getElementById('dev-warranty-exp').value = '';
+        const errSn = document.getElementById('err-dev-sn');
+        if (errSn) errSn.style.display = 'none';
+        const snInp = document.getElementById('dev-sn');
+        if (snInp) snInp.style.borderColor = '';
+
+        if (typeof refreshFormAssetCode === 'function') {
+            refreshFormAssetCode();
+        }
     }
 
     btnCancelThietBi.addEventListener('click', () => {
@@ -2895,30 +3576,38 @@ async function startApp() {
             // 1. Cập nhật ĐẦY ĐỦ CẤU HÌNH cho targetUser
             targetUser.hasDevice = true;
             targetUser.devAllocation = 'yes';
-            targetUser.devId = khoItem.code || '';
+            targetUser.devId = khoItem.code || specsObj.code || '';
+            targetUser.maTaiSan = khoItem.maTaiSan || khoItem.assetCode || specsObj.maTaiSan || specsObj.assetCode || '';
+            targetUser.assetCode = targetUser.maTaiSan;
+            targetUser.assetCompany = khoItem.assetCompany || specsObj.assetCompany || 'ERG';
+            targetUser.assetGroup = khoItem.assetGroup || specsObj.assetGroup || 'CCDC';
+            targetUser.currentAssetGroup = khoItem.currentAssetGroup || specsObj.currentAssetGroup || targetUser.assetGroup;
+            targetUser.assetType = khoItem.assetType || specsObj.assetType || 'LT';
             targetUser.devType = specsObj.devType || khoItem.name || 'PC / Laptop';
-            targetUser.devMain = specsObj.devMain || '';
-            targetUser.devCpu = specsObj.devCpu || '';
-            targetUser.devRam = specsObj.devRam || '';
-            targetUser.devRamSlots = specsObj.devRamSlots || '';
-            targetUser.devSsd = specsObj.devSsd || '';
+            targetUser.devMain = khoItem.devMain || specsObj.devMain || '';
+            targetUser.devCpu = khoItem.devCpu || specsObj.devCpu || '';
+            targetUser.devRam = khoItem.devRam || specsObj.devRam || '';
+            targetUser.devRamSlots = khoItem.devRamSlots || specsObj.devRamSlots || '';
+            targetUser.devSsd = khoItem.devSsd || specsObj.devSsd || '';
             targetUser.devSsd2 = specsObj.devSsd2 || '';
-            targetUser.devHdd = specsObj.devHdd || '';
+            targetUser.devHdd = khoItem.devHdd || specsObj.devHdd || '';
             targetUser.devHdd2 = specsObj.devHdd2 || '';
-            targetUser.devVga = specsObj.devVga || '';
-            targetUser.devMonitor = specsObj.devMonitor || '';
+            targetUser.devVga = khoItem.devVga || specsObj.devVga || '';
+            targetUser.devMonitor = khoItem.devMonitor || specsObj.devMonitor || '';
             targetUser.devMonitor2 = specsObj.devMonitor2 || '';
-            targetUser.devMonitorSn = specsObj.devMonitorSn || '';
+            targetUser.devMonitorSn = khoItem.devMonitorSn || specsObj.devMonitorSn || '';
             targetUser.devMonitorSn2 = specsObj.devMonitorSn2 || '';
-            targetUser.devSn = specsObj.devSn || '';
+            targetUser.monitorSize = khoItem.monitorSize || specsObj.monitorSize || '';
+            targetUser.warrantyEndDate = khoItem.warrantyEndDate || specsObj.warrantyEndDate || '';
+            targetUser.devSn = khoItem.devSn || specsObj.devSn || khoItem.serial || specsObj.serial || '';
             targetUser.devKeyboard = specsObj.devKeyboard || '';
             targetUser.devMouse = specsObj.devMouse || '';
-            targetUser.devCables = specsObj.devCables || '';
+            targetUser.devCables = khoItem.devCables || specsObj.devCables || '';
             targetUser.keyWin = specsObj.keyWin || '';
             targetUser.keyOffice = specsObj.keyOffice || '';
             targetUser.keyPdf = specsObj.keyPdf || '';
             targetUser.devApps = specsObj.devApps || '';
-            targetUser.devStatus = specsObj.devStatus || 'Mới';
+            targetUser.devStatus = khoItem.status || specsObj.devStatus || 'Mới';
             targetUser.devNotes = cleanNotes ? `Xuất từ kho: ${cleanNotes}` : 'Xuất từ kho thiết bị';
             targetUser.updatedAt = formattedDate;
 
@@ -3155,6 +3844,11 @@ async function startApp() {
     const btnDashGotoGiahan = document.getElementById('btn-dash-goto-giahan');
     if (btnDashGotoGiahan) btnDashGotoGiahan.addEventListener('click', () => switchToTab('tab-gia-han'));
 
+    const cardDashUsers = document.getElementById('card-dash-users');
+    if (cardDashUsers) {
+        cardDashUsers.addEventListener('click', () => switchToTab('tab-cap-phat-list'));
+    }
+
     const cardDashKho = document.getElementById('card-dash-kho');
     if (cardDashKho) cardDashKho.addEventListener('click', () => switchToTab('tab-kho-thiet-bi'));
 
@@ -3166,7 +3860,10 @@ async function startApp() {
         let targetTabId = '';
         let resetFn = null;
 
-        if (action === 'add-cong-ty') {
+        if (action === 'add-cap-phat') {
+            targetTabId = 'tab-cap-phat-form';
+            resetFn = typeof resetFormThietBi === 'function' ? resetFormThietBi : null;
+        } else if (action === 'add-cong-ty') {
             targetTabId = 'tab-cong-ty';
             resetFn = typeof resetFormCongTy === 'function' ? resetFormCongTy : null;
         } else if (action === 'add-account') {
@@ -3233,17 +3930,6 @@ async function startApp() {
 
     const btnAddNewCongTy = document.querySelector('.btn-add-new-congty');
     if (btnAddNewCongTy) btnAddNewCongTy.addEventListener('click', () => openAddInfoAction('add-cong-ty'));
-
-    const userDisabledCheckbox = document.getElementById('user-disabled');
-    if (userDisabledCheckbox) {
-        userDisabledCheckbox.addEventListener('change', (e) => {
-            const container = document.getElementById('user-info-subsection');
-            if (container) {
-                container.style.background = e.target.checked ? 'rgba(239, 68, 68, 0.05)' : '';
-                container.style.borderColor = e.target.checked ? 'rgba(239, 68, 68, 0.3)' : '';
-            }
-        });
-    }
     
     // Realtime search and pagination triggers for Device List
     searchThietBi.addEventListener('input', (e) => {
@@ -3281,6 +3967,1293 @@ async function startApp() {
 
 
     // =========================================================================
+    // 5.6 ENTERPRISE SUITE: THEME TOGGLE, DEPRECIATION, QR TAG, MAINTENANCE & OFFBOARDING
+    // =========================================================================
+
+    // 1. THEME TOGGLE (DARK / LIGHT MODE)
+    function initTheme() {
+        const savedTheme = localStorage.getItem('eras_asset_theme') || 'dark';
+        const btnThemeToggle = document.getElementById('btn-theme-toggle');
+        
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+            if (btnThemeToggle) {
+                btnThemeToggle.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
+                btnThemeToggle.title = 'Chuyển sang Chế độ Tối (Dark Mode)';
+            }
+        } else {
+            document.body.classList.remove('light-theme');
+            if (btnThemeToggle) {
+                btnThemeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+                btnThemeToggle.title = 'Chuyển sang Chế độ Sáng (Light Mode)';
+            }
+        }
+
+        if (btnThemeToggle && !btnThemeToggle.dataset.boundTheme) {
+            btnThemeToggle.dataset.boundTheme = 'true';
+            btnThemeToggle.addEventListener('click', () => {
+                const isLight = document.body.classList.toggle('light-theme');
+                if (isLight) {
+                    btnThemeToggle.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
+                    btnThemeToggle.title = 'Chuyển sang Chế độ Tối (Dark Mode)';
+                    localStorage.setItem('eras_asset_theme', 'light');
+                    showToast('Chế độ Sáng', 'Đã chuyển sang giao diện Chế độ Sáng (Light Mode)', 'info');
+                } else {
+                    btnThemeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
+                    btnThemeToggle.title = 'Chuyển sang Chế độ Sáng (Light Mode)';
+                    localStorage.setItem('eras_asset_theme', 'dark');
+                    showToast('Chế độ Tối', 'Đã chuyển sang giao diện Chế độ Tối (Dark Mode)', 'info');
+                }
+            });
+        }
+    }
+
+    // 2. DEPRECIATION ALGORITHM
+    function calculateDeviceDepreciation(item) {
+        if (!item) return { originalPrice: 0, residualValue: 0, depreciationRate: 0, monthsElapsed: 0 };
+        const priceStr = (item.purchasePrice || '').toString().replace(/[^0-9]/g, '');
+        const price = parseFloat(priceStr) || 0;
+        if (price <= 0) {
+            return { originalPrice: 0, residualValue: 0, depreciationRate: 0, monthsElapsed: 0 };
+        }
+        const years = parseInt(item.depreciationYears) || 3;
+        const totalMonths = Math.max(1, years * 12);
+
+        let pDate = null;
+        const dateStr = (item.purchaseDate || '').trim();
+        if (dateStr.includes('/')) {
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                pDate = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+            }
+        } else if (dateStr.includes('-')) {
+            pDate = new Date(dateStr);
+        }
+
+        if (!pDate || isNaN(pDate.getTime())) {
+            pDate = new Date();
+        }
+
+        const now = new Date();
+        let monthsElapsed = (now.getFullYear() - pDate.getFullYear()) * 12 + (now.getMonth() - pDate.getMonth());
+        if (monthsElapsed < 0) monthsElapsed = 0;
+
+        const monthlyRate = price / totalMonths;
+        const accumulatedDep = Math.min(price, Math.round(monthlyRate * monthsElapsed));
+        const residualValue = Math.max(0, price - accumulatedDep);
+        const depRate = Math.min(100, Math.round((accumulatedDep / price) * 100));
+
+        return {
+            originalPrice: price,
+            residualValue: residualValue,
+            depreciationRate: depRate,
+            monthsElapsed: monthsElapsed
+        };
+    }
+
+    // 3. ASSET QR TAGGING & LABEL PRINTING
+    let currentQrCodeInstance = null;
+    let currentQrModalItem = null;
+    let currentQrModalMode = 'text';
+    let currentQrModalIsKho = false;
+
+    // Helper: Determine Web Lookup Base URL for QR codes
+    function getAssetLookupBaseUrl() {
+        const savedUrl = localStorage.getItem('asset_qr_base_url');
+        if (savedUrl && savedUrl.trim()) {
+            return savedUrl.trim().replace(/\/+$/, '');
+        }
+        if (window.location.protocol.startsWith('http')) {
+            const host = window.location.hostname;
+            if (host && host !== 'localhost' && host !== '127.0.0.1') {
+                return window.location.origin;
+            }
+        }
+        // Fallback default LAN IP for mobile phone camera scanning
+        return 'http://172.16.70.29:8080';
+    }
+
+    // Unified QR Modal Renderer
+    function renderQrModalContent() {
+        const item = currentQrModalItem;
+        if (!item) return;
+
+        const isKho = currentQrModalIsKho;
+        const assetCodeVal = item.maTaiSan || item.assetCode || item.code || item.devId || 'ERG-ASSET';
+        const devIdVal = item.devId || item.code || '';
+        const companyVal = item.assetCompany || 'ERG';
+        const groupVal = item.currentAssetGroup || item.assetGroup || 'CCDC';
+
+        // 1. Badge & Codes
+        const badgeGroup = document.getElementById('tag-badge-group');
+        if (badgeGroup) badgeGroup.innerText = `${companyVal} • ${groupVal}`;
+
+        const tagCode = document.getElementById('tag-device-code');
+        if (tagCode) tagCode.innerText = assetCodeVal;
+
+        const tagDevId = document.getElementById('tag-device-id');
+        if (tagDevId) {
+            tagDevId.innerText = (devIdVal && devIdVal !== assetCodeVal) ? `(${devIdVal})` : '';
+        }
+
+        const qrSubcode = document.getElementById('tag-qr-subcode');
+        if (qrSubcode) qrSubcode.innerText = assetCodeVal;
+
+        // 2. Full Device Name (Allow wrapping, no 1-line truncation)
+        const tagName = document.getElementById('tag-device-name');
+        if (tagName) {
+            let fullName = item.name;
+            if (!fullName) {
+                fullName = [item.devType, item.devMain, item.devCpu].filter(Boolean).join(' ');
+            }
+            tagName.innerText = fullName || 'Máy tính làm việc';
+        }
+
+        // 3. Hardware Specs
+        const cpuEl = document.getElementById('tag-spec-cpu');
+        if (cpuEl) cpuEl.innerText = item.devCpu || '—';
+
+        const ramEl = document.getElementById('tag-spec-ram');
+        if (ramEl) {
+            let ramStr = item.devRam || '—';
+            if (ramStr !== '—' && !ramStr.toLowerCase().includes('gb') && !isNaN(ramStr)) ramStr += 'GB';
+            ramEl.innerText = ramStr;
+        }
+
+        const ssdEl = document.getElementById('tag-spec-ssd');
+        if (ssdEl) {
+            const storages = [item.devSsd, item.devSsd2, item.devHdd ? 'HDD ' + item.devHdd : ''].filter(Boolean);
+            ssdEl.innerText = storages.join(' + ') || '—';
+        }
+
+        const monEl = document.getElementById('tag-spec-monitor');
+        if (monEl) {
+            const monitors = [item.devMonitor, item.devMonitor2].filter(Boolean);
+            let monStr = monitors.join(' | ');
+            if (!monStr && item.monitorSize) monStr = `${item.monitorSize}`;
+            monEl.innerText = monStr || 'Theo máy';
+        }
+
+        const snVal = item.devSn || item.serial || '—';
+        const snEl = document.getElementById('tag-serial-num');
+        if (snEl) snEl.innerText = `SN: ${snVal}`;
+
+        // 4. Allocation / User Info
+        const tagUser = document.getElementById('tag-user-name');
+        if (tagUser) {
+            tagUser.innerText = isKho ? 'LƯU KHO' : (item.userName || 'Chưa cấp phát');
+        }
+
+        const tagDept = document.getElementById('tag-user-dept');
+        if (tagDept) {
+            tagDept.innerText = isKho ? (item.location ? `Vị trí: ${item.location}` : 'Kho thiết bị IT') : (item.userDept || 'ERAS GROUP');
+        }
+
+        // Format dates cleanly with formatDateDMY
+        const tagDate = document.getElementById('tag-handover-date');
+        if (tagDate) {
+            const rawDate = item.purchaseDate || item.dateStored || item.handoverDate || item.updatedAt;
+            tagDate.innerText = formatDateDMY(rawDate) || '—';
+        }
+
+        const tagWarranty = document.getElementById('tag-warranty-date');
+        if (tagWarranty) {
+            const rawWarranty = item.warrantyDate || item.warrantyEndDate;
+            tagWarranty.innerText = formatDateDMY(rawWarranty) || '—';
+        }
+
+        // 5. Generate QR Payload - Quét mã mở trang tra cứu hiển thị Thẻ Tem Nhãn & Cấu hình chi tiết
+        const baseUrl = getAssetLookupBaseUrl();
+        const qrPayload = `${baseUrl}/tai-san.html?code=${encodeURIComponent(assetCodeVal)}`;
+
+        // 6. Draw QR Code (Supports both qrcode-generator full 40 versions & QRCode.js fallback)
+        const qrTarget = document.getElementById('asset-tag-qrcode');
+        if (qrTarget) {
+            qrTarget.innerHTML = '';
+            let rendered = false;
+
+            // Ưu tiên thư viện qrcode-generator
+            if (typeof qrcode !== 'undefined') {
+                try {
+                    const qr = qrcode(0, 'M');
+                    qr.addData(qrPayload);
+                    qr.make();
+                    const dataUrl = qr.createDataURL(4, 1);
+                    qrTarget.innerHTML = `<img src="${dataUrl}" style="width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; display: block;" alt="QR Code">`;
+                    rendered = true;
+                } catch (e) {
+                    console.warn('qrcode-generator render error:', e);
+                }
+            }
+
+            // Fallback sang QRCode.js nếu có
+            if (!rendered && typeof QRCode !== 'undefined') {
+                try {
+                    currentQrCodeInstance = new QRCode(qrTarget, {
+                        text: qrPayload,
+                        width: 98,
+                        height: 98,
+                        colorDark: '#0f172a',
+                        colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.L
+                    });
+                    rendered = true;
+                } catch (e) {
+                    console.error("QRCode.js render error:", e);
+                    qrTarget.innerHTML = `<div style="font-size: 9px; color: #ef4444; padding: 4px; text-align: center; word-break: break-word;">Lỗi sinh QR (${e.message})</div>`;
+                }
+            }
+        }
+    }
+
+    function openQrTagModal(index) {
+        const item = thietBiList[index];
+        if (!item) return;
+
+        currentQrModalItem = item;
+        currentQrModalIsKho = false;
+        currentQrModalMode = 'text';
+
+        renderQrModalContent();
+
+        const modal = document.getElementById('modal-asset-qr-tag');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    function openKhoQrTagModal(index) {
+        const item = khoList[index];
+        if (!item) return;
+
+        currentQrModalItem = item;
+        currentQrModalIsKho = true;
+        currentQrModalMode = 'text';
+
+        renderQrModalContent();
+
+        const modal = document.getElementById('modal-asset-qr-tag');
+        if (modal) modal.classList.remove('hidden');
+    }
+
+    const modalQrTag = document.getElementById('modal-asset-qr-tag');
+    const btnCloseQrModal = document.getElementById('btn-close-qr-modal');
+    const btnCancelQrModal = document.getElementById('btn-cancel-qr-modal');
+    const btnPrintQrTag = document.getElementById('btn-print-qr-tag');
+    const btnDownloadQrPng = document.getElementById('btn-download-qr-png');
+
+    if (btnCloseQrModal) btnCloseQrModal.addEventListener('click', () => modalQrTag?.classList.add('hidden'));
+    if (btnCancelQrModal) btnCancelQrModal.addEventListener('click', () => modalQrTag?.classList.add('hidden'));
+    if (modalQrTag) {
+        modalQrTag.addEventListener('click', (e) => {
+            if (e.target === modalQrTag) modalQrTag.classList.add('hidden');
+        });
+    }
+
+    if (btnPrintQrTag) {
+        btnPrintQrTag.addEventListener('click', () => {
+            // Đảm bảo chỉ in duy nhất mã QR code
+            const qrImg = document.querySelector('#asset-tag-qrcode img') || document.querySelector('#asset-tag-qrcode canvas');
+            let printContainer = document.getElementById('only-print-qr-container');
+            if (!printContainer) {
+                printContainer = document.createElement('div');
+                printContainer.id = 'only-print-qr-container';
+                document.body.appendChild(printContainer);
+            }
+            if (qrImg) {
+                const qrSrc = qrImg.src || (qrImg.toDataURL ? qrImg.toDataURL('image/png') : '');
+                printContainer.innerHTML = `<img src="${qrSrc}" alt="Mã QR">`;
+            } else {
+                printContainer.innerHTML = document.getElementById('asset-tag-qrcode')?.innerHTML || '';
+            }
+            window.print();
+        });
+    }
+
+    // 4. MAINTENANCE & UPGRADE LOG
+    let currentMaintDeviceIndex = null;
+
+    function openMaintenanceModal(index) {
+        const item = thietBiList[index];
+        if (!item) return;
+        currentMaintDeviceIndex = index;
+
+        const modal = document.getElementById('modal-maintenance-log');
+        if (!modal) return;
+
+        const titleEl = document.getElementById('maint-device-title');
+        const configEl = document.getElementById('maint-device-config');
+        if (titleEl) titleEl.innerText = `${item.userName} (${item.userId}) - ${item.devId || item.devType || 'Thiết bị IT'}`;
+        if (configEl) {
+            configEl.innerText = `CPU: ${item.devCpu || '—'} | RAM: ${item.devRam || '—'} | SSD: ${item.devSsd || '—'} | Tình trạng: ${item.devStatus || 'Tốt'}`;
+        }
+
+        const now = new Date();
+        const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const dateInput = document.getElementById('maint-input-date');
+        if (dateInput) dateInput.value = todayStr;
+
+        const costInput = document.getElementById('maint-input-cost');
+        const providerInput = document.getElementById('maint-input-provider');
+        const descInput = document.getElementById('maint-input-desc');
+        if (costInput) costInput.value = '';
+        if (providerInput) providerInput.value = 'IT Nội bộ ERAS';
+        if (descInput) descInput.value = '';
+
+        renderMaintenanceLogsList(item);
+        modal.classList.remove('hidden');
+    }
+
+    function renderMaintenanceLogsList(item) {
+        const listEl = document.getElementById('maint-records-list');
+        const totalEl = document.getElementById('maint-total-cost');
+        if (!listEl) return;
+
+        const logs = Array.isArray(item.maintenanceLogs) ? item.maintenanceLogs : [];
+        let totalCost = 0;
+
+        if (logs.length === 0) {
+            listEl.innerHTML = `
+                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; font-style: italic; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px dashed var(--border-color);">
+                    <i class="fa-solid fa-clipboard-check" style="font-size: 24px; margin-bottom: 8px; display: block; color: var(--brand-green);"></i>
+                    Chưa có nhật ký bảo trì hoặc nâng cấp nào cho thiết bị này.
+                </div>
+            `;
+        } else {
+            listEl.innerHTML = '';
+            [...logs].reverse().forEach((log, revIdx) => {
+                const originalLogIdx = logs.length - 1 - revIdx;
+                const costNum = parseFloat((log.cost || '').toString().replace(/[^0-9]/g, '')) || 0;
+                totalCost += costNum;
+
+                const div = document.createElement('div');
+                div.className = 'maint-timeline-item';
+                div.innerHTML = `
+                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span class="badge badge-green" style="font-weight: 700;">${log.type || 'Bảo trì'}</span>
+                            <span style="font-size: 12px; color: var(--text-secondary);"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${log.date || '—'}</span>
+                            ${log.provider ? `<span style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-store" style="margin-right: 4px;"></i>${log.provider}</span>` : ''}
+                        </div>
+                        <div style="font-size: 13px; color: var(--text-primary); margin-top: 2px;">
+                            ${log.desc || 'Không có mô tả chi tiết'}
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
+                        <span style="font-weight: 700; color: var(--brand-green); font-size: 14px;">
+                            ${costNum > 0 ? (new Intl.NumberFormat('vi-VN').format(costNum) + ' đ') : 'Miễn phí'}
+                        </span>
+                        <button type="button" class="btn-icon-only delete btn-delete-maint-record" data-log-index="${originalLogIdx}" title="Xóa lượt ghi này" style="width: 24px; height: 24px; font-size: 11px;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(div);
+            });
+        }
+
+        if (totalEl) {
+            totalEl.innerText = new Intl.NumberFormat('vi-VN').format(totalCost) + ' VNĐ';
+        }
+
+        listEl.querySelectorAll('.btn-delete-maint-record').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const logIdx = parseInt(this.getAttribute('data-log-index'));
+                deleteMaintenanceRecord(logIdx);
+            });
+        });
+    }
+
+    async function addMaintenanceRecord() {
+        if (currentMaintDeviceIndex === null) return;
+        const item = thietBiList[currentMaintDeviceIndex];
+        if (!item) return;
+
+        const type = document.getElementById('maint-input-type')?.value || 'Bảo trì';
+        const date = document.getElementById('maint-input-date')?.value.trim();
+        const cost = document.getElementById('maint-input-cost')?.value.trim() || '0';
+        const provider = document.getElementById('maint-input-provider')?.value.trim() || 'IT Nội bộ';
+        const desc = document.getElementById('maint-input-desc')?.value.trim();
+
+        if (!date) {
+            showToast('Thiếu thông tin', 'Vui lòng nhập ngày thực hiện!', 'warning');
+            return;
+        }
+        if (!desc) {
+            showToast('Thiếu thông tin', 'Vui lòng nhập chi tiết nội dung bảo trì / linh kiện thay thế!', 'warning');
+            return;
+        }
+
+        if (!Array.isArray(item.maintenanceLogs)) {
+            item.maintenanceLogs = [];
+        }
+
+        const newRecord = {
+            id: Date.now(),
+            type: type,
+            date: date,
+            cost: cost,
+            provider: provider,
+            desc: desc
+        };
+
+        item.maintenanceLogs.push(newRecord);
+
+        const extraKey = item.devId || item.userId || item.id;
+        saveDeviceExtras(extraKey, {
+            maintenanceLogs: item.maintenanceLogs
+        });
+
+        const now = new Date();
+        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        if (!Array.isArray(item.history)) item.history = [];
+        item.history.push({
+            time: formattedDate,
+            action: 'Bảo trì / Nâng cấp',
+            details: `${type} ngày ${date}: ${desc} - Chi phí: ${cost} đ (Đơn vị: ${provider})`
+        });
+
+        saveToLocalStorageFallback('thiet_bi', thietBiList);
+
+        try {
+            if (supabaseClient && item.id && !item.id.toString().startsWith('local-')) {
+                const dbData = mappers.thietBi.toDB(item);
+                await supabaseClient.from('thiet_bi').update(dbData).eq('id', item.id);
+            }
+        } catch (e) {
+            console.warn('Sync maintenance to DB error:', e);
+        }
+
+        const descInput = document.getElementById('maint-input-desc');
+        const costInput = document.getElementById('maint-input-cost');
+        if (descInput) descInput.value = '';
+        if (costInput) costInput.value = '';
+
+        renderMaintenanceLogsList(item);
+        showToast('Thành công', 'Đã thêm lượt bảo trì mới vào hồ sơ thiết bị!', 'success');
+    }
+
+    function deleteMaintenanceRecord(logIdx) {
+        if (currentMaintDeviceIndex === null) return;
+        const item = thietBiList[currentMaintDeviceIndex];
+        if (!item || !Array.isArray(item.maintenanceLogs)) return;
+
+        if (confirm('Bạn có chắc chắn muốn xóa lượt ghi bảo trì này?')) {
+            item.maintenanceLogs.splice(logIdx, 1);
+            const extraKey = item.devId || item.userId || item.id;
+            saveDeviceExtras(extraKey, {
+                maintenanceLogs: item.maintenanceLogs
+            });
+            saveToLocalStorageFallback('thiet_bi', thietBiList);
+            renderMaintenanceLogsList(item);
+            showToast('Đã xóa', 'Đã xóa lượt ghi bảo trì!', 'info');
+        }
+    }
+
+    const modalMaintLog = document.getElementById('modal-maintenance-log');
+    const btnCloseMaintModal = document.getElementById('btn-close-maint-modal');
+    const btnCloseMaintBottom = document.getElementById('btn-close-maint-modal-bottom');
+    const btnAddMaintRecord = document.getElementById('btn-add-maint-record');
+
+    if (btnCloseMaintModal) btnCloseMaintModal.addEventListener('click', () => modalMaintLog?.classList.add('hidden'));
+    if (btnCloseMaintBottom) btnCloseMaintBottom.addEventListener('click', () => modalMaintLog?.classList.add('hidden'));
+    if (btnAddMaintRecord) btnAddMaintRecord.addEventListener('click', addMaintenanceRecord);
+    if (modalMaintLog) {
+        modalMaintLog.addEventListener('click', (e) => {
+            if (e.target === modalMaintLog) modalMaintLog.classList.add('hidden');
+        });
+    }
+
+    // 5. OFFBOARDING CHECKLIST & 1-CLICK RETURN TO WAREHOUSE
+    let currentOffboardIndex = null;
+
+    function openOffboardModal(index) {
+        const item = thietBiList[index];
+        if (!item) return;
+        currentOffboardIndex = index;
+
+        const modal = document.getElementById('modal-offboarding-checklist');
+        if (!modal) return;
+
+        const userLabel = document.getElementById('offboard-user-name');
+        const deptLabel = document.getElementById('offboard-user-dept');
+        const checklistContainer = document.getElementById('offboard-checklist-items');
+        const conditionSelect = document.getElementById('offboard-device-condition');
+        const notesInput = document.getElementById('offboard-notes');
+
+        if (userLabel) userLabel.innerText = `${item.userName} (Mã NV: ${item.userId})`;
+        if (deptLabel) deptLabel.innerText = `Phòng ban: ${item.userDept || '—'} | Chức danh: ${item.userTitle || '—'}`;
+        if (conditionSelect) conditionSelect.value = 'Sẵn sàng cấp phát';
+        if (notesInput) notesInput.value = `Thu hồi đầy đủ thiết bị và phụ kiện khi nhân sự bàn giao nghỉ việc.`;
+
+        const itemsToRecover = [];
+        if (item.devId || item.devCpu || item.devRam) {
+            itemsToRecover.push({
+                id: 'chk-device',
+                label: `Thân máy: ${item.devType || 'Máy tính'} (Mã TB: ${item.devId || 'Chưa gán'}) - Cấu hình: ${[item.devCpu, item.devRam, item.devSsd].filter(Boolean).join(' / ')}`,
+                checked: true
+            });
+        }
+        if (item.devMonitor) {
+            itemsToRecover.push({
+                id: 'chk-mon1',
+                label: `Màn hình 1: ${item.devMonitor}${item.devMonitorSn ? ` (S/N: ${item.devMonitorSn})` : ''}`,
+                checked: true
+            });
+        }
+        if (item.devMonitor2) {
+            itemsToRecover.push({
+                id: 'chk-mon2',
+                label: `Màn hình 2: ${item.devMonitor2}${item.devMonitorSn2 ? ` (S/N: ${item.devMonitorSn2})` : ''}`,
+                checked: true
+            });
+        }
+        if (item.devKeyboard || item.devMouse) {
+            itemsToRecover.push({
+                id: 'chk-km',
+                label: `Phụ kiện: ${[item.devKeyboard, item.devMouse].filter(Boolean).join(' + ')}`,
+                checked: true
+            });
+        }
+        if (item.devCables) {
+            itemsToRecover.push({
+                id: 'chk-cables',
+                label: `Dây sạc / Dây nguồn / Cáp tín hiệu: ${item.devCables}`,
+                checked: true
+            });
+        }
+        itemsToRecover.push({
+            id: 'chk-account',
+            label: `Tài khoản & Phân quyền: Đã thu hồi Email/ERP/VPN và đổi mật khẩu truy cập`,
+            checked: true
+        });
+        itemsToRecover.push({
+            id: 'chk-data',
+            label: `Dữ liệu công việc: Đã sao lưu dữ liệu máy và bàn giao cho Trưởng bộ phận`,
+            checked: true
+        });
+
+        if (checklistContainer) {
+            checklistContainer.innerHTML = itemsToRecover.map(it => `
+                <label class="offboard-chk-row">
+                    <input type="checkbox" id="${it.id}" ${it.checked ? 'checked' : ''}>
+                    <span style="color: var(--text-primary); font-size: 13px;">${it.label}</span>
+                </label>
+            `).join('');
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    async function confirmOffboarding() {
+        if (currentOffboardIndex === null) return;
+        const item = thietBiList[currentOffboardIndex];
+        if (!item) return;
+
+        const condition = document.getElementById('offboard-device-condition')?.value || 'Sẵn sàng cấp phát';
+        const notes = document.getElementById('offboard-notes')?.value.trim() || '';
+
+        const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu;
+        const oldDevId = item.devId || '';
+        const oldDevType = item.devType || 'Máy tính';
+        const oldSpecs = [item.devMain, item.devCpu, item.devRam, item.devSsd, item.devHdd, item.devVga].filter(Boolean).join(' | ');
+
+        item.userDisabled = true;
+
+        const now = new Date();
+        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (hadDevice) {
+            const newKhoItem = {
+                id: 'kho-' + Date.now(),
+                code: oldDevId || item.maTaiSan || ('KHO-' + Date.now()),
+                assetCode: item.maTaiSan || item.assetCode || '',
+                maTaiSan: item.maTaiSan || item.assetCode || '',
+                assetCompany: item.assetCompany || 'ERG',
+                assetGroup: item.assetGroup || 'CCDC',
+                currentAssetGroup: item.currentAssetGroup || item.assetGroup || 'CCDC',
+                assetType: item.assetType || 'LT',
+                name: `${oldDevType} (Thu hồi từ ${item.userName})`,
+                type: oldDevType,
+                status: condition,
+                quantity: 1,
+                unit: 'Chiếc',
+                serial: item.devSn || '',
+                devSn: item.devSn || '',
+                devCpu: item.devCpu || '',
+                devRam: item.devRam || '',
+                devRamSlots: item.devRamSlots || '',
+                devSsd: item.devSsd || '',
+                devHdd: item.devHdd || '',
+                devVga: item.devVga || '',
+                devMain: item.devMain || '',
+                devMonitor: item.devMonitor || '',
+                monitorSize: item.monitorSize || '',
+                devCables: item.devCables || '',
+                warrantyEndDate: item.warrantyEndDate || '',
+                reason: `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
+                dateStored: formattedDate.split(' lúc ')[0],
+                config: oldSpecs,
+                origin: `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
+                notes: `[Thu hồi nghỉ việc]: ${notes}`,
+                updatedAt: formattedDate
+            };
+
+            if (typeof khoList !== 'undefined') {
+                khoList.push(newKhoItem);
+                saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                try {
+                    if (supabaseClient && mappers && mappers.khoThietBi) {
+                        const dbKho = mappers.khoThietBi.toDB(newKhoItem);
+                        const { data: insertedKho, error } = await supabaseClient.from('kho_thiet_bi').insert([dbKho]).select();
+                        if (!error && insertedKho && insertedKho.length > 0) {
+                            khoList[khoList.length - 1] = mappers.khoThietBi.fromDB(insertedKho[0]);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Kho insert error:', e);
+                }
+            }
+
+            item.devAllocation = 'no';
+            item.hasDevice = false;
+            item.devId = '';
+            item.devStatus = 'Không cấp';
+            item.devNotes = (item.devNotes ? item.devNotes + '\n' : '') + `[${formattedDate}] Đã thu hồi toàn bộ thiết bị về Kho. Ghi chú: ${notes}`;
+        }
+
+        if (!Array.isArray(item.history)) item.history = [];
+        item.history.push({
+            time: formattedDate,
+            action: 'Thu hồi nghỉ việc (Offboarding)',
+            details: hadDevice 
+                ? `Đã hoàn tất quy trình thu hồi thiết bị ${oldDevId} về Kho (Tình trạng: "${condition}"). Vô hiệu hóa tài khoản nhân sự.`
+                : `Đã hoàn tất checklist bàn giao nghỉ việc và vô hiệu hóa tài khoản.`
+        });
+        item.updatedAt = formattedDate;
+
+        saveToLocalStorageFallback('thiet_bi', thietBiList);
+        try {
+            if (supabaseClient && item.id && !item.id.toString().startsWith('local-')) {
+                const dbData = mappers.thietBi.toDB(item);
+                await supabaseClient.from('thiet_bi').update(dbData).eq('id', item.id);
+            }
+        } catch (e) {
+            console.warn('User update error:', e);
+        }
+
+        const modal = document.getElementById('modal-offboarding-checklist');
+        if (modal) modal.classList.add('hidden');
+
+        renderThietBi();
+        if (typeof renderKhoThietBi === 'function') renderKhoThietBi();
+        renderDashboard();
+
+        showToast('Thu hồi thành công', `Đã hoàn tất quy trình offboarding cho ${item.userName}${hadDevice ? ' và nhập thiết bị về Kho!' : '!'}`, 'success');
+    }
+
+    const modalOffboard = document.getElementById('modal-offboarding-checklist');
+    const btnCloseOffboardModal = document.getElementById('btn-close-offboarding-modal');
+    const btnCancelOffboardModal = document.getElementById('btn-cancel-offboard-modal');
+    const btnConfirmOffboard = document.getElementById('btn-confirm-offboard');
+
+    if (btnCloseOffboardModal) btnCloseOffboardModal.addEventListener('click', () => modalOffboard?.classList.add('hidden'));
+    if (btnCancelOffboardModal) btnCancelOffboardModal.addEventListener('click', () => modalOffboard?.classList.add('hidden'));
+    if (btnConfirmOffboard) btnConfirmOffboard.addEventListener('click', confirmOffboarding);
+    if (modalOffboard) {
+        modalOffboard.addEventListener('click', (e) => {
+            if (e.target === modalOffboard) modalOffboard.classList.add('hidden');
+        });
+    }
+
+    // =========================================================================
+    // 5.7 AUTOMATIC ASSET CODE ENGINE (ERG-[NHÓM]-[LOẠI]-[STT]) & SETTINGS
+    // =========================================================================
+
+    // 1. System Prefix & Asset Types Catalog Management
+    function getAssetPrefix() {
+        return (localStorage.getItem('eras_asset_prefix') || 'ERG').trim().toUpperCase();
+    }
+
+    function setAssetPrefix(prefix) {
+        const clean = (prefix || 'ERG').trim().toUpperCase();
+        localStorage.setItem('eras_asset_prefix', clean);
+        return clean;
+    }
+
+    function getAssetTypes() {
+        try {
+            const raw = localStorage.getItem('eras_asset_types');
+            if (raw) {
+                const list = JSON.parse(raw);
+                if (Array.isArray(list) && list.length > 0) return list;
+            }
+        } catch (e) {
+            console.warn('Error reading asset types:', e);
+        }
+        const defaultTypes = [
+            { code: 'PC', name: 'Máy tính để bàn' },
+            { code: 'LT', name: 'Laptop' },
+            { code: 'MH', name: 'Màn hình' }
+        ];
+        localStorage.setItem('eras_asset_types', JSON.stringify(defaultTypes));
+        return defaultTypes;
+    }
+
+    function saveAssetTypes(typesList) {
+        localStorage.setItem('eras_asset_types', JSON.stringify(typesList));
+        populateAssetTypeDropdowns();
+        renderAssetTypesTable();
+    }
+
+    function populateAssetTypeDropdowns() {
+        const types = getAssetTypes();
+        const selects = ['dev-asset-type', 'batch-asset-type', 'kho-asset-type'];
+        selects.forEach(selId => {
+            const el = document.getElementById(selId);
+            if (!el) return;
+            const currentVal = el.value;
+            el.innerHTML = types.map(t => `<option value="${t.code}">${t.code} - ${t.name}</option>`).join('');
+            if (types.some(t => t.code === currentVal)) {
+                el.value = currentVal;
+            }
+        });
+    }
+
+    function renderAssetTypesTable() {
+        const tbody = document.getElementById('tbody-asset-types');
+        if (!tbody) return;
+        const types = getAssetTypes();
+        tbody.innerHTML = types.map((t, i) => `
+            <tr style="border-bottom: 1px solid var(--border-color);">
+                <td style="padding: 8px 12px; font-family: monospace; font-weight: 700; color: var(--brand-green);">${t.code}</td>
+                <td style="padding: 8px 12px; color: var(--text-primary);">${t.name}</td>
+                <td style="padding: 8px 12px; text-align: center;">
+                    ${['PC', 'LT', 'MH'].includes(t.code) ? `
+                        <span style="font-size: 11px; color: var(--text-muted); font-style: italic;">Mặc định</span>
+                    ` : `
+                        <button type="button" class="btn-icon-only delete btn-del-asset-type" data-code="${t.code}" title="Xóa loại này" style="width: 22px; height: 22px; font-size: 10px;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    `}
+                </td>
+            </tr>
+        `).join('');
+
+        tbody.querySelectorAll('.btn-del-asset-type').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const code = this.getAttribute('data-code');
+                deleteAssetType(code);
+            });
+        });
+    }
+
+    function addAssetType(code, name) {
+        const cleanCode = (code || '').trim().toUpperCase();
+        const cleanName = (name || '').trim();
+
+        if (!cleanCode || !/^[A-Z0-9]{2,4}$/.test(cleanCode)) {
+            showToast('Lỗi nhập liệu', 'Mã loại phải từ 2-4 ký tự chữ cái in hoa/số (VD: PR, SV, TB)!', 'warning');
+            return false;
+        }
+        if (!cleanName) {
+            showToast('Lỗi nhập liệu', 'Vui lòng nhập tên loại tài sản!', 'warning');
+            return false;
+        }
+
+        const types = getAssetTypes();
+        if (types.some(t => t.code === cleanCode)) {
+            showToast('Trùng lặp', `Mã loại "${cleanCode}" đã tồn tại trong danh mục!`, 'error');
+            return false;
+        }
+
+        types.push({ code: cleanCode, name: cleanName });
+        saveAssetTypes(types);
+        showToast('Thành công', `Đã thêm loại tài sản "${cleanCode} - ${cleanName}"!`, 'success');
+        return true;
+    }
+
+    function deleteAssetType(code) {
+        let types = getAssetTypes();
+        if (confirm(`Bạn có chắc chắn muốn xóa loại tài sản "${code}" khỏi danh mục?`)) {
+            types = types.filter(t => t.code !== code);
+            saveAssetTypes(types);
+            showToast('Đã xóa', `Đã xóa loại tài sản "${code}"!`, 'info');
+        }
+    }
+
+    // 1.1 Company Datalist Management (ERG, IOM, ERL...)
+    function populateAssetCompanyDatalists() {
+        const defaultCompanies = ['ERG', 'IOM', 'ERL'];
+        const fromCongTyList = (congTyList || []).map(c => (c.code || '').trim().toUpperCase()).filter(Boolean);
+        const allCompanies = [...new Set([...defaultCompanies, ...fromCongTyList])];
+
+        const datalistIds = ['list-asset-company', 'list-batch-asset-company'];
+        datalistIds.forEach(id => {
+            const dl = document.getElementById(id);
+            if (!dl) return;
+            dl.innerHTML = allCompanies.map(c => `<option value="${c}">${c}</option>`).join('');
+        });
+    }
+
+    // 2. Sequence Counter & Generator per (company, nhom, loai)
+    function formatSeqNumber(num) {
+        return num < 1000 ? String(num).padStart(3, '0') : String(num);
+    }
+
+    function getNextSequence(company, group, type) {
+        const cleanCompany = (company || getAssetPrefix() || 'ERG').trim().toUpperCase();
+        const cleanGroup = (group || 'CCDC').trim().toUpperCase();
+        const cleanType = (type || 'LT').trim().toUpperCase();
+        const key = `${cleanCompany}_${cleanGroup}_${cleanType}`;
+        
+        let seqMap = {};
+        try {
+            seqMap = JSON.parse(localStorage.getItem('eras_asset_sequences') || '{}');
+        } catch (e) {
+            seqMap = {};
+        }
+
+        let lastSeq = parseInt(seqMap[key]) || 0;
+
+        // Quét toàn bộ mã đã có trong thietBiList và khoList để luôn lấy số lớn nhất
+        const escC = cleanCompany.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escG = cleanGroup.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escT = cleanType.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pattern = new RegExp(`^${escC}-${escG}-${escT}-(\\d+)$`, 'i');
+
+        const allItems = [...(thietBiList || []), ...(khoList || [])];
+        allItems.forEach(item => {
+            const c = (item.maTaiSan || item.assetCode || item.code || '').trim();
+            const m = c.match(pattern);
+            if (m && m[1]) {
+                const n = parseInt(m[1]);
+                if (n > lastSeq) lastSeq = n;
+            }
+        });
+
+        // Đảm bảo không trùng các mã đã từng xóa
+        try {
+            const deleted = JSON.parse(localStorage.getItem('eras_deleted_asset_codes') || '[]');
+            deleted.forEach(c => {
+                const m = (c || '').match(pattern);
+                if (m && m[1]) {
+                    const n = parseInt(m[1]);
+                    if (n > lastSeq) lastSeq = n;
+                }
+            });
+        } catch (e) {}
+
+        return lastSeq + 1;
+    }
+
+    function generateAssetCode(company, group, type) {
+        const cleanCompany = (company || getAssetPrefix() || 'ERG').trim().toUpperCase();
+        const cleanGroup = (group || 'CCDC').trim().toUpperCase();
+        const cleanType = (type || 'LT').trim().toUpperCase();
+        const nextSeq = getNextSequence(cleanCompany, cleanGroup, cleanType);
+        return `${cleanCompany}-${cleanGroup}-${cleanType}-${formatSeqNumber(nextSeq)}`;
+    }
+
+    function generateBatchAssetCodes(company, group, type, count) {
+        const cleanCompany = (company || getAssetPrefix() || 'ERG').trim().toUpperCase();
+        const cleanGroup = (group || 'CCDC').trim().toUpperCase();
+        const cleanType = (type || 'LT').trim().toUpperCase();
+        const startSeq = getNextSequence(cleanCompany, cleanGroup, cleanType);
+        const codes = [];
+        for (let i = 0; i < count; i++) {
+            const seq = startSeq + i;
+            codes.push({
+                seq: seq,
+                code: `${cleanCompany}-${cleanGroup}-${cleanType}-${formatSeqNumber(seq)}`
+            });
+        }
+        return codes;
+    }
+
+    function commitAssetSequence(company, group, type, fullCodeOrSeq) {
+        const cleanCompany = (company || getAssetPrefix() || 'ERG').trim().toUpperCase();
+        const cleanGroup = (group || 'CCDC').trim().toUpperCase();
+        const cleanType = (type || 'LT').trim().toUpperCase();
+        const key = `${cleanCompany}_${cleanGroup}_${cleanType}`;
+
+        let seqNum = 0;
+        if (typeof fullCodeOrSeq === 'number') {
+            seqNum = fullCodeOrSeq;
+        } else if (typeof fullCodeOrSeq === 'string') {
+            const parts = fullCodeOrSeq.split('-');
+            const lastPart = parts[parts.length - 1];
+            seqNum = parseInt(lastPart) || 0;
+        }
+
+        if (seqNum > 0) {
+            let seqMap = {};
+            try {
+                seqMap = JSON.parse(localStorage.getItem('eras_asset_sequences') || '{}');
+            } catch (e) {}
+            if (!seqMap[key] || seqNum > seqMap[key]) {
+                seqMap[key] = seqNum;
+                localStorage.setItem('eras_asset_sequences', JSON.stringify(seqMap));
+            }
+        }
+    }
+
+    function recordDeletedAssetCode(code, reason) {
+        if (!code) return;
+        try {
+            const list = JSON.parse(localStorage.getItem('eras_deleted_asset_codes') || '[]');
+            if (!list.includes(code)) {
+                list.push(code);
+                localStorage.setItem('eras_deleted_asset_codes', JSON.stringify(list));
+            }
+        } catch (e) {}
+    }
+
+    function refreshFormAssetCode(force = false) {
+        const companyEl = document.getElementById('dev-asset-company');
+        const groupEl = document.getElementById('dev-asset-group');
+        const typeEl = document.getElementById('dev-asset-type');
+        const codeInp = document.getElementById('dev-ma-tai-san');
+        if (!groupEl || !typeEl || !codeInp) return;
+
+        const isCreate = (!editIndexThietBi || editIndexThietBi.value === '');
+        const company = (companyEl?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
+
+        if (isCreate || force) {
+            const code = generateAssetCode(company, groupEl.value, typeEl.value);
+            codeInp.value = code;
+        } else {
+            // Khi đang chỉnh sửa thiết bị đã có:
+            // Nếu người dùng đổi Cty, Nhóm hoặc Loại, tự động cập nhật các thành phần tương ứng của mã tài sản
+            const curVal = codeInp.value.trim();
+            const parts = curVal.split('-');
+            if (parts.length >= 4) {
+                codeInp.value = `${company}-${groupEl.value}-${typeEl.value}-${parts.slice(3).join('-')}`;
+            } else if (!curVal) {
+                const code = generateAssetCode(company, groupEl.value, typeEl.value);
+                codeInp.value = code;
+            }
+        }
+    }
+
+    function refreshKhoAssetCode(force = false) {
+        const companyEl = document.getElementById('kho-asset-company');
+        const groupEl = document.getElementById('kho-asset-group');
+        const typeEl = document.getElementById('kho-asset-type');
+        const codeInp = document.getElementById('kho-ma-tai-san');
+        if (!groupEl || !typeEl || !codeInp) return;
+
+        const editIndexKho = document.getElementById('edit-index-kho');
+        const isCreate = (!editIndexKho || editIndexKho.value === '');
+        const company = (companyEl?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
+
+        if (isCreate || force) {
+            const code = generateAssetCode(company, groupEl.value, typeEl.value);
+            codeInp.value = code;
+        } else {
+            const curVal = codeInp.value.trim();
+            const parts = curVal.split('-');
+            if (parts.length >= 4) {
+                codeInp.value = `${company}-${groupEl.value}-${typeEl.value}-${parts.slice(3).join('-')}`;
+            } else if (!curVal) {
+                const code = generateAssetCode(company, groupEl.value, typeEl.value);
+                codeInp.value = code;
+            }
+        }
+    }
+
+    // 3. Serial Number Validation (Không bắt buộc điền, chỉ kiểm tra không trùng lặp nếu có nhập)
+    function validateDeviceSerial(excludeIndex = "") {
+        const snInput = document.getElementById('dev-sn');
+        const errSn = document.getElementById('err-dev-sn');
+        if (!snInput || !errSn) return true;
+
+        const val = snInput.value.trim().toLowerCase();
+
+        // Không bắt buộc điền: nếu để trống thì hợp lệ
+        if (!val) {
+            errSn.style.display = 'none';
+            snInput.style.borderColor = '';
+            return true;
+        }
+
+        // Nếu có nhập thì kiểm tra trùng lặp với Thiết Bị và Kho
+        const dupThietBi = thietBiList.find((item, index) => {
+            if (excludeIndex !== "" && index === parseInt(excludeIndex)) return false;
+            return (item.devSn || '').trim().toLowerCase() === val;
+        });
+        const dupKho = (khoList || []).find(item => (item.devSn || item.serial || '').trim().toLowerCase() === val);
+
+        if (dupThietBi || dupKho) {
+            const owner = dupThietBi ? `Nhân sự ${dupThietBi.userName} (${dupThietBi.userId})` : 'Kho thiết bị';
+            errSn.innerText = `Số Serial đã tồn tại trên hệ thống (đang gán cho ${owner})!`;
+            errSn.style.display = 'block';
+            snInput.style.borderColor = 'var(--danger-color)';
+            return false;
+        }
+
+        errSn.style.display = 'none';
+        snInput.style.borderColor = '';
+        return true;
+    }
+
+    // 4. Batch Asset Generation Modal Handlers
+    function updateBatchPreview() {
+        const company = (document.getElementById('batch-asset-company')?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
+        const group = document.getElementById('batch-asset-group')?.value || 'CCDC';
+        const type = document.getElementById('batch-asset-type')?.value || 'LT';
+        const qtyInp = document.getElementById('batch-quantity');
+        const qty = parseInt(qtyInp ? qtyInp.value : 20) || 1;
+        const validQty = Math.min(200, Math.max(1, qty));
+
+        const codes = generateBatchAssetCodes(company, group, type, validQty);
+        const previewEl = document.getElementById('batch-preview-codes');
+        if (previewEl && codes.length > 0) {
+            previewEl.innerHTML = `Từ <strong style="color: var(--brand-green);">${codes[0].code}</strong> đến <strong style="color: var(--brand-green);">${codes[codes.length - 1].code}</strong> (Tổng cộng: <strong>${codes.length}</strong> thiết bị liên tiếp)`;
+        }
+    }
+
+    async function executeBatchCreate() {
+        const company = (document.getElementById('batch-asset-company')?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
+        const group = document.getElementById('batch-asset-group')?.value || 'CCDC';
+        const type = document.getElementById('batch-asset-type')?.value || 'LT';
+        const qtyInp = document.getElementById('batch-quantity');
+        const qty = parseInt(qtyInp ? qtyInp.value : 20) || 1;
+        const validQty = Math.min(200, Math.max(1, qty));
+
+        const deviceName = document.getElementById('batch-device-name')?.value.trim();
+        if (!deviceName) {
+            showToast('Thiếu thông tin', 'Vui lòng nhập tên model / tên thiết bị của lô hàng!', 'warning');
+            return;
+        }
+
+        const cpu = document.getElementById('batch-cpu')?.value.trim() || '';
+        const ram = document.getElementById('batch-ram')?.value.trim() || '';
+        const ssd = document.getElementById('batch-ssd')?.value.trim() || '';
+        const monitorSize = document.getElementById('batch-monitor-size')?.value.trim() || '';
+        const warrantyExp = document.getElementById('batch-warranty-exp')?.value.trim() || '';
+        const reason = document.getElementById('batch-reason')?.value.trim() || 'Nhập kho lô mới';
+
+        const codes = generateBatchAssetCodes(company, group, type, validQty);
+        const now = new Date();
+        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+
+        const createdItems = [];
+        codes.forEach(cObj => {
+            const item = {
+                id: 'kho-' + Date.now() + '-' + cObj.seq,
+                code: cObj.code,
+                assetCode: cObj.code,
+                maTaiSan: cObj.code,
+                assetCompany: company,
+                name: `${deviceName} (#${cObj.seq})`,
+                quantity: 1,
+                reason: reason,
+                dateStored: formattedDate,
+                assetGroup: group,
+                currentAssetGroup: group,
+                assetType: type,
+                devCpu: cpu,
+                devRam: ram,
+                devSsd: ssd,
+                monitorSize: monitorSize,
+                warrantyEndDate: warrantyExp,
+                notes: `[Lô ${codes[0].code} - ${codes[codes.length - 1].code}] CPU: ${cpu} | RAM: ${ram} | SSD: ${ssd}`
+            };
+            khoList.push(item);
+            createdItems.push(item);
+        });
+
+        // Commit sequence to the highest number
+        commitAssetSequence(company, group, type, codes[codes.length - 1].seq);
+        saveToLocalStorageFallback('kho_thiet_bi', khoList);
+
+        // Batch insert to Supabase if available
+        try {
+            if (supabaseClient) {
+                const dbBatch = createdItems.map(it => ({
+                    code: it.code,
+                    name: it.name,
+                    quantity: 1,
+                    reason: it.reason,
+                    notes: it.notes
+                }));
+                await supabaseClient.from('kho_thiet_bi').insert(dbBatch);
+            }
+        } catch (e) {
+            console.warn('Batch Supabase insert error:', e);
+        }
+
+        const modal = document.getElementById('modal-batch-create-asset');
+        if (modal) modal.classList.add('hidden');
+
+        renderKho();
+        renderDashboard();
+
+        showToast('Tạo hàng loạt thành công', `Đã tạo thành công ${validQty} mã tài sản từ ${codes[0].code} đến ${codes[codes.length - 1].code} và nhập vào Kho!`, 'success');
+    }
+
+    // Modal DOM Events Wiring
+    const modalBatchAsset = document.getElementById('modal-batch-create-asset');
+    const btnCloseBatchModal = document.getElementById('btn-close-batch-modal');
+    const btnCancelBatchModal = document.getElementById('btn-cancel-batch-modal');
+    const btnConfirmBatchCreate = document.getElementById('btn-confirm-batch-create');
+    const btnOpenBatchKho = document.getElementById('btn-open-batch-create-kho');
+
+    if (btnOpenBatchKho) {
+        btnOpenBatchKho.addEventListener('click', () => {
+            populateAssetCompanyDatalists();
+            populateAssetTypeDropdowns();
+            updateBatchPreview();
+            if (modalBatchAsset) modalBatchAsset.classList.remove('hidden');
+        });
+    }
+
+    if (btnCloseBatchModal) btnCloseBatchModal.addEventListener('click', () => modalBatchAsset?.classList.add('hidden'));
+    if (btnCancelBatchModal) btnCancelBatchModal.addEventListener('click', () => modalBatchAsset?.classList.add('hidden'));
+    if (modalBatchAsset) {
+        modalBatchAsset.addEventListener('click', (e) => {
+            if (e.target === modalBatchAsset) modalBatchAsset.classList.add('hidden');
+        });
+    }
+
+    if (btnConfirmBatchCreate) btnConfirmBatchCreate.addEventListener('click', executeBatchCreate);
+
+    document.getElementById('batch-asset-company')?.addEventListener('input', updateBatchPreview);
+    document.getElementById('batch-asset-company')?.addEventListener('change', updateBatchPreview);
+    document.getElementById('batch-asset-group')?.addEventListener('change', updateBatchPreview);
+    document.getElementById('batch-asset-type')?.addEventListener('change', updateBatchPreview);
+    document.getElementById('batch-quantity')?.addEventListener('input', updateBatchPreview);
+
+    // Asset Settings Modal DOM Events Wiring
+    const modalAssetSettings = document.getElementById('modal-asset-type-settings');
+    const btnCloseAssetSettings = document.getElementById('btn-close-asset-settings');
+    const btnCloseAssetSettingsBottom = document.getElementById('btn-close-asset-settings-bottom');
+    const btnOpenAssetSettingsForm = document.getElementById('btn-open-asset-settings');
+    const btnOpenAssetSettingsKho = document.getElementById('btn-open-asset-settings-kho');
+    const btnSavePrefix = document.getElementById('btn-save-asset-prefix');
+    const btnAddType = document.getElementById('btn-add-asset-type');
+
+    function openAssetSettingsModal() {
+        const prefixInput = document.getElementById('setting-asset-prefix');
+        if (prefixInput) prefixInput.value = getAssetPrefix();
+        renderAssetTypesTable();
+        if (modalAssetSettings) modalAssetSettings.classList.remove('hidden');
+    }
+
+    if (btnOpenAssetSettingsForm) btnOpenAssetSettingsForm.addEventListener('click', openAssetSettingsModal);
+    if (btnOpenAssetSettingsKho) btnOpenAssetSettingsKho.addEventListener('click', openAssetSettingsModal);
+    if (btnCloseAssetSettings) btnCloseAssetSettings.addEventListener('click', () => modalAssetSettings?.classList.add('hidden'));
+    if (btnCloseAssetSettingsBottom) btnCloseAssetSettingsBottom.addEventListener('click', () => modalAssetSettings?.classList.add('hidden'));
+    if (modalAssetSettings) {
+        modalAssetSettings.addEventListener('click', (e) => {
+            if (e.target === modalAssetSettings) modalAssetSettings.classList.add('hidden');
+        });
+    }
+
+    if (btnSavePrefix) {
+        btnSavePrefix.addEventListener('click', () => {
+            const prefixVal = document.getElementById('setting-asset-prefix')?.value.trim();
+            if (!prefixVal) {
+                showToast('Lỗi', 'Tiền tố không được để trống!', 'warning');
+                return;
+            }
+            setAssetPrefix(prefixVal);
+            refreshFormAssetCode();
+            populateAssetCompanyDatalists();
+            showToast('Thành công', `Đã lưu tiền tố mã tài sản: "${getAssetPrefix()}"!`, 'success');
+        });
+    }
+
+    if (btnAddType) {
+        btnAddType.addEventListener('click', () => {
+            const code = document.getElementById('new-type-code')?.value;
+            const name = document.getElementById('new-type-name')?.value;
+            if (addAssetType(code, name)) {
+                document.getElementById('new-type-code').value = '';
+                document.getElementById('new-type-name').value = '';
+                refreshFormAssetCode();
+                updateBatchPreview();
+            }
+        });
+    }
+
+    // Auto-update asset code when company, group or type changes on form-cap-phat
+    document.getElementById('dev-asset-company')?.addEventListener('input', () => {
+        refreshFormAssetCode();
+    });
+    document.getElementById('dev-asset-company')?.addEventListener('change', () => {
+        refreshFormAssetCode();
+    });
+
+    document.getElementById('dev-asset-group')?.addEventListener('change', () => {
+        refreshFormAssetCode();
+        validateDeviceSerial(editIndexThietBi.value);
+    });
+
+    document.getElementById('dev-asset-type')?.addEventListener('change', () => {
+        refreshFormAssetCode();
+        validateDeviceSerial(editIndexThietBi.value);
+    });
+
+    document.getElementById('btn-regen-asset-code')?.addEventListener('click', () => {
+        refreshFormAssetCode(true);
+        showToast('Sinh mã mới', `Mã tài sản: ${document.getElementById('dev-ma-tai-san')?.value || ''}`, 'info');
+    });
+
+    // Copy Mã Tài Sản to ID Thiết Bị button
+    const btnCopyMaToDevId = document.getElementById('btn-copy-ma-to-devid');
+    if (btnCopyMaToDevId) {
+        btnCopyMaToDevId.addEventListener('click', () => {
+            const maTS = document.getElementById('dev-ma-tai-san')?.value;
+            if (maTS && devIdInput) {
+                devIdInput.value = maTS;
+                validateDuplicateDevice(editIndexThietBi.value);
+                showToast('Đã điền ID', `Đã lấy ID Thiết bị theo Mã Tài Sản: ${maTS}`, 'info');
+            }
+        });
+    }
+
+    // Auto-update asset code when company, group or type changes on form-kho-thiet-bi
+    document.getElementById('kho-asset-company')?.addEventListener('input', () => refreshKhoAssetCode(false));
+    document.getElementById('kho-asset-company')?.addEventListener('change', () => refreshKhoAssetCode(false));
+    document.getElementById('kho-asset-group')?.addEventListener('change', () => refreshKhoAssetCode(false));
+    document.getElementById('kho-asset-type')?.addEventListener('change', () => refreshKhoAssetCode(false));
+
+    document.getElementById('btn-regen-kho-asset-code')?.addEventListener('click', () => {
+        refreshKhoAssetCode(true);
+        showToast('Sinh mã mới', `Mã tài sản kho: ${document.getElementById('kho-ma-tai-san')?.value || ''}`, 'info');
+    });
+
+    // Copy Mã Tài Sản to ID Thiết Bị Kho button
+    document.getElementById('btn-copy-kho-ma-to-devid')?.addEventListener('click', () => {
+        const maTS = document.getElementById('kho-ma-tai-san')?.value;
+        const khoCodeInput = document.getElementById('kho-code');
+        if (maTS && khoCodeInput) {
+            khoCodeInput.value = maTS;
+            showToast('Đã điền ID', `Đã lấy Mã thiết bị kho theo Mã Tài Sản: ${maTS}`, 'info');
+        }
+    });
+
+    // Button Mở Form Thêm Thiết Bị Vào Kho
+    document.getElementById('btn-open-add-kho')?.addEventListener('click', () => {
+        if (typeof resetFormKho === 'function') resetFormKho();
+        const formTitle = document.getElementById('title-form-kho');
+        if (formTitle) formTitle.innerHTML = '<i class="fa-solid fa-boxes-stacked"></i> Thêm Thiết Bị Lưu Kho Mới';
+        showTabFormOnly('tab-kho-thiet-bi');
+        populateAssetCompanyDatalists();
+        populateAssetTypeDropdowns();
+        refreshKhoAssetCode();
+        document.getElementById('kho-name')?.focus();
+    });
+
+    // Populate asset types & company datalists on startup
+    populateAssetCompanyDatalists();
+    populateAssetTypeDropdowns();
+    refreshFormAssetCode();
+    refreshKhoAssetCode();
+
+
+    // =========================================================================
     // 6. PHÂN HỆ 2: THÔNG TIN CÔNG TY
     // =========================================================================
     const formCongTy = document.getElementById('form-cong-ty');
@@ -3294,6 +5267,9 @@ async function startApp() {
     const itemsPerPageCongTy = 10;
 
     function renderCongTy(filterText = '') {
+        if (typeof populateAssetCompanyDatalists === 'function') {
+            populateAssetCompanyDatalists();
+        }
         tbodyCongTy.innerHTML = '';
         
         const sortedList = [...congTyList].sort((a, b) => {
@@ -5307,6 +7283,7 @@ async function startApp() {
 
     attachDateMask(document.getElementById('company-gpkd-date'));
     attachDateMask(document.getElementById('kho-date-stored'));
+    attachDateMask(document.getElementById('kho-warranty-exp'));
     attachDateMask(document.getElementById('license-expiry'));
     // =========================================================================
     // PHÂN HỆ MỚI: THIẾT BỊ LƯU KHO
@@ -5335,8 +7312,16 @@ async function startApp() {
             const keyword = filterText.toLowerCase();
             return (
                 (item.code || '').toLowerCase().includes(keyword) ||
+                (item.assetCode || '').toLowerCase().includes(keyword) ||
+                (item.maTaiSan || '').toLowerCase().includes(keyword) ||
                 (item.name || '').toLowerCase().includes(keyword) ||
-                (item.reason || '').toLowerCase().includes(keyword)
+                (item.reason || '').toLowerCase().includes(keyword) ||
+                (item.devSn || '').toLowerCase().includes(keyword) ||
+                (item.serial || '').toLowerCase().includes(keyword) ||
+                (item.devCpu || '').toLowerCase().includes(keyword) ||
+                (item.devRam || '').toLowerCase().includes(keyword) ||
+                (item.status || '').toLowerCase().includes(keyword) ||
+                (item.location || '').toLowerCase().includes(keyword)
             );
         });
 
@@ -5375,7 +7360,14 @@ async function startApp() {
         if (totalItems === 0) {
             tbodyKho.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="6" class="text-center text-muted">Chưa có thiết bị nào trong kho!</td>
+                    <td colspan="7" class="text-center" style="padding: 35px 20px; color: var(--text-muted);">
+                        <div style="font-size: 32px; color: #64748b; margin-bottom: 10px;"><i class="fa-solid fa-boxes-packing"></i></div>
+                        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">Kho hiện chưa có thiết bị lưu kho nào!</div>
+                        <div style="font-size: 13px; margin-bottom: 16px;">Bấm nút bên dưới để thêm thiết bị mới vào kho.</div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById('btn-open-add-kho')?.click()" style="font-weight: 600; padding: 7px 18px;">
+                            <i class="fa-solid fa-plus"></i> Thêm Thiết Bị Vào Kho
+                        </button>
+                    </td>
                 </tr>
             `;
             return;
@@ -5383,22 +7375,70 @@ async function startApp() {
 
         const pageItems = filtered.slice(startIndex, endIndex);
 
-        pageItems.forEach((item, index) => {
+        pageItems.forEach((item) => {
             const originalIndex = khoList.indexOf(item);
             const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.setAttribute('title', 'Nhấn vào dòng này để xem chi tiết & cập nhật thiết bị');
+            tr.addEventListener('click', function(e) {
+                if (e.target.closest('.actions-cell') || e.target.closest('button') || e.target.closest('a')) return;
+                editKho(originalIndex);
+            });
+
+            // 1. Mã Thiết Bị & Mã Tài Sản
+            const assetCodeVal = item.maTaiSan || item.assetCode || '';
+            const assetCodeBadge = assetCodeVal ? `<div style="margin-top: 3px;"><span class="badge" style="background: rgba(34, 211, 238, 0.12); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.3); font-family: monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">${assetCodeVal}</span></div>` : '';
+            const devIdBadge = item.code ? `<span class="badge badge-blue" style="font-weight: 700;">${item.code}</span>` : '<span class="text-muted">—</span>';
+
+            // 2. Tên Thiết Bị & Serial
+            const snVal = item.devSn || item.serial || '';
+            const snHtml = snVal ? `<div style="font-size: 11.5px; color: #94a3b8; font-family: monospace; margin-top: 2px;"><i class="fa-solid fa-barcode" style="font-size: 10px;"></i> S/N: ${snVal}</div>` : '';
+
+            // 3. Cấu hình tóm tắt
+            const specsPills = [];
+            if (item.devCpu) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-microchip"></i> ${item.devCpu}</span>`);
+            if (item.devRam) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-memory"></i> ${item.devRam}</span>`);
+            if (item.devSsd) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-hard-drive"></i> ${item.devSsd}</span>`);
+            if (item.monitorSize) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-desktop"></i> ${item.monitorSize}</span>`);
+
+            let specsContent = specsPills.join(' ');
+            if (!specsContent && item.notes) {
+                const clean = item.notes.replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+                if (clean) specsContent = `<span style="font-size: 11.5px; color: var(--text-secondary);">${clean}</span>`;
+            }
+            if (!specsContent) specsContent = `<span style="font-size: 11px; color: var(--text-muted);">—</span>`;
+
+            // 4. Tình trạng & Vị trí
+            const statusVal = item.status || 'Sẵn sàng cấp phát';
+            let statusStyle = 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);';
+            if (statusVal.includes('hư hỏng') || statusVal.includes('Chờ sửa')) {
+                statusStyle = 'background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);';
+            } else if (statusVal.includes('thanh lý') || statusVal.includes('Hỏng')) {
+                statusStyle = 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);';
+            } else if (statusVal.includes('Đã qua sử dụng')) {
+                statusStyle = 'background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);';
+            }
+            const locationHtml = item.location ? `<div style="font-size: 11.5px; color: #94a3b8; margin-top: 3px;"><i class="fa-solid fa-location-dot" style="color: #60a5fa; font-size: 10px;"></i> ${item.location}</div>` : '';
 
             tr.innerHTML = `
-                <td><span class="badge badge-blue">${item.code}</span></td>
-                <td><strong>${item.name}</strong></td>
+                <td>${devIdBadge}${assetCodeBadge}</td>
+                <td><strong style="color: var(--text-primary); font-size: 13.5px;">${item.name || 'Thiết bị'}</strong>${snHtml}</td>
+                <td><div style="display: flex; flex-wrap: wrap; gap: 4px;">${specsContent}</div></td>
+                <td><span class="badge" style="${statusStyle} font-size: 11px; font-weight: 600;">${statusVal}</span>${locationHtml}</td>
                 <td class="text-center"><span class="badge badge-warning" style="font-size: 13px; font-weight: 700;">${item.quantity || 1}</span></td>
-                <td style="font-size: 13px; color: var(--text-secondary);">${item.reason}</td>
-                <td style="font-size: 13px;">${formatDateDMY(item.dateStored)}</td>
+                <td>
+                    <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">${item.reason || '—'}</div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><i class="fa-regular fa-calendar"></i> ${formatDateDMY(item.dateStored)}</div>
+                </td>
                 <td>
                     <div class="actions-cell">
                         <button class="btn-icon-only edit btn-allocate-kho" data-index="${originalIndex}" title="Cấp phát cho Nhân viên" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
                             <i class="fa-solid fa-user-plus"></i>
                         </button>
-                        <button class="btn-icon-only edit btn-edit-kho" data-index="${originalIndex}" title="Sửa">
+                        <button class="btn-icon-only edit btn-qr-kho" data-index="${originalIndex}" title="In tem tài sản QR Code" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </button>
+                        <button class="btn-icon-only edit btn-edit-kho" data-index="${originalIndex}" title="Xem chi tiết & Cập nhật">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
                         <button class="btn-icon-only delete btn-delete-kho" data-index="${originalIndex}" title="Xóa">
@@ -5417,6 +7457,13 @@ async function startApp() {
             });
         });
 
+        document.querySelectorAll('.btn-qr-kho').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                openKhoQrTagModal(idx);
+            });
+        });
+
         document.querySelectorAll('.btn-edit-kho').forEach(btn => {
             btn.addEventListener('click', function() {
                 const idx = parseInt(this.getAttribute('data-index'));
@@ -5431,6 +7478,8 @@ async function startApp() {
             });
         });
     }
+
+    // openKhoQrTagModal is managed centrally by the unified QR engine in Section 3
 
     if (formKho) {
         formKho.addEventListener('submit', async (e) => {
@@ -5449,23 +7498,86 @@ async function startApp() {
                 dateStoredVal = formatDateDMY(dateStoredInputVal);
             }
 
+            const warrantyVal = document.getElementById('kho-warranty-exp')?.value.trim() || '';
+            if (warrantyVal && !validateDateDMY(warrantyVal, true)) {
+                showToast('Lỗi nhập liệu', 'Vui lòng nhập Ngày hết bảo hành đúng định dạng dd/mm/yyyy!', 'error');
+                return;
+            }
+
+            const companyVal = (document.getElementById('kho-asset-company')?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
+            const groupVal = document.getElementById('kho-asset-group')?.value || 'CCDC';
+            const currentGroupVal = groupVal;
+            const typeVal = document.getElementById('kho-asset-type')?.value || 'LT';
+            const maTaiSanVal = document.getElementById('kho-ma-tai-san')?.value.trim() || generateAssetCode(companyVal, groupVal, typeVal);
+
+            const userNotes = document.getElementById('kho-notes')?.value.trim() || '';
+
             const data = {
                 code: document.getElementById('kho-code').value.trim(),
+                assetCode: maTaiSanVal,
+                maTaiSan: maTaiSanVal,
+                assetCompany: companyVal,
+                assetGroup: groupVal,
+                currentAssetGroup: currentGroupVal,
+                assetType: typeVal,
                 name: document.getElementById('kho-name').value.trim(),
+                devSn: document.getElementById('kho-sn')?.value.trim() || '',
+                serial: document.getElementById('kho-sn')?.value.trim() || '',
+                status: document.getElementById('kho-status')?.value || 'Sẵn sàng cấp phát',
                 quantity: parseInt(document.getElementById('kho-quantity').value) || 1,
+                devCpu: document.getElementById('kho-cpu')?.value.trim() || '',
+                devRam: document.getElementById('kho-ram')?.value.trim() || '',
+                devRamSlots: document.getElementById('kho-ram-slots')?.value || '',
+                devSsd: document.getElementById('kho-ssd')?.value.trim() || '',
+                devHdd: document.getElementById('kho-hdd')?.value.trim() || '',
+                devVga: document.getElementById('kho-vga')?.value.trim() || '',
+                devMain: document.getElementById('kho-main')?.value.trim() || '',
+                devMonitor: document.getElementById('kho-monitor')?.value.trim() || '',
+                monitorSize: document.getElementById('kho-monitor-size')?.value.trim() || '',
+                devMonitorSn: document.getElementById('kho-monitor-sn')?.value.trim() || '',
+                devCables: document.getElementById('kho-cables')?.value.trim() || '',
+                warrantyEndDate: warrantyVal ? formatDateDMY(warrantyVal) : '',
                 reason: document.getElementById('kho-reason').value.trim(),
-                dateStored: dateStoredVal
+                location: document.getElementById('kho-location')?.value.trim() || '',
+                dateStored: dateStoredVal,
+                storedBy: document.getElementById('kho-stored-by')?.value.trim() || '',
+                notes: userNotes
             };
 
-            if (indexStr !== '') {
-                const existingItem = khoList[parseInt(indexStr)];
-                if (existingItem && existingItem.notes) {
-                    data.notes = existingItem.notes;
-                }
-            }
+            // Bundle full specs into [SPECS_JSON:...] inside notes for maximum compatibility
+            const specsJson = JSON.stringify({
+                code: data.code,
+                maTaiSan: data.maTaiSan,
+                assetCompany: data.assetCompany,
+                assetGroup: data.assetGroup,
+                currentAssetGroup: data.currentAssetGroup,
+                assetType: data.assetType,
+                name: data.name,
+                devSn: data.devSn,
+                status: data.status,
+                quantity: data.quantity,
+                devCpu: data.devCpu,
+                devRam: data.devRam,
+                devRamSlots: data.devRamSlots,
+                devSsd: data.devSsd,
+                devHdd: data.devHdd,
+                devVga: data.devVga,
+                devMain: data.devMain,
+                devMonitor: data.devMonitor,
+                monitorSize: data.monitorSize,
+                devMonitorSn: data.devMonitorSn,
+                devCables: data.devCables,
+                warrantyEndDate: data.warrantyEndDate,
+                reason: data.reason,
+                location: data.location,
+                dateStored: data.dateStored,
+                storedBy: data.storedBy
+            });
+            data.notes = userNotes ? `${userNotes}\n[SPECS_JSON:${specsJson}]` : `[SPECS_JSON:${specsJson}]`;
 
             if (indexStr === '') {
                 try {
+                    commitAssetSequence(companyVal, groupVal, typeVal, maTaiSanVal);
                     const dbData = mappers.khoThietBi.toDB(data);
                     let isDbSuccess = false;
                     if (supabaseClient) {
@@ -5515,20 +7627,17 @@ async function startApp() {
                     }
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
                     showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin thiết bị lưu kho!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
-                    resetFormKho();
                 } catch (err) {
                     console.error("Lỗi cập nhật kho:", err);
                     data.id = oldItem ? oldItem.id : ('local-' + Date.now());
                     khoList[idx] = data;
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
                     showToast('Lưu Offline', 'Đã cập nhật tạm thời trên trình duyệt!', 'warning');
-                    resetFormKho();
                 }
             }
 
             renderKho();
-            formKho.reset();
-            resetFormKho();
+            returnToKhoTable();
         });
     }
 
@@ -5538,14 +7647,82 @@ async function startApp() {
         showTabFormOnly('tab-kho-thiet-bi');
         if (editIndexKho) editIndexKho.value = index;
 
-        document.getElementById('kho-code').value = item.code || '';
-        document.getElementById('kho-name').value = item.name || '';
-        document.getElementById('kho-quantity').value = item.quantity || 1;
-        document.getElementById('kho-reason').value = item.reason || '';
-        document.getElementById('kho-date-stored').value = item.dateStored ? formatDateDMY(item.dateStored) : '';
+        const formTitle = document.getElementById('title-form-kho');
+        const codeDisplay = item.code || item.maTaiSan || item.name || 'Thiết bị';
+        if (formTitle) {
+            formTitle.innerHTML = `<i class="fa-solid fa-circle-info"></i> Chi Tiết & Cập Nhật Thiết Bị Kho: <span style="color: #60a5fa; font-family: monospace;">${codeDisplay}</span>`;
+        }
 
-        if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
-        if (btnCancelKho) btnCancelKho.classList.remove('hidden');
+        // Trích xuất specs nếu có
+        let specs = {};
+        if (item.notes && item.notes.includes('[SPECS_JSON:')) {
+            const match = item.notes.match(/\[SPECS_JSON:(.*?)\]/s);
+            if (match && match[1]) {
+                try { specs = JSON.parse(match[1]); } catch (e) {}
+            }
+        }
+
+        populateAssetCompanyDatalists();
+        populateAssetTypeDropdowns();
+
+        const codeVal = item.code || specs.code || '';
+        const maVal = item.maTaiSan || item.assetCode || specs.maTaiSan || specs.assetCode || '';
+        const companyVal = item.assetCompany || specs.assetCompany || 'ERG';
+        const groupVal = item.assetGroup || specs.assetGroup || 'CCDC';
+        const currentGroupVal = item.currentAssetGroup || specs.currentAssetGroup || groupVal;
+        const typeVal = item.assetType || specs.assetType || 'LT';
+
+        if (document.getElementById('kho-code')) document.getElementById('kho-code').value = codeVal;
+        const khoCompanyEl = document.getElementById('kho-asset-company');
+        if (khoCompanyEl) {
+            khoCompanyEl.value = companyVal;
+            khoCompanyEl.readOnly = false;
+            khoCompanyEl.disabled = false;
+        }
+        const khoGroupEl = document.getElementById('kho-asset-group');
+        if (khoGroupEl) {
+            khoGroupEl.value = groupVal;
+            khoGroupEl.disabled = false;
+        }
+        const khoTypeEl = document.getElementById('kho-asset-type');
+        if (khoTypeEl) {
+            khoTypeEl.value = typeVal;
+            khoTypeEl.disabled = false;
+        }
+        const khoMaInp = document.getElementById('kho-ma-tai-san');
+        if (khoMaInp) {
+            khoMaInp.value = maVal;
+            khoMaInp.readOnly = false;
+        }
+
+
+
+        if (document.getElementById('kho-name')) document.getElementById('kho-name').value = item.name || specs.name || '';
+        if (document.getElementById('kho-sn')) document.getElementById('kho-sn').value = item.devSn || item.serial || specs.devSn || specs.serial || '';
+        if (document.getElementById('kho-status')) document.getElementById('kho-status').value = item.status || specs.status || 'Sẵn sàng cấp phát';
+        if (document.getElementById('kho-quantity')) document.getElementById('kho-quantity').value = item.quantity || specs.quantity || 1;
+        if (document.getElementById('kho-cpu')) document.getElementById('kho-cpu').value = item.devCpu || specs.devCpu || '';
+        if (document.getElementById('kho-ram')) document.getElementById('kho-ram').value = item.devRam || specs.devRam || '';
+        if (document.getElementById('kho-ram-slots')) document.getElementById('kho-ram-slots').value = item.devRamSlots || specs.devRamSlots || '';
+        if (document.getElementById('kho-ssd')) document.getElementById('kho-ssd').value = item.devSsd || specs.devSsd || '';
+        if (document.getElementById('kho-hdd')) document.getElementById('kho-hdd').value = item.devHdd || specs.devHdd || '';
+        if (document.getElementById('kho-vga')) document.getElementById('kho-vga').value = item.devVga || specs.devVga || '';
+        if (document.getElementById('kho-main')) document.getElementById('kho-main').value = item.devMain || specs.devMain || '';
+        if (document.getElementById('kho-monitor')) document.getElementById('kho-monitor').value = item.devMonitor || specs.devMonitor || '';
+        if (document.getElementById('kho-monitor-size')) document.getElementById('kho-monitor-size').value = item.monitorSize || specs.monitorSize || '';
+        if (document.getElementById('kho-monitor-sn')) document.getElementById('kho-monitor-sn').value = item.devMonitorSn || specs.devMonitorSn || '';
+        if (document.getElementById('kho-cables')) document.getElementById('kho-cables').value = item.devCables || specs.devCables || '';
+        if (document.getElementById('kho-warranty-exp')) document.getElementById('kho-warranty-exp').value = item.warrantyEndDate ? formatDateDMY(item.warrantyEndDate) : (specs.warrantyEndDate ? formatDateDMY(specs.warrantyEndDate) : '');
+
+        if (document.getElementById('kho-reason')) document.getElementById('kho-reason').value = item.reason || specs.reason || '';
+        if (document.getElementById('kho-location')) document.getElementById('kho-location').value = item.location || specs.location || '';
+        if (document.getElementById('kho-date-stored')) document.getElementById('kho-date-stored').value = item.dateStored ? formatDateDMY(item.dateStored) : (specs.dateStored ? formatDateDMY(specs.dateStored) : '');
+        if (document.getElementById('kho-stored-by')) document.getElementById('kho-stored-by').value = item.storedBy || specs.storedBy || '';
+
+        const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+        if (document.getElementById('kho-notes')) document.getElementById('kho-notes').value = cleanNotes;
+
+        if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU CẬP NHẬT';
 
         document.querySelector('.tab-container').scrollTop = 0;
     }
@@ -5566,7 +7743,7 @@ async function startApp() {
                 showToast('Đã xóa', 'Xóa thiết bị lưu kho thành công!', 'warning');
 
                 if (editIndexKho && editIndexKho.value === index.toString()) {
-                    resetFormKho();
+                    returnToKhoTable();
                 }
             } catch (err) {
                 console.error(err);
@@ -5576,7 +7753,7 @@ async function startApp() {
                 showToast('Xóa Offline', 'Không kết nối được Supabase. Đã xóa tạm thời trên trình duyệt!', 'warning');
 
                 if (editIndexKho && editIndexKho.value === index.toString()) {
-                    resetFormKho();
+                    returnToKhoTable();
                 }
             }
         }
@@ -5584,16 +7761,27 @@ async function startApp() {
 
     function resetFormKho() {
         if (editIndexKho) editIndexKho.value = '';
-        if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU';
-        if (btnCancelKho) btnCancelKho.classList.add('hidden');
+        if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU THIẾT BỊ KHO';
+        const formTitle = document.getElementById('title-form-kho');
+        if (formTitle) formTitle.innerHTML = '<i class="fa-solid fa-boxes-stacked"></i> Thêm & Cập Nhật Thiết Bị Lưu Kho';
         if (formKho) formKho.reset();
+
         if (document.getElementById('kho-quantity')) document.getElementById('kho-quantity').value = '1';
+        if (document.getElementById('kho-status')) document.getElementById('kho-status').value = 'Sẵn sàng cấp phát';
         const khoDateInput = document.getElementById('kho-date-stored');
         if (khoDateInput) khoDateInput.value = formatDateDMY(new Date());
+        refreshKhoAssetCode();
+    }
+
+    function returnToKhoTable() {
+        resetFormKho();
         showTabTableOnly('tab-kho-thiet-bi');
     }
 
-    if (btnCancelKho) btnCancelKho.addEventListener('click', resetFormKho);
+    document.querySelectorAll('.btn-back-to-kho-table').forEach(btn => {
+        btn.addEventListener('click', returnToKhoTable);
+    });
+    if (btnCancelKho) btnCancelKho.addEventListener('click', returnToKhoTable);
 
     if (searchKho) {
         searchKho.addEventListener('input', (e) => {
@@ -5620,8 +7808,16 @@ async function startApp() {
             const totalItems = khoList.filter(item => {
                 return (
                     (item.code || '').toLowerCase().includes(keyword) ||
+                    (item.assetCode || '').toLowerCase().includes(keyword) ||
+                    (item.maTaiSan || '').toLowerCase().includes(keyword) ||
                     (item.name || '').toLowerCase().includes(keyword) ||
-                    (item.reason || '').toLowerCase().includes(keyword)
+                    (item.reason || '').toLowerCase().includes(keyword) ||
+                    (item.devSn || '').toLowerCase().includes(keyword) ||
+                    (item.serial || '').toLowerCase().includes(keyword) ||
+                    (item.devCpu || '').toLowerCase().includes(keyword) ||
+                    (item.devRam || '').toLowerCase().includes(keyword) ||
+                    (item.status || '').toLowerCase().includes(keyword) ||
+                    (item.location || '').toLowerCase().includes(keyword)
                 );
             }).length;
             const totalPages = Math.ceil(totalItems / itemsPerPageKho) || 1;
@@ -6298,14 +8494,28 @@ async function startApp() {
             }),
             supabaseClient.from('kho_thiet_bi').select('*').then(({ data, error }) => {
                 if (error) throw error;
-                khoList = (data || []).map(mappers.khoThietBi.fromDB);
-                saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                if (data && data.length > 0) {
+                    khoList = data.map(mappers.khoThietBi.fromDB);
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                } else {
+                    // Nếu Supabase trả về rỗng (do chưa cấp quyền RLS hoặc chưa sync), dùng local fallback và initial seed an toàn
+                    loadFromLocalStorageFallback('kho_thiet_bi', khoList, renderKho);
+                    if (khoList.length === 0 && initialKhoSeed.length > 0) {
+                        khoList = JSON.parse(JSON.stringify(initialKhoSeed));
+                        saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    }
+                }
                 renderKho();
             }).catch(err => {
                 hasConnectionError = true;
                 lastErrorMsg = err.message || (typeof err === 'object' ? JSON.stringify(err) : err);
                 console.warn("Fetch kho_thiet_bi failed, loading fallback:", err);
                 loadFromLocalStorageFallback('kho_thiet_bi', khoList, renderKho);
+                if (khoList.length === 0 && initialKhoSeed.length > 0) {
+                    khoList = JSON.parse(JSON.stringify(initialKhoSeed));
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    renderKho();
+                }
             })
         ];
 
@@ -6334,119 +8544,104 @@ async function startApp() {
     const btnToggleLoginPass = document.getElementById('btn-toggle-login-pass');
     const btnLogout = document.getElementById('btn-logout-header');
 
-    // Toggle Password Visibility on Login Screen
+    // Toggle Password Visibility on Login Screen (Delegates to centralized toggleLoginPassword)
     if (btnToggleLoginPass) {
-        btnToggleLoginPass.addEventListener('click', () => {
-            const passInput = document.getElementById('login-password');
-            if (passInput.type === 'password') {
-                passInput.type = 'text';
-                btnToggleLoginPass.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+        btnToggleLoginPass.onclick = (e) => {
+            if (typeof window.toggleLoginPassword === 'function') {
+                window.toggleLoginPassword(e);
             } else {
-                passInput.type = 'password';
-                btnToggleLoginPass.innerHTML = '<i class="fa-regular fa-eye"></i>';
+                const passInput = document.getElementById('login-password');
+                if (!passInput) return;
+                if (passInput.type === 'password') {
+                    passInput.type = 'text';
+                    btnToggleLoginPass.innerHTML = '<i class="fa-solid fa-eye-slash" id="icon-login-pass"></i>';
+                    btnToggleLoginPass.classList.add('active');
+                } else {
+                    passInput.type = 'password';
+                    btnToggleLoginPass.innerHTML = '<i class="fa-solid fa-eye" id="icon-login-pass"></i>';
+                    btnToggleLoginPass.classList.remove('active');
+                }
             }
-        });
+        };
     }
 
-    // Handle Login Form Submit
+    // Handle Login Form Submit via Supabase Auth
     if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const usernameInput = (document.getElementById('login-username').value || '').trim();
-            const passwordInput = (document.getElementById('login-password').value || '').trim();
+            const rawUser = (document.getElementById('login-username')?.value || '').trim();
+            const rawPass = (document.getElementById('login-password')?.value || '').trim();
 
-            let email = usernameInput;
-            if (email === 'admin') {
-                email = 'admin@erasgroup.vn';
+            // Clear any previous error message
+            const errDiv = document.getElementById('login-error-msg');
+            if (errDiv) errDiv.classList.add('hidden');
+
+            if (!rawUser || !rawPass) {
+                const msg = 'Vui lòng nhập đầy đủ Email và Mật khẩu!';
+                if (errDiv) {
+                    errDiv.textContent = msg;
+                    errDiv.classList.remove('hidden');
+                }
+                showToast('Thiếu thông tin', msg, 'warning');
+                return;
             }
 
-            // Show loading state
             const btnSubmit = formLogin.querySelector('button[type="submit"]');
             const originalText = btnSubmit ? btnSubmit.innerHTML : 'Đăng nhập';
             if (btnSubmit) {
                 btnSubmit.disabled = true;
-                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang đăng nhập...';
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực Supabase...';
             }
 
+            // Normalise Email: If user types username without @domain, auto-append @erasgroup.vn
+            const emailToAuth = rawUser.includes('@') ? rawUser : `${rawUser}@erasgroup.vn`;
+
             try {
-                // Clear any previous error message
-                const errDiv = document.getElementById('login-error-msg');
-                if (errDiv) errDiv.classList.add('hidden');
+                if (!supabaseClient) {
+                    throw new Error('Không thể kết nối đến máy chủ Supabase. Vui lòng kiểm tra lại mạng!');
+                }
 
-                let loginSuccess = false;
-                let offlineMode = false;
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: emailToAuth,
+                    password: rawPass
+                });
 
-                const userClean = usernameInput.toLowerCase().trim();
-                const passClean = passwordInput.toLowerCase().trim();
-
-                // 1. Kiểm tra tài khoản chuẩn theo luật dự án (Chấp nhận mọi chữ hoa/thường, Telex/VNI hay không gõ Shift)
-                if (
-                    userClean === 'admin' || 
-                    userClean === 'admin@erasgroup.vn' || 
-                    userClean === 'tiphu' || 
-                    userClean === 'tiphu@erasgroup.vn'
-                ) {
-                    if (
-                        passwordInput === 'Cntt@262' || 
-                        passClean === 'cntt@262' || 
-                        passClean === 'cntt262' || 
-                        passClean.includes('cntt') || 
-                        passClean.includes('262') ||
-                        passwordInput.length > 0
-                    ) {
-                        loginSuccess = true;
-                        offlineMode = true;
+                if (error) {
+                    let errMsg = error.message || 'Email hoặc mật khẩu không chính xác!';
+                    if (errMsg.includes('Invalid login credentials')) {
+                        errMsg = 'Email hoặc mật khẩu không chính xác!';
+                    } else if (errMsg.includes('Email not confirmed')) {
+                        errMsg = 'Tài khoản chưa được kích hoạt email!';
                     }
+                    throw new Error(errMsg);
                 }
 
-                // 2. Thử đăng nhập qua Supabase nếu chưa khớp
-                if (!loginSuccess && supabaseClient) {
-                    try {
-                        const { data, error } = await supabaseClient.auth.signInWithPassword({
-                            email: email,
-                            password: passwordInput
-                        });
-                        if (!error && data && data.user) {
-                            loginSuccess = true;
-                            offlineMode = false;
-                        }
-                    } catch (authErr) {
-                        console.warn("Supabase auth failed:", authErr);
-                    }
+                if (!data || !data.user) {
+                    throw new Error('Không nhận được phiên làm việc hợp lệ từ Supabase!');
                 }
 
-                // 3. Fallback dự phòng: Cho phép đăng nhập cho bất kỳ tài khoản nào nếu nhập Cntt@262 hoặc cntt@262
-                if (!loginSuccess && (passClean === 'cntt@262' || passClean === 'cntt262' || passwordInput === 'Cntt@262')) {
-                    loginSuccess = true;
-                    offlineMode = true;
-                }
+                // Supabase Auth Success!
+                const userEmail = data.user.email || emailToAuth;
+                localStorage.setItem('erg_asset_logged_in', 'true');
+                localStorage.setItem('erg_asset_user', userEmail);
 
-                if (loginSuccess) {
-                    localStorage.setItem('erg_asset_logged_in', 'true');
-                    localStorage.setItem('erg_asset_user', usernameInput);
-                    showToast('Đăng nhập', offlineMode ? 'Đăng nhập thành công (Chế độ Ngoại tuyến)!' : 'Đăng nhập thành công!', 'success');
-                    if (loginScreen) loginScreen.classList.add('hidden');
-                    if (appContainer) appContainer.classList.remove('hidden');
-                    switchToTab('tab-trang-chu');
-                    initApp().catch(err => console.warn("Background initApp error:", err));
-                    renderDashboard();
-                } else {
-                    throw new Error('Tên đăng nhập hoặc mật khẩu không chính xác!');
-                }
+                showToast('Đăng nhập thành công', `Xin chào ${userEmail}!`, 'success');
+                if (loginScreen) loginScreen.classList.add('hidden');
+                if (appContainer) appContainer.classList.remove('hidden');
+                switchToTab('tab-trang-chu');
+                initApp().catch(err => console.warn("Background initApp error:", err));
+                renderDashboard();
+
             } catch (err) {
-                console.error(err);
-                
-                const errDiv = document.getElementById('login-error-msg');
+                console.error("Supabase Login Error:", err);
                 if (errDiv) {
-                    errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!');
+                    errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Lỗi xác thực!');
                     errDiv.classList.remove('hidden');
-                    
                     errDiv.style.animation = 'none';
                     errDiv.offsetHeight; /* trigger reflow */
                     errDiv.style.animation = '';
                 }
-                
-                showToast('Lỗi đăng nhập', err.message || 'Tên đăng nhập hoặc mật khẩu không đúng!', 'error');
+                showToast('Lỗi đăng nhập', err.message || 'Đăng nhập Supabase không thành công!', 'error');
             } finally {
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
@@ -6456,21 +8651,81 @@ async function startApp() {
         });
     }
 
-    // Handle Logout Click
-    if (btnLogout) {
-        btnLogout.addEventListener('click', async () => {
-            if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) {
-                localStorage.removeItem('erg_asset_logged_in');
-                localStorage.removeItem('erg_asset_user');
-                localStorage.removeItem('erg_asset_active_tab');
-                try {
-                    if (supabaseClient) await supabaseClient.auth.signOut();
-                } catch (e) {
-                    console.error("Signout error:", e);
+    // -------------------------------------------------------------------------
+    // Centralized, Resilient Logout System (Never hangs on network)
+    // -------------------------------------------------------------------------
+    async function performAppLogout() {
+        if (!confirm('Bạn có chắc chắn muốn đăng xuất khỏi hệ thống?')) return;
+
+        // 1. Immediately wipe all local authentication & session state
+        try {
+            localStorage.removeItem('erg_asset_logged_in');
+            localStorage.removeItem('erg_asset_user');
+            localStorage.removeItem('erg_asset_active_tab');
+
+            // Wipe all Supabase auth storage tokens
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
+                if (key && (key.startsWith('sb-') || key.includes('supabase') || key.startsWith('erg_'))) {
+                    localStorage.removeItem(key);
                 }
-                location.reload();
             }
-        });
+            sessionStorage.clear();
+        } catch (storageErr) {
+            console.warn('Storage wipe error:', storageErr);
+        }
+
+        // 2. Immediately switch UI to login screen without waiting
+        if (loginScreen) loginScreen.classList.remove('hidden');
+        if (appContainer) appContainer.classList.add('hidden');
+
+        // Reset inputs
+        const userInput = document.getElementById('login-username');
+        const passInput = document.getElementById('login-password');
+        if (userInput) userInput.value = '';
+        if (passInput) passInput.value = '';
+
+        showToast('Đã đăng xuất', 'Đang chuyển về màn hình đăng nhập...', 'info');
+
+        // 3. Best-effort Supabase signOut with strict 400ms timeout (never hangs!)
+        try {
+            if (supabaseClient && supabaseClient.auth) {
+                await Promise.race([
+                    supabaseClient.auth.signOut(),
+                    new Promise(resolve => setTimeout(resolve, 400))
+                ]);
+            }
+        } catch (signOutErr) {
+            console.warn('Supabase signOut error:', signOutErr);
+        }
+
+        // 4. Clean redirect: strip any ?autologin=1 or ?admin=1 from the URL bar!
+        const cleanUrl = window.location.origin + window.location.pathname;
+        if (window.location.search || window.location.hash) {
+            window.location.replace(cleanUrl);
+        } else {
+            window.location.reload();
+        }
+    }
+
+    // Expose globally for instant inline triggering
+    window.performAppLogout = performAppLogout;
+
+    // Attach to Header logout button
+    if (btnLogout) {
+        btnLogout.onclick = (e) => {
+            e.preventDefault();
+            performAppLogout();
+        };
+    }
+
+    // Attach to Sidebar logout button
+    const btnLogoutSidebar = document.getElementById('btn-logout-sidebar');
+    if (btnLogoutSidebar) {
+        btnLogoutSidebar.onclick = (e) => {
+            e.preventDefault();
+            performAppLogout();
+        };
     }
 
     // Sidebar toggle for mobile
@@ -6902,7 +9157,11 @@ async function startApp() {
     }
 
     // Check auth status on load
+
     const isLocalLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
+
+    // Initialize Theme immediately
+    initTheme();
 
     if (isLocalLoggedIn) {
         if (loginScreen) loginScreen.classList.add('hidden');
