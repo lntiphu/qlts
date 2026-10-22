@@ -1998,8 +1998,8 @@ async function startApp() {
                             <span class="badge badge-blue">${item.userId}</span>
                             ${statusBadgeHtml}
                             ${item.userDisabled 
-                                ? `<span class="badge badge-danger" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #ef4444;"></i> Offline</span>` 
-                                : `<span class="badge badge-success" style="margin-left: 4px; font-size: 11px; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Online</span>`}
+                                ? `<span class="badge badge-danger btn-toggle-user-status" data-index="${originalIndex}" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="Tài khoản đã vô hiệu hóa (Bấm để kích hoạt lại Online)"><i class="fa-solid fa-circle" style="font-size: 7px; color: #ef4444;"></i> Offline</span>` 
+                                : `<span class="badge badge-success btn-toggle-user-status" data-index="${originalIndex}" style="margin-left: 4px; font-size: 11px; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="Tài khoản đang hoạt động (Bấm để vô hiệu hóa / Offboard)"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Online</span>`}
                         </span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
@@ -2077,11 +2077,9 @@ async function startApp() {
                             ` : ''}
                         </div>
                         <div class="actions-row">
-                            ${item.hasDevice || item.devId || item.devCpu || item.userDisabled ? `
-                                <button class="btn-icon-only btn-offboard-thietbi" data-index="${originalIndex}" title="Quy trình thu hồi thiết bị nghỉ việc (Offboarding)" style="background: ${item.userDisabled ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.12)'}; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35);">
-                                    <i class="fa-solid fa-user-xmark"></i>
-                                </button>
-                            ` : ''}
+                            <button class="btn-icon-only btn-offboard-thietbi" data-index="${originalIndex}" title="${item.userDisabled ? 'Nhân sự đã vô hiệu hóa (Bấm để xem hoặc kích hoạt lại)' : 'Quy trình vô hiệu hóa tài khoản / Nghỉ việc (Offboarding)'}" style="background: ${item.userDisabled ? 'rgba(239, 68, 68, 0.25)' : 'rgba(239, 68, 68, 0.12)'}; color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.35);">
+                                <i class="fa-solid fa-user-xmark"></i>
+                            </button>
                             <button class="btn-icon-only btn-troubleshoot-row-thietbi" data-index="${originalIndex}" title="Xem danh sách các lỗi thường gặp & Cách fix" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">
                                 <i class="fa-solid fa-wrench"></i>
                             </button>
@@ -2140,6 +2138,22 @@ async function startApp() {
                 e.stopPropagation();
                 const idx = parseInt(this.getAttribute('data-index'));
                 openOffboardModal(idx);
+            });
+        });
+
+        document.querySelectorAll('.btn-toggle-user-status').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const idx = parseInt(this.getAttribute('data-index'));
+                const it = thietBiList[idx];
+                if (!it) return;
+                if (it.userDisabled) {
+                    if (confirm(`Bạn có muốn mở khóa / kích hoạt lại tài khoản (Online) cho nhân sự "${it.userName}" không?`)) {
+                        reEnableUser(idx);
+                    }
+                } else {
+                    openOffboardModal(idx);
+                }
             });
         });
         document.querySelectorAll('.btn-edit-thietbi').forEach(btn => {
@@ -2303,7 +2317,9 @@ async function startApp() {
         const data = {
             devAllocation: devAllocVal,
             hasDevice: hasDevice,
-            userDisabled: (indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false,
+            userDisabled: document.getElementById('user-status-select') 
+                ? (document.getElementById('user-status-select').value === 'disabled')
+                : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false),
             userId: userIdInput.value.trim(),
             userName: document.getElementById('user-name').value.trim(),
             userTitle: document.getElementById('user-title').value.trim(),
@@ -2571,6 +2587,7 @@ async function startApp() {
         document.getElementById('user-phone').value = item.userPhone || '';
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
+        if (document.getElementById('user-status-select')) document.getElementById('user-status-select').value = item.userDisabled ? 'disabled' : 'active';
         const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
         const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
@@ -2723,6 +2740,9 @@ async function startApp() {
         }
         formCapPhat.reset();
         resetTroubleshootForm();
+        if (document.getElementById('user-status-select')) {
+            document.getElementById('user-status-select').value = 'active';
+        }
         const devAllocYes = document.getElementById('dev-alloc-yes');
         if (devAllocYes) {
             devAllocYes.checked = true;
@@ -4477,13 +4497,54 @@ async function startApp() {
         const userLabel = document.getElementById('offboard-user-name');
         const deptLabel = document.getElementById('offboard-user-dept');
         const checklistContainer = document.getElementById('offboard-checklist-items');
+        const conditionContainer = document.getElementById('offboard-device-condition-container');
         const conditionSelect = document.getElementById('offboard-device-condition');
         const notesInput = document.getElementById('offboard-notes');
+        const modalTitle = modal.querySelector('.backup-modal-title');
+        const btnConfirm = document.getElementById('btn-confirm-offboard');
+        const btnConfirmText = document.getElementById('btn-confirm-offboard-text');
+        const btnConfirmIcon = document.getElementById('btn-confirm-offboard-icon');
+        const btnReEnable = document.getElementById('btn-re-enable-offboard');
+
+        const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu;
 
         if (userLabel) userLabel.innerText = `${item.userName} (Mã NV: ${item.userId})`;
-        if (deptLabel) deptLabel.innerText = `Phòng ban: ${item.userDept || '—'} | Chức danh: ${item.userTitle || '—'}`;
+        if (deptLabel) deptLabel.innerText = `Phòng ban: ${item.userDept || '—'} | Chức danh: ${item.userTitle || '—'} | Trạng thái: ${item.userDisabled ? '🔴 Đã vô hiệu hóa (Offline)' : '🟢 Đang hoạt động (Online)'}`;
+
+        if (modalTitle) {
+            if (item.userDisabled) {
+                modalTitle.innerHTML = `<i class="fa-solid fa-user-lock"></i> Chi Tiết Hồ Sơ Vô Hiệu Hóa / Nghỉ Việc`;
+            } else if (hadDevice) {
+                modalTitle.innerHTML = `<i class="fa-solid fa-user-xmark"></i> Quy Trình Thu Hồi Thiết Bị (Offboarding)`;
+            } else {
+                modalTitle.innerHTML = `<i class="fa-solid fa-user-xmark"></i> Quy Trình Vô Hiệu Hóa Tài Khoản (Thiết Bị Cá Nhân)`;
+            }
+        }
+
+        if (conditionContainer) {
+            conditionContainer.style.display = hadDevice ? 'grid' : 'none';
+        }
+
         if (conditionSelect) conditionSelect.value = 'Sẵn sàng cấp phát';
-        if (notesInput) notesInput.value = `Thu hồi đầy đủ thiết bị và phụ kiện khi nhân sự bàn giao nghỉ việc.`;
+        if (notesInput) {
+            notesInput.value = hadDevice 
+                ? `Thu hồi đầy đủ thiết bị và phụ kiện khi nhân sự bàn giao nghỉ việc.`
+                : `Nhân sự sử dụng thiết bị cá nhân - Đã thu hồi toàn bộ tài khoản và bàn giao công việc.`;
+        }
+
+        if (btnConfirm) {
+            btnConfirm.style.display = item.userDisabled ? 'none' : 'inline-flex';
+        }
+        if (btnConfirmText) {
+            btnConfirmText.innerText = hadDevice ? 'Xác Nhận Thu Hồi Về Kho' : 'Xác Nhận Vô Hiệu Hóa Tài Khoản';
+        }
+        if (btnConfirmIcon) {
+            btnConfirmIcon.className = hadDevice ? 'fa-solid fa-boxes-stacked' : 'fa-solid fa-user-xmark';
+        }
+
+        if (btnReEnable) {
+            btnReEnable.style.display = item.userDisabled ? 'inline-flex' : 'none';
+        }
 
         const itemsToRecover = [];
         if (item.devId || item.devCpu || item.devRam) {
@@ -4521,6 +4582,13 @@ async function startApp() {
                 checked: true
             });
         }
+        if (!hadDevice) {
+            itemsToRecover.push({
+                id: 'chk-personal-dev',
+                label: `Thiết bị làm việc: Nhân sự sử dụng thiết bị cá nhân (Không có tài sản công ty cần thu hồi)`,
+                checked: true
+            });
+        }
         itemsToRecover.push({
             id: 'chk-account',
             label: `Tài khoản & Phân quyền: Đã thu hồi Email/ERP/VPN và đổi mật khẩu truy cập`,
@@ -4535,13 +4603,49 @@ async function startApp() {
         if (checklistContainer) {
             checklistContainer.innerHTML = itemsToRecover.map(it => `
                 <label class="offboard-chk-row">
-                    <input type="checkbox" id="${it.id}" ${it.checked ? 'checked' : ''}>
+                    <input type="checkbox" id="${it.id}" ${it.checked ? 'checked' : ''} ${item.userDisabled ? 'disabled' : ''}>
                     <span style="color: var(--text-primary); font-size: 13px;">${it.label}</span>
                 </label>
             `).join('');
         }
 
         modal.classList.remove('hidden');
+    }
+
+    async function reEnableUser(index) {
+        if (index === null || index === undefined) return;
+        const item = thietBiList[index];
+        if (!item) return;
+
+        item.userDisabled = false;
+        const now = new Date();
+        const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        if (!Array.isArray(item.history)) item.history = [];
+        item.history.push({
+            time: formattedDate,
+            action: 'Kích hoạt lại tài khoản',
+            details: `Đã mở khóa / kích hoạt lại tài khoản nhân sự hoạt động bình thường (Online).`
+        });
+        item.updatedAt = formattedDate;
+
+        saveToLocalStorageFallback('thiet_bi', thietBiList);
+        try {
+            if (supabaseClient && item.id && !item.id.toString().startsWith('local-')) {
+                const dbData = mappers.thietBi.toDB(item);
+                await supabaseClient.from('thiet_bi').update(dbData).eq('id', item.id);
+            }
+        } catch (e) {
+            console.warn('User update error:', e);
+        }
+
+        const modal = document.getElementById('modal-offboarding-checklist');
+        if (modal) modal.classList.add('hidden');
+
+        renderThietBi();
+        renderDashboard();
+
+        showToast('Kích hoạt thành công', `Đã mở khóa và kích hoạt lại tài khoản cho ${item.userName} (Online)!`, 'success');
     }
 
     async function confirmOffboarding() {
@@ -4648,17 +4752,31 @@ async function startApp() {
         if (typeof renderKhoThietBi === 'function') renderKhoThietBi();
         renderDashboard();
 
-        showToast('Thu hồi thành công', `Đã hoàn tất quy trình offboarding cho ${item.userName}${hadDevice ? ' và nhập thiết bị về Kho!' : '!'}`, 'success');
+        showToast(
+            hadDevice ? 'Thu hồi thành công' : 'Vô hiệu hóa thành công',
+            hadDevice 
+                ? `Đã hoàn tất quy trình offboarding cho ${item.userName} và nhập thiết bị về Kho!`
+                : `Đã vô hiệu hóa tài khoản cho nhân sự ${item.userName}!`,
+            'success'
+        );
     }
 
     const modalOffboard = document.getElementById('modal-offboarding-checklist');
     const btnCloseOffboardModal = document.getElementById('btn-close-offboarding-modal');
     const btnCancelOffboardModal = document.getElementById('btn-cancel-offboard-modal');
     const btnConfirmOffboard = document.getElementById('btn-confirm-offboard');
+    const btnReEnableOffboard = document.getElementById('btn-re-enable-offboard');
 
     if (btnCloseOffboardModal) btnCloseOffboardModal.addEventListener('click', () => modalOffboard?.classList.add('hidden'));
     if (btnCancelOffboardModal) btnCancelOffboardModal.addEventListener('click', () => modalOffboard?.classList.add('hidden'));
     if (btnConfirmOffboard) btnConfirmOffboard.addEventListener('click', confirmOffboarding);
+    if (btnReEnableOffboard) {
+        btnReEnableOffboard.addEventListener('click', () => {
+            if (currentOffboardIndex !== null) {
+                reEnableUser(currentOffboardIndex);
+            }
+        });
+    }
     if (modalOffboard) {
         modalOffboard.addEventListener('click', (e) => {
             if (e.target === modalOffboard) modalOffboard.classList.add('hidden');
