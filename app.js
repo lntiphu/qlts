@@ -1398,6 +1398,147 @@ async function startApp() {
         return getItemCreatedTimestamp(item);
     }
 
+    function renderRecentActivity(filterText) {
+        const elRecentActivity = document.getElementById('dash-recent-activity');
+        if (!elRecentActivity) return;
+
+        const searchInput = document.getElementById('search-recent-activity');
+        const clearBtn = document.getElementById('btn-clear-recent-activity');
+        const query = (typeof filterText === 'string' ? filterText : (searchInput ? searchInput.value : '')).trim();
+
+        if (clearBtn) {
+            clearBtn.style.display = query ? 'block' : 'none';
+        }
+
+        elRecentActivity.innerHTML = '';
+        let allLogs = [];
+
+        function parseLogTime(timeStr) {
+            if (!timeStr) return 0;
+            const match = String(timeStr).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+lúc\s+(\d{1,2}):(\d{1,2}))?/);
+            if (match) {
+                const day = parseInt(match[1]);
+                const month = parseInt(match[2]) - 1;
+                const year = parseInt(match[3]);
+                const hour = match[4] ? parseInt(match[4]) : 0;
+                const min = match[5] ? parseInt(match[5]) : 0;
+                return new Date(year, month, day, hour, min).getTime();
+            }
+            return 0;
+        }
+
+        thietBiList.forEach(item => {
+            if (item.history && item.history.length > 0) {
+                item.history.forEach(log => {
+                    allLogs.push({
+                        userName: item.userName || 'Chưa đặt tên',
+                        userId: item.userId || '',
+                        userDept: item.userDept || '',
+                        devId: item.devId || '',
+                        devName: item.devName || '',
+                        time: log.time || '',
+                        action: log.action || '',
+                        details: log.details || '',
+                        timestamp: parseLogTime(log.time)
+                    });
+                });
+            }
+        });
+
+        // Sắp xếp các nhật ký mới nhất theo thời gian (giảm dần)
+        allLogs.sort((a, b) => b.timestamp - a.timestamp);
+
+        if (allLogs.length === 0) {
+            elRecentActivity.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic; text-align: center; padding: 20px 0;">Chưa có hoạt động cập nhật</div>';
+            return;
+        }
+
+        let displayLogs = allLogs;
+        if (query) {
+            const removeVietnameseTones = (str) => {
+                if (!str) return '';
+                return String(str)
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[đĐ]/g, 'd')
+                    .toLowerCase();
+            };
+
+            const keywords = query.toLowerCase().split(/\s+/).filter(Boolean);
+            displayLogs = allLogs.filter(log => {
+                const plainDetails = (log.details || '').replace(/<[^>]*>/g, ' ');
+                const fullText = `${log.userName} ${log.userId} ${log.userDept} ${log.devId} ${log.devName} ${log.action} ${log.time} ${plainDetails}`.toLowerCase();
+                const fullTextNoTone = removeVietnameseTones(fullText);
+
+                return keywords.every(kw => {
+                    const kwNoTone = removeVietnameseTones(kw);
+                    return fullText.includes(kw) || fullTextNoTone.includes(kwNoTone);
+                });
+            });
+        } else {
+            // Mặc định hiển thị 8 hoạt động mới nhất
+            displayLogs = allLogs.slice(0, 8);
+        }
+
+        if (displayLogs.length === 0) {
+            elRecentActivity.innerHTML = `
+                <div class="text-muted" style="font-size: 13px; font-style: italic; text-align: center; padding: 24px 10px;">
+                    <i class="fa-solid fa-magnifying-glass" style="font-size: 20px; opacity: 0.35; margin-bottom: 8px; display: block;"></i>
+                    Không tìm thấy lịch sử phù hợp với "<strong>${query.replace(/"/g, '&quot;')}</strong>"
+                </div>
+            `;
+            return;
+        }
+
+        if (query) {
+            const countDiv = document.createElement('div');
+            countDiv.style.cssText = 'font-size: 11.5px; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center; padding: 0 4px 4px 4px;';
+            countDiv.innerHTML = `
+                <span>Kết quả tìm kiếm: <strong style="color: var(--brand-green);">${displayLogs.length}</strong> nhật ký</span>
+                <span style="font-size: 11px; opacity: 0.8;">Esc hoặc ✕ để xóa</span>
+            `;
+            elRecentActivity.appendChild(countDiv);
+        }
+
+        displayLogs.forEach(log => {
+            const div = document.createElement('div');
+            div.style.cssText = 'padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; font-size: 12px; transition: all 0.2s ease; cursor: pointer;';
+            div.title = 'Click để xem nhân sự / thiết bị này';
+            
+            div.onmouseenter = () => {
+                div.style.background = 'rgba(255, 255, 255, 0.06)';
+                div.style.borderColor = 'rgba(123, 202, 15, 0.3)';
+                div.style.transform = 'translateX(2px)';
+            };
+            div.onmouseleave = () => {
+                div.style.background = 'rgba(255, 255, 255, 0.03)';
+                div.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                div.style.transform = 'translateX(0)';
+            };
+
+            div.addEventListener('click', () => {
+                if (window.getSelection && window.getSelection().toString().trim().length > 0) return;
+                
+                switchToTab('tab-cap-phat-list');
+                const searchInputEl = document.getElementById('search-thiet-bi');
+                if (searchInputEl) {
+                    searchInputEl.value = log.userId || log.userName;
+                    currentPageThietBi = 1;
+                    renderThietBi(searchInputEl.value.trim());
+                }
+            });
+
+            div.innerHTML = `
+                <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; gap: 8px;">
+                    <span>${log.userName} (${log.userId}) - <span style="color: var(--primary-color);">${log.action}</span></span>
+                    <span style="font-weight: 400; color: var(--text-secondary); font-size: 11px; white-space: nowrap;">${log.time}</span>
+                </div>
+                <div style="color: var(--text-secondary); line-height: 1.4;">${log.details}</div>
+            `;
+            elRecentActivity.appendChild(div);
+        });
+    }
+
     function renderDashboard() {
         const totalUsers = thietBiList.length;
         const onlineUsers = thietBiList.filter(item => !item.userDisabled).length;
@@ -1606,60 +1747,7 @@ async function startApp() {
         }
 
         // 4. Recent Activity Log Feed (Sorted Chronologically: Newest First)
-        const elRecentActivity = document.getElementById('dash-recent-activity');
-        if (elRecentActivity) {
-            elRecentActivity.innerHTML = '';
-            let allLogs = [];
-
-            function parseLogTime(timeStr) {
-                if (!timeStr) return 0;
-                const match = String(timeStr).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+lúc\s+(\d{1,2}):(\d{1,2}))?/);
-                if (match) {
-                    const day = parseInt(match[1]);
-                    const month = parseInt(match[2]) - 1;
-                    const year = parseInt(match[3]);
-                    const hour = match[4] ? parseInt(match[4]) : 0;
-                    const min = match[5] ? parseInt(match[5]) : 0;
-                    return new Date(year, month, day, hour, min).getTime();
-                }
-                return 0;
-            }
-
-            thietBiList.forEach(item => {
-                if (item.history && item.history.length > 0) {
-                    item.history.forEach(log => {
-                        allLogs.push({
-                            userName: item.userName,
-                            userId: item.userId,
-                            time: log.time,
-                            action: log.action,
-                            details: log.details,
-                            timestamp: parseLogTime(log.time)
-                        });
-                    });
-                }
-            });
-
-            // Sắp xếp các nhật ký mới nhất theo thời gian (giảm dần)
-            allLogs.sort((a, b) => b.timestamp - a.timestamp);
-
-            if (allLogs.length === 0) {
-                elRecentActivity.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Chưa có hoạt động cập nhật</div>';
-            } else {
-                allLogs.slice(0, 8).forEach(log => {
-                    const div = document.createElement('div');
-                    div.style.cssText = 'padding: 10px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 8px; font-size: 12px;';
-                    div.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; font-weight: 600; color: var(--text-primary); margin-bottom: 3px;">
-                            <span>${log.userName} (${log.userId}) - <span style="color: var(--primary-color);">${log.action}</span></span>
-                            <span style="font-weight: 400; color: var(--text-secondary); font-size: 11px;">${log.time}</span>
-                        </div>
-                        <div style="color: var(--text-secondary); line-height: 1.4;">${log.details}</div>
-                    `;
-                    elRecentActivity.appendChild(div);
-                });
-            }
-        }
+        renderRecentActivity();
 
         // 5. License Expiry Alerts Summary (Sorted by Soonest Expiry Date)
         const elLicenseAlerts = document.getElementById('dash-license-alerts');
@@ -3871,6 +3959,30 @@ async function startApp() {
 
     const cardDashKho = document.getElementById('card-dash-kho');
     if (cardDashKho) cardDashKho.addEventListener('click', () => switchToTab('tab-kho-thiet-bi'));
+
+    // Tìm kiếm lịch sử hoạt động gần đây trên Dashboard
+    const searchRecentActivity = document.getElementById('search-recent-activity');
+    const btnClearRecentActivity = document.getElementById('btn-clear-recent-activity');
+
+    if (searchRecentActivity) {
+        searchRecentActivity.addEventListener('input', (e) => {
+            renderRecentActivity(e.target.value);
+        });
+        searchRecentActivity.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchRecentActivity.value = '';
+                renderRecentActivity('');
+            }
+        });
+    }
+
+    if (btnClearRecentActivity && searchRecentActivity) {
+        btnClearRecentActivity.addEventListener('click', () => {
+            searchRecentActivity.value = '';
+            renderRecentActivity('');
+            searchRecentActivity.focus();
+        });
+    }
 
     // Thêm thông tin Modal Popup & Actions
     function openAddInfoAction(action) {
