@@ -298,6 +298,10 @@
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Gia hạn bản quyền</span>
                 </button>
+                <button class="menu-item" data-tab="tab-phan-quyen" id="menu-item-phan-quyen">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <span>Phân quyền User</span>
+                </button>
                 
                 <div style="padding: 0 16px; margin-top: auto; margin-bottom: 8px; width: 100%;">
                     <button type="button" class="menu-item btn-logout-sidebar" id="btn-logout-sidebar" onclick="triggerAppLogout(event)" style="color: #ef4444; width: 100%; border: 1px solid rgba(239, 68, 68, 0.25); background: rgba(239, 68, 68, 0.08); padding: 8px 14px; border-radius: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s ease; margin: 0;">
@@ -306,7 +310,7 @@
                     </button>
                 </div>
 
-                <div style="display: flex; gap: 8px; margin-bottom: 12px; width: 100%; padding: 0 16px;">
+                <div id="sidebar-export-import-box" style="display: flex; gap: 8px; margin-bottom: 12px; width: 100%; padding: 0 16px;">
                     <button class="menu-item" id="btn-export-db" style="flex: 1; margin: 0; color: #ffffff; background: linear-gradient(135deg, rgba(37, 51, 141, 0.5), rgba(37, 51, 141, 0.25)); border: 1px solid rgba(43, 57, 144, 0.6); justify-content: center; gap: 5px; padding: 7px 0; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s ease;">
                         <i class="fa-solid fa-file-export" style="font-size: 11px; color: #93c5fd;"></i>
                         <span>Export</span>
@@ -350,15 +354,15 @@
                         <i class="fa-solid fa-moon"></i>
                     </button>
 
-                    <!-- Profile Admin -->
-                    <div class="user-profile" style="display: flex; align-items: center; gap: 10px; background: rgba(37, 51, 141, 0.2); padding: 4px 6px 4px 12px; border-radius: 30px; border: 1px solid rgba(123, 202, 15, 0.3); user-select: none;">
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <div style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #7bca0f, #25338d); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; box-shadow: 0 2px 6px rgba(37, 51, 141, 0.4);">
-                                <i class="fa-solid fa-user-shield"></i>
+                    <!-- Profile User & Role -->
+                    <div class="user-profile" id="header-user-profile" style="display: flex; align-items: center; gap: 10px; background: rgba(37, 51, 141, 0.2); padding: 4px 6px 4px 12px; border-radius: 30px; border: 1px solid rgba(123, 202, 15, 0.3); user-select: none;">
+                        <div id="header-user-info-clickable" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="Thông tin tài khoản & quyền hạn hiện tại">
+                            <div id="header-user-avatar" style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #7bca0f, #25338d); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; box-shadow: 0 2px 6px rgba(37, 51, 141, 0.4);">
+                                <i class="fa-solid fa-user-shield" id="header-user-avatar-icon"></i>
                             </div>
                             <div style="display: flex; flex-direction: column;">
-                                <span class="user-name" style="font-size: 12px; font-weight: 600; color: var(--text-primary); line-height: 1.2;">Admin</span>
-                                <span style="font-size: 10px; color: var(--text-secondary); line-height: 1.1;">ERAS Quản trị</span>
+                                <span class="user-name" id="header-user-name" style="font-size: 12px; font-weight: 600; color: var(--text-primary); line-height: 1.2;">Admin</span>
+                                <span id="header-user-role" style="font-size: 10px; color: #7bca0f; font-weight: 600; line-height: 1.1;">Quản trị viên</span>
                             </div>
                         </div>
                         <button id="btn-logout-header" class="btn-logout-icon" onclick="triggerAppLogout(event)" title="Đăng xuất khỏi hệ thống" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin-left: 2px;">
@@ -1985,6 +1989,324 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- 8. TAB PHÂN QUYỀN USER (CHỈ ADMIN THẤY) -->
+                <section id="tab-phan-quyen" class="tab-content">
+                    <!-- Top Summary & Default Policy Bar -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Tổng số Tài khoản</span>
+                                    <h3 id="rbac-stat-total" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Quản trị viên (Admin)</span>
+                                    <h3 id="rbac-stat-admin" style="font-size: 24px; font-weight: 700; color: #7bca0f; margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(123, 202, 15, 0.15); color: #7bca0f; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Quản lý / Kỹ thuật</span>
+                                    <h3 id="rbac-stat-editor" style="font-size: 24px; font-weight: 700; color: #38bdf8; margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-user-gear"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Chỉ xem (Viewer)</span>
+                                    <h3 id="rbac-stat-viewer" style="font-size: 24px; font-weight: 700; color: #c084fc; margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(168, 85, 247, 0.15); color: #c084fc; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-eye"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Thêm / Chỉnh sửa Phân quyền User -->
+                    <div class="card form-card" id="form-card-phan-quyen" style="display: none; margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); flex-wrap: wrap; gap: 10px;">
+                            <h3 class="section-title text-primary" id="title-form-phan-quyen" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-user-lock"></i> Thiết Lập Tài Khoản & Phân Quyền Truy Cập
+                            </h3>
+                            <button type="button" class="btn btn-secondary btn-sm" id="btn-back-to-rbac-table" style="font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-arrow-left"></i> Quay lại Danh sách User
+                            </button>
+                        </div>
+
+                        <form id="form-phan-quyen" autocomplete="off">
+                            <input type="hidden" id="edit-index-phan-quyen" value="">
+
+                            <!-- 1. Thông tin định danh tài khoản -->
+                            <div style="background: rgba(37, 51, 141, 0.12); border: 1px solid rgba(43, 57, 144, 0.35); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <h4 style="font-size: 13.5px; font-weight: 700; color: #93c5fd; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-id-card"></i> 1. Thông Tin Tài Khoản Đăng Nhập
+                                </h4>
+                                <div class="grid grid-col-6" style="gap: 12px;">
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="rbac-user-email">Email / Tên đăng nhập (*)</label>
+                                        <input type="text" id="rbac-user-email" required placeholder="VD: nhanvien@erasgroup.vn hoặc nhanvien">
+                                        <span style="font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block;">Nếu nhập tên không có @, hệ thống tự hiểu @erasgroup.vn</span>
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="rbac-user-name">Họ và tên / Chức danh hiển thị (*)</label>
+                                        <input type="text" id="rbac-user-name" required placeholder="VD: Nguyễn Văn A - Kỹ thuật IT">
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="rbac-user-password">Mật khẩu đăng nhập (Tùy chọn)</label>
+                                        <div class="password-input-wrapper">
+                                            <input type="password" id="rbac-user-password" placeholder="Nhập nếu tạo mới hoặc đổi mật khẩu...">
+                                            <button type="button" class="btn-toggle-password" id="btn-toggle-rbac-pass" tabindex="-1">
+                                                <i class="fa-regular fa-eye"></i>
+                                            </button>
+                                        </div>
+                                        <span style="font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block;">Để trống nếu chỉ phân quyền cho Email đã có trên Supabase</span>
+                                    </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="rbac-user-status">Trạng thái truy cập</label>
+                                        <select id="rbac-user-status">
+                                            <option value="active" selected>🟢 Đang hoạt động (Cho phép Login)</option>
+                                            <option value="locked">🔴 Tạm khóa (Chặn đăng nhập)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group col-span-4-lg">
+                                        <label for="rbac-user-notes">Ghi chú (Phòng ban / Phạm vi phụ trách)</label>
+                                        <input type="text" id="rbac-user-notes" placeholder="VD: Phòng Kế toán - Chỉ xem danh sách tài sản và kho...">
+                                    </div>
+                                </div>
+                                <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
+                                    <input type="checkbox" id="rbac-sync-supabase-auth" checked style="width: 16px; height: 16px; accent-color: #7bca0f; cursor: pointer;">
+                                    <label for="rbac-sync-supabase-auth" style="font-size: 12.5px; color: var(--text-secondary); cursor: pointer; margin: 0;">
+                                        Đồng thời đăng ký tài khoản lên <strong>Supabase Auth</strong> nếu có nhập mật khẩu mới (Hỗ trợ đăng nhập cả Online & Nội bộ)
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 2. Chọn Vai trò (Role Preset) -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-user-tag" style="color: var(--brand-green);"></i> 2. Chọn Vai Trò Chính (Role)
+                                </h4>
+                                <input type="hidden" id="rbac-selected-role" value="viewer">
+                                <div class="rbac-role-cards-grid">
+                                    <!-- Role 1: Admin -->
+                                    <div class="rbac-role-card" data-role="admin" id="rbac-card-admin">
+                                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <span style="font-weight: 700; font-size: 14px; color: #7bca0f; display: flex; align-items: center; gap: 7px;">
+                                                <i class="fa-solid fa-user-shield"></i> Quản trị viên (Admin)
+                                            </span>
+                                            <i class="fa-solid fa-circle-check rbac-role-check" style="color: #7bca0f; display: none;"></i>
+                                        </div>
+                                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+                                            Toàn quyền hệ thống: Truy cập mọi Tab, Thêm, Sửa, Xóa, Export/Import dữ liệu và Quản lý phân quyền User.
+                                        </p>
+                                    </div>
+
+                                    <!-- Role 2: Editor (Quản lý / Kỹ thuật) -->
+                                    <div class="rbac-role-card" data-role="editor" id="rbac-card-editor">
+                                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <span style="font-weight: 700; font-size: 14px; color: #38bdf8; display: flex; align-items: center; gap: 7px;">
+                                                <i class="fa-solid fa-user-gear"></i> Quản lý / Kỹ thuật (Editor)
+                                            </span>
+                                            <i class="fa-solid fa-circle-check rbac-role-check" style="color: #38bdf8; display: none;"></i>
+                                        </div>
+                                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+                                            Được phép Xem, Thêm mới, Chỉnh sửa, Cấp phát & Thu hồi thiết bị trên các Tab được cấp. Mặc định không xóa dữ liệu.
+                                        </p>
+                                    </div>
+
+                                    <!-- Role 3: Viewer (Chỉ xem) -->
+                                    <div class="rbac-role-card active-role-viewer" data-role="viewer" id="rbac-card-viewer">
+                                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <span style="font-weight: 700; font-size: 14px; color: #c084fc; display: flex; align-items: center; gap: 7px;">
+                                                <i class="fa-solid fa-eye"></i> Chỉ xem (Viewer)
+                                            </span>
+                                            <i class="fa-solid fa-circle-check rbac-role-check" style="color: #c084fc;"></i>
+                                        </div>
+                                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0; line-height: 1.45;">
+                                            Chỉ được xem và tra cứu thông tin, xuất phiếu/in QR ở các Tab được cấp. Ẩn toàn bộ nút Thêm, Sửa, Xóa, Thu hồi.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 3. Tùy chỉnh Quyền thao tác (Actions) -->
+                            <div style="margin-bottom: 20px;">
+                                <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
+                                    <i class="fa-solid fa-sliders" style="color: #f59e0b;"></i> 3. Tùy Chỉnh Quyền Thao Tác Chi Tiết (Thêm / Sửa / Xóa)
+                                </h4>
+                                <div class="rbac-check-grid">
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" id="rbac-act-add">
+                                        <div>
+                                            <div style="font-weight: 600; color: #4ade80;"><i class="fa-solid fa-plus-circle"></i> Quyền Thêm mới</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Thêm cấp phát, thiết bị kho, dữ liệu mới</div>
+                                        </div>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" id="rbac-act-edit">
+                                        <div>
+                                            <div style="font-weight: 600; color: #38bdf8;"><i class="fa-solid fa-pen-to-square"></i> Quyền Chỉnh sửa & Cấp phát</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Sửa thông tin, chuyển máy, thu hồi, bảo trì</div>
+                                        </div>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" id="rbac-act-delete">
+                                        <div>
+                                            <div style="font-weight: 600; color: #ef4444;"><i class="fa-solid fa-trash-can"></i> Quyền Xóa dữ liệu</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Xóa bản ghi trong các bảng dữ liệu</div>
+                                        </div>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" id="rbac-act-export">
+                                        <div>
+                                            <div style="font-weight: 600; color: #fbbf24;"><i class="fa-solid fa-database"></i> Quyền Export / Import DB</div>
+                                            <div style="font-size: 11px; color: var(--text-muted);">Sao lưu & Khôi phục toàn bộ dữ liệu</div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 4. Tùy chỉnh Ẩn / Hiện từng Tab trên thanh Menu -->
+                            <div style="margin-bottom: 22px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                                    <h4 style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-table-columns" style="color: #06b6d4;"></i> 4. Phân Quyền Các Tab Được Phép Xem Trên Menu
+                                    </h4>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-rbac-select-all-tabs" style="padding: 4px 10px; font-size: 11.5px;">
+                                            <i class="fa-solid fa-check-double"></i> Chọn tất cả Tab
+                                        </button>
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-rbac-select-basic-tabs" style="padding: 4px 10px; font-size: 11.5px;">
+                                            <i class="fa-solid fa-filter"></i> Chỉ Tab cơ bản (Ẩn Account & Camera)
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="rbac-check-grid" id="rbac-tabs-checkbox-container">
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-trang-chu" checked>
+                                        <span><i class="fa-solid fa-chart-pie" style="color: #7bca0f; width: 18px;"></i> Trang chủ (Dashboard)</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-cap-phat-list" checked>
+                                        <span><i class="fa-solid fa-users" style="color: #38bdf8; width: 18px;"></i> Danh sách cấp phát nhân sự</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-kho-thiet-bi" checked>
+                                        <span><i class="fa-solid fa-boxes-stacked" style="color: #06b6d4; width: 18px;"></i> Kho thiết bị</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-cong-ty" checked>
+                                        <span><i class="fa-solid fa-building" style="color: #a855f7; width: 18px;"></i> Thông tin công ty</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-account">
+                                        <span><i class="fa-solid fa-user-shield" style="color: #ef4444; width: 18px;"></i> Tài khoản (Account)</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-ho-tro" checked>
+                                        <span><i class="fa-solid fa-headset" style="color: #22c55e; width: 18px;"></i> Trang hỗ trợ</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-camera">
+                                        <span><i class="fa-solid fa-video" style="color: #f59e0b; width: 18px;"></i> Thông tin camera</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-tips" checked>
+                                        <span><i class="fa-solid fa-lightbulb" style="color: #eab308; width: 18px;"></i> Tip & Trick</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-gia-han">
+                                        <span><i class="fa-solid fa-calendar-check" style="color: #fb7185; width: 18px;"></i> Gia hạn bản quyền</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-actions" style="display: flex; gap: 10px; align-items: center;">
+                                <button type="submit" class="btn btn-primary" id="btn-save-phan-quyen" style="padding: 9px 22px; font-weight: 700;">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Phân Quyền User
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btn-cancel-phan-quyen">
+                                    Hủy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bảng Danh Sách User & Phân Quyền -->
+                    <div class="card table-card" id="table-card-phan-quyen">
+                        <div class="table-header" style="flex-wrap: wrap; gap: 14px;">
+                            <div>
+                                <h3 class="table-title" style="margin-bottom: 4px;"><i class="fa-solid fa-users-gear"></i> Danh Sách Tài Khoản & Phân Quyền Hệ Thống</h3>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Quản lý quyền truy cập các Tab và thao tác Thêm / Sửa / Xóa cho từng User khi đăng nhập</p>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); padding: 5px 10px; border-radius: 8px; font-size: 12px;" title="Quyền tự động áp dụng khi một Email trên Supabase đăng nhập lần đầu mà chưa có trong danh sách bên dưới">
+                                    <span style="color: var(--text-secondary); white-space: nowrap;"><i class="fa-solid fa-shield-halved" style="color: #7bca0f;"></i> Mặc định User mới:</span>
+                                    <select id="rbac-default-new-user-role" style="background: transparent; border: none; color: var(--text-primary); font-weight: 700; font-size: 12px; outline: none; cursor: pointer;">
+                                        <option value="viewer" style="background: #131929; color: #fff;">👁️ Chỉ xem (Viewer)</option>
+                                        <option value="editor" style="background: #131929; color: #fff;">🛠️ Quản lý / Kỹ thuật</option>
+                                        <option value="admin" style="background: #131929; color: #fff;">🛡️ Admin (Toàn quyền)</option>
+                                        <option value="block" style="background: #131929; color: #ef4444;">🚫 Chặn nếu chưa cấp quyền</option>
+                                    </select>
+                                </div>
+
+                                <select id="filter-role-phan-quyen" class="filter-select" style="max-width: 170px; padding: 6px 10px; font-size: 12.5px;">
+                                    <option value="">-- Tất cả vai trò --</option>
+                                    <option value="admin">🛡️ Quản trị viên (Admin)</option>
+                                    <option value="editor">🛠️ Quản lý / Kỹ thuật</option>
+                                    <option value="viewer">👁️ Chỉ xem (Viewer)</option>
+                                </select>
+
+                                <div class="search-box" style="width: 230px;">
+                                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                    <input type="text" id="search-phan-quyen" placeholder="Tìm Email, Họ tên, Ghi chú...">
+                                </div>
+
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-open-add-phan-quyen" style="font-weight: 600; padding: 7px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="fa-solid fa-user-plus"></i> Thêm User / Phân Quyền
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-phan-quyen">
+                                <thead>
+                                    <tr>
+                                        <th style="min-width: 200px;">Tài khoản / Người dùng</th>
+                                        <th style="width: 165px;">Vai trò (Role)</th>
+                                        <th style="min-width: 220px;">Quyền thao tác</th>
+                                        <th style="min-width: 260px;">Các Tab được phép truy cập</th>
+                                        <th style="width: 130px;">Trạng thái</th>
+                                        <th class="text-center" style="width: 120px;">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-phan-quyen">
+                                    <tr class="empty-row">
+                                        <td colspan="6" class="text-center text-muted">Chưa có cấu hình phân quyền nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
                 
             </div>
         </main>
@@ -2386,6 +2708,17 @@
                         <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Mã thiết bị, Tên thiết bị, Lý do lưu kho</p>
                     </div>
                 </div>
+
+                <!-- Option 8: Phân quyền User (Chỉ Admin thấy) -->
+                <div class="option-add-card" id="option-add-phan-quyen" data-action="add-phan-quyen" style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.25); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                        <i class="fa-solid fa-users-gear"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 3px 0;">Thêm & Phân quyền User</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Tạo tài khoản và cấp quyền truy cập hệ thống</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2683,7 +3016,7 @@
                 </div>
 
                 <!-- Form Thêm Lượt Bảo Trì Mới -->
-                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
+                <div id="maint-form-add-box" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
                     <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
                         <i class="fa-solid fa-plus-circle" style="color: var(--brand-green);"></i> Ghi nhận lượt bảo trì / nâng cấp mới
                     </h4>
@@ -2923,6 +3256,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="qrcode-gen.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=36.0"></script>
+    <script src="app.js?v=37.0"></script>
 </body>
 </html>

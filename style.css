@@ -2083,3 +2083,213 @@ body.light-theme .autocomplete-suggestion-item:hover {
     border-color: rgba(123, 202, 15, 0.5) !important;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(123, 202, 15, 0.2) !important;
 }
+
+/* ==========================================================================
+   FEATURE: USER ROLE & PERMISSION MANAGEMENT (RBAC)
+   ========================================================================== */
+
+/* Role Preset Selection Cards */
+.rbac-role-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.rbac-role-card {
+    background: rgba(255, 255, 255, 0.025);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    position: relative;
+    user-select: none;
+}
+
+.rbac-role-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(123, 202, 15, 0.45);
+    transform: translateY(-1px);
+}
+
+.rbac-role-card.active-role-admin {
+    background: rgba(123, 202, 15, 0.1);
+    border-color: #7bca0f;
+    box-shadow: 0 0 0 3px rgba(123, 202, 15, 0.15);
+}
+
+.rbac-role-card.active-role-editor {
+    background: rgba(56, 189, 248, 0.1);
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.rbac-role-card.active-role-viewer {
+    background: rgba(168, 85, 247, 0.1);
+    border-color: #a855f7;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
+}
+
+/* Tab & Action Permission Checkboxes */
+.rbac-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 10px;
+}
+
+.rbac-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.rbac-check-item:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(123, 202, 15, 0.4);
+}
+
+.rbac-check-item input[type="checkbox"] {
+    width: 17px;
+    height: 17px;
+    accent-color: #7bca0f;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* Role Badges */
+.badge-role-admin {
+    background: rgba(123, 202, 15, 0.15);
+    color: #7bca0f;
+    border: 1px solid rgba(123, 202, 15, 0.35);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge-role-editor {
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.badge-role-viewer {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rbac-perm-pill {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Automatic UI Enforcement via Body Classes */
+body.perm-no-add #btn-toggle-add-info,
+body.perm-no-add #btn-open-add-kho,
+body.perm-no-add #btn-add-asset-type {
+    display: none !important;
+}
+
+body.perm-no-edit .btn-transfer-row-thietbi,
+body.perm-no-edit .btn-offboard-thietbi,
+body.perm-no-edit .btn-allocate-kho,
+body.perm-no-edit .btn-edit-kho,
+body.perm-no-edit .btn-edit-congty,
+body.perm-no-edit .btn-edit-account,
+body.perm-no-edit .btn-edit-hotro,
+body.perm-no-edit .btn-edit-camera,
+body.perm-no-edit .btn-edit-tips,
+body.perm-no-edit .btn-edit-giahan,
+body.perm-no-edit #btn-save-asset-prefix,
+body.perm-no-edit #btn-add-maint-record,
+body.perm-no-edit #maint-form-add-box {
+    display: none !important;
+}
+
+body.perm-no-edit .btn-edit-thietbi {
+    pointer-events: none !important;
+    cursor: default !important;
+    text-decoration: none !important;
+}
+
+body.perm-no-edit .btn-toggle-user-status {
+    pointer-events: none !important;
+    cursor: default !important;
+}
+
+body.perm-no-delete .btn-delete-thietbi,
+body.perm-no-delete .btn-delete-kho,
+body.perm-no-delete .btn-delete-congty,
+body.perm-no-delete .btn-delete-account,
+body.perm-no-delete .btn-delete-hotro,
+body.perm-no-delete .btn-delete-camera,
+body.perm-no-delete .btn-delete-tips,
+body.perm-no-delete .btn-delete-giahan,
+body.perm-no-delete .btn-delete-maint-record {
+    display: none !important;
+}
+
+body.perm-no-export #sidebar-export-import-box {
+    display: none !important;
+}
+
+/* Light Theme Support for RBAC */
+body.light-theme .rbac-role-card,
+body.light-theme .rbac-check-item {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+body.light-theme .rbac-role-card.active-role-admin {
+    background: rgba(123, 202, 15, 0.12) !important;
+    border-color: #7bca0f !important;
+}
+
+body.light-theme .rbac-role-card.active-role-editor {
+    background: rgba(14, 165, 233, 0.12) !important;
+    border-color: #0284c7 !important;
+}
+
+body.light-theme .rbac-role-card.active-role-viewer {
+    background: rgba(168, 85, 247, 0.12) !important;
+    border-color: #9333ea !important;
+}
+

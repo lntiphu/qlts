@@ -808,11 +808,105 @@ async function startApp() {
     };
 
     // -------------------------------------------------------------------------
-    // 2. DOM ELEMENTS & NAVIGATION
+    // 2. DOM ELEMENTS, RBAC PERMISSIONS CORE & NAVIGATION
     // -------------------------------------------------------------------------
     const menuItems = document.querySelectorAll('.menu-item');
     const tabContents = document.querySelectorAll('.tab-content');
     const pageTitle = document.getElementById('page-title');
+
+    // RBAC (Role-Based Access Control) State & Presets
+    const RBAC_STORAGE_KEY = 'eras_rbac_config';
+    const ALL_CONFIGURABLE_TABS = [
+        { id: 'tab-trang-chu', name: 'Trang chủ' },
+        { id: 'tab-cap-phat-list', name: 'Danh sách cấp phát' },
+        { id: 'tab-kho-thiet-bi', name: 'Kho thiết bị' },
+        { id: 'tab-cong-ty', name: 'Thông tin công ty' },
+        { id: 'tab-account', name: 'Tài khoản (Account)' },
+        { id: 'tab-ho-tro', name: 'Trang hỗ trợ' },
+        { id: 'tab-camera', name: 'Thông tin camera' },
+        { id: 'tab-tips', name: 'Tip & Trick' },
+        { id: 'tab-gia-han', name: 'Gia hạn bản quyền' }
+    ];
+
+    function getRolePresetPermissions(role) {
+        if (role === 'admin') {
+            return {
+                actions: { canAdd: true, canEdit: true, canDelete: true, canExportImport: true },
+                tabs: ALL_CONFIGURABLE_TABS.map(t => t.id)
+            };
+        } else if (role === 'editor') {
+            return {
+                actions: { canAdd: true, canEdit: true, canDelete: false, canExportImport: false },
+                tabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips', 'tab-gia-han']
+            };
+        } else {
+            return {
+                actions: { canAdd: false, canEdit: false, canDelete: false, canExportImport: false },
+                tabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips']
+            };
+        }
+    }
+
+    function normalizeUserEmail(raw) {
+        const clean = (raw || '').trim().toLowerCase();
+        if (!clean) return '';
+        return clean.includes('@') ? clean : `${clean}@erasgroup.vn`;
+    }
+
+    let rbacConfig = {
+        defaultRoleForNewUsers: 'viewer',
+        updatedAt: 0,
+        users: []
+    };
+
+    try {
+        const savedRbac = localStorage.getItem(RBAC_STORAGE_KEY);
+        if (savedRbac) {
+            const parsed = JSON.parse(savedRbac);
+            if (parsed && Array.isArray(parsed.users)) {
+                rbacConfig = parsed;
+            }
+        }
+    } catch (e) {
+        console.warn('Error loading initial RBAC config from localStorage:', e);
+    }
+
+    let currentUserPerm = null;
+
+    function hasActionPermission(actionKey) {
+        if (!currentUserPerm) return true;
+        if (currentUserPerm.role === 'admin') return true;
+        return !!(currentUserPerm.permissions && currentUserPerm.permissions.actions && currentUserPerm.permissions.actions[actionKey]);
+    }
+
+    function canAccessTab(tabId) {
+        if (!currentUserPerm) return true;
+        if (tabId === 'tab-phan-quyen') {
+            return currentUserPerm.role === 'admin';
+        }
+        if (currentUserPerm.role === 'admin') return true;
+        const allowedTabs = (currentUserPerm.permissions && Array.isArray(currentUserPerm.permissions.tabs))
+            ? currentUserPerm.permissions.tabs
+            : ['tab-trang-chu'];
+        if (tabId === 'tab-cap-phat-form') {
+            return allowedTabs.includes('tab-cap-phat-list') && (hasActionPermission('canAdd') || hasActionPermission('canEdit'));
+        }
+        return allowedTabs.includes(tabId);
+    }
+
+    function requirePermission(actionKey, customDesc = 'thực hiện thao tác này') {
+        if (hasActionPermission(actionKey)) return true;
+        if (typeof showToast === 'function') {
+            showToast('Giới hạn phân quyền', `Tài khoản của bạn (${currentUserPerm?.displayName || currentUserPerm?.email || 'User'}) không được cấp quyền ${customDesc}!`, 'warning');
+        }
+        return false;
+    }
+
+    function getFirstAllowedTab() {
+        if (!currentUserPerm || currentUserPerm.role === 'admin') return 'tab-trang-chu';
+        const allowed = currentUserPerm.permissions?.tabs || [];
+        return allowed.length > 0 ? allowed[0] : 'tab-trang-chu';
+    }
 
     function showTabFormOnly(tabId) {
         const targetTab = document.getElementById(tabId);
@@ -833,7 +927,7 @@ async function startApp() {
     }
 
     function hideAllTabForms() {
-        const tabs = ['tab-kho-thiet-bi', 'tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han'];
+        const tabs = ['tab-kho-thiet-bi', 'tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han', 'tab-phan-quyen'];
         tabs.forEach(tabId => showTabTableOnly(tabId));
     }
 
@@ -842,6 +936,24 @@ async function startApp() {
     // Tab Navigation Logic
     function switchToTab(targetTabId, keepFormVisible = false, pushState = true) {
         if (!targetTabId) return;
+
+        // RBAC Guard: Check if user has permission to access this tab
+        if (currentUserPerm && !canAccessTab(targetTabId)) {
+            if (typeof showToast === 'function') {
+                if (targetTabId === 'tab-cap-phat-form') {
+                    showToast('Giới hạn phân quyền', 'Tài khoản của bạn chỉ có quyền Xem, không được phép thêm mới hoặc chỉnh sửa thông tin cấp phát!', 'warning');
+                } else {
+                    showToast('Giới hạn phân quyền', 'Tài khoản của bạn không được cấp quyền truy cập mục này!', 'warning');
+                }
+            }
+            const fallbackTab = getFirstAllowedTab();
+            if (fallbackTab && fallbackTab !== targetTabId && canAccessTab(fallbackTab)) {
+                targetTabId = fallbackTab;
+            } else {
+                return;
+            }
+        }
+
         const targetItem = document.querySelector(`.menu-item[data-tab="${targetTabId}"]`);
         const targetContent = document.getElementById(targetTabId);
         if (!targetContent) return;
@@ -873,6 +985,7 @@ async function startApp() {
             if (targetTabId === 'tab-cap-phat-list') tabName = 'Danh sách đã cấp phát';
             else if (targetTabId === 'tab-cap-phat-form') tabName = 'Quản lý cấp phát';
             else if (targetTabId === 'tab-kho-thiet-bi') tabName = 'Thiết bị lưu kho';
+            else if (targetTabId === 'tab-phan-quyen') tabName = 'Phân quyền User';
             else tabName = 'Trang chủ';
         }
         if (pageTitle) {
@@ -883,6 +996,8 @@ async function startApp() {
             renderDashboard();
         } else if (targetTabId === 'tab-kho-thiet-bi') {
             renderKho();
+        } else if (targetTabId === 'tab-phan-quyen' && typeof renderPhanQuyen === 'function') {
+            renderPhanQuyen();
         }
 
         // Persist active tab so F5 stays on the same page
@@ -2765,6 +2880,7 @@ async function startApp() {
 
     // Populate form with existing data to Edit
     function editThietBi(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin cấp phát thiết bị')) return;
         const item = thietBiList[index];
         editIndexThietBi.value = index;
         
@@ -2881,6 +2997,7 @@ async function startApp() {
     }
 
     async function deleteThietBi(index) {
+        if (!requirePermission('canDelete', 'xóa thông tin cấp phát thiết bị')) return;
         const item = thietBiList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa cấp phát thiết bị của nhân sự ${item.userName} (${item.userId})?`)) {
             try {
@@ -3193,6 +3310,7 @@ async function startApp() {
 
     // Mở Modal Chuyển Thiết Bị nội bộ
     function openTransferModalInternal() {
+        if (!requirePermission('canEdit', 'chuyển thiết bị / thu hồi về kho')) return;
         const specs = getCurrentDeviceSpecs();
 
         if (!specs.hasDevice && !specs.devId && !specs.devType && !specs.devCpu && !specs.devRam) {
@@ -3658,6 +3776,7 @@ async function startApp() {
     }
 
     function openAllocateKhoModal(index) {
+        if (!requirePermission('canEdit', 'cấp phát thiết bị từ kho cho nhân viên')) return;
         if (index < 0 || index >= khoList.length) return;
         currentSelectedKhoIndex = index;
         const item = khoList[index];
@@ -4091,6 +4210,8 @@ async function startApp() {
         const modal = document.getElementById('modal-add-info-options');
         if (modal) modal.style.display = 'none';
 
+        if (!requirePermission('canAdd', 'thêm mới dữ liệu')) return;
+
         let targetTabId = '';
         let resetFn = null;
 
@@ -4118,9 +4239,16 @@ async function startApp() {
         } else if (action === 'add-kho') {
             targetTabId = 'tab-kho-thiet-bi';
             resetFn = typeof resetFormKho === 'function' ? resetFormKho : null;
+        } else if (action === 'add-phan-quyen') {
+            targetTabId = 'tab-phan-quyen';
+            resetFn = typeof resetFormPhanQuyen === 'function' ? resetFormPhanQuyen : null;
         }
 
         if (targetTabId) {
+            if (!canAccessTab(targetTabId)) {
+                showToast('Giới hạn phân quyền', 'Tài khoản của bạn không được cấp quyền truy cập mục này!', 'warning');
+                return;
+            }
             switchToTab(targetTabId, true);
             if (resetFn) resetFn();
             showTabFormOnly(targetTabId);
@@ -4134,6 +4262,7 @@ async function startApp() {
     if (btnToggleAddInfo && modalAddInfoOptions) {
         btnToggleAddInfo.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (!requirePermission('canAdd', 'thêm mới dữ liệu')) return;
             modalAddInfoOptions.style.display = 'flex';
         });
     }
@@ -4598,6 +4727,7 @@ async function startApp() {
     }
 
     async function addMaintenanceRecord() {
+        if (!requirePermission('canEdit', 'thêm lịch sử bảo trì / nâng cấp')) return;
         if (currentMaintDeviceIndex === null) return;
         const item = thietBiList[currentMaintDeviceIndex];
         if (!item) return;
@@ -4667,6 +4797,7 @@ async function startApp() {
     }
 
     function deleteMaintenanceRecord(logIdx) {
+        if (!requirePermission('canDelete', 'xóa lịch sử bảo trì')) return;
         if (currentMaintDeviceIndex === null) return;
         const item = thietBiList[currentMaintDeviceIndex];
         if (!item || !Array.isArray(item.maintenanceLogs)) return;
@@ -4701,6 +4832,7 @@ async function startApp() {
     let currentOffboardIndex = null;
 
     function openOffboardModal(index) {
+        if (!requirePermission('canEdit', 'thu hồi nghỉ việc / vô hiệu hóa tài khoản')) return;
         const item = thietBiList[index];
         if (!item) return;
         currentOffboardIndex = index;
@@ -5785,6 +5917,7 @@ async function startApp() {
     });
 
     function editCongTy(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin chi nhánh / công ty')) return;
         const item = congTyList[index];
         if (!item) return;
         showTabFormOnly('tab-cong-ty');
@@ -5805,6 +5938,7 @@ async function startApp() {
     }
 
     async function deleteCongTy(index) {
+        if (!requirePermission('canDelete', 'xóa thông tin chi nhánh / công ty')) return;
         const item = congTyList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa thông tin công ty: ${item.name}?`)) {
             try {
@@ -6094,6 +6228,7 @@ async function startApp() {
     });
 
     function editAccount(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin tài khoản')) return;
         const item = accountList[index];
         if (!item) return;
         const formCard = document.querySelector('#tab-account .form-card');
@@ -6119,6 +6254,7 @@ async function startApp() {
     }
 
     async function deleteAccount(index) {
+        if (!requirePermission('canDelete', 'xóa thông tin tài khoản')) return;
         const item = accountList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa tài khoản thuộc chức năng: ${item.func}?`)) {
             try {
@@ -6386,6 +6522,7 @@ async function startApp() {
     });
 
     function editHoTro(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin hỗ trợ')) return;
         const item = hoTroList[index];
         if (!item) return;
 
@@ -6408,6 +6545,7 @@ async function startApp() {
     }
 
     async function deleteHoTro(index) {
+        if (!requirePermission('canDelete', 'xóa thông tin hỗ trợ')) return;
         const item = hoTroList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa thông tin hỗ trợ của đầu mối: ${item.name}?`)) {
             try {
@@ -6734,6 +6872,7 @@ async function startApp() {
     });
 
     function editCamera(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin camera')) return;
         const item = cameraList[index];
         if (!item) return;
 
@@ -6762,6 +6901,7 @@ async function startApp() {
     }
 
     async function deleteCamera(index) {
+        if (!requirePermission('canDelete', 'xóa thông tin camera')) return;
         const item = cameraList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa thông tin camera dự án: ${item.project}?`)) {
             try {
@@ -7009,6 +7149,7 @@ async function startApp() {
     });
 
     function editTips(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa bài viết Tip & Trick')) return;
         const item = tipsList[index];
         if (!item) return;
         const formCard = document.querySelector('#tab-tips .form-card');
@@ -7025,6 +7166,7 @@ async function startApp() {
     }
 
     async function deleteTips(index) {
+        if (!requirePermission('canDelete', 'xóa bài viết Tip & Trick')) return;
         const item = tipsList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa bài viết Tip & Trick: "${item.issue}"?`)) {
             try {
@@ -7506,6 +7648,7 @@ async function startApp() {
     }
 
     function editGiaHan(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin gia hạn bản quyền')) return;
         const item = giaHanList[index];
         if (!item) return;
         showTabFormOnly('tab-gia-han');
@@ -7523,6 +7666,7 @@ async function startApp() {
     }
 
     function deleteGiaHan(index) {
+        if (!requirePermission('canDelete', 'xóa thông tin gia hạn bản quyền')) return;
         const item = giaHanList[index];
         if (confirm(`Bạn có chắc chắn muốn xóa thông tin gia hạn bản quyền: "${item.name}"?`)) {
             // Local delete first for safety
@@ -7974,6 +8118,7 @@ async function startApp() {
     }
 
     function editKho(index) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin thiết bị lưu kho')) return;
         const item = khoList[index];
         if (!item) return;
         showTabFormOnly('tab-kho-thiet-bi');
@@ -8060,6 +8205,7 @@ async function startApp() {
     }
 
     async function deleteKho(index) {
+        if (!requirePermission('canDelete', 'xóa thiết bị lưu kho')) return;
         const item = khoList[index];
         if (!item) return;
         if (confirm(`Bạn có chắc chắn muốn xóa thiết bị lưu kho: "${item.name}"?`)) {
@@ -8178,6 +8324,7 @@ async function startApp() {
 
     if (btnExportDb) {
         btnExportDb.addEventListener('click', () => {
+            if (!requirePermission('canExport', 'xuất dữ liệu sao lưu hệ thống')) return;
             if (modalBackup) {
                 modalBackup.classList.remove('hidden');
                 backupExportSection.classList.remove('hidden');
@@ -8189,6 +8336,7 @@ async function startApp() {
 
     if (btnImportDb) {
         btnImportDb.addEventListener('click', () => {
+            if (!requirePermission('canExport', 'nhập dữ liệu phục hồi hệ thống')) return;
             if (modalBackup) {
                 modalBackup.classList.remove('hidden');
                 backupExportSection.classList.add('hidden');
@@ -8253,7 +8401,8 @@ async function startApp() {
                 cameras: cameraList || [],
                 tips: tipsList || [],
                 giaHan: giaHanList || [],
-                khoThietBi: khoList || []
+                khoThietBi: khoList || [],
+                rbacConfig: rbacConfig || null
             };
 
             const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -8546,6 +8695,12 @@ async function startApp() {
         if (data.khoThietBi) {
             khoList.length = 0;
             khoList.push(...data.khoThietBi);
+        }
+        if (data.rbacConfig && Array.isArray(data.rbacConfig.users)) {
+            rbacConfig = data.rbacConfig;
+            if (typeof savePermissionsConfig === 'function') {
+                savePermissionsConfig();
+            }
         }
 
         // 2. Save local storage for fallback
@@ -8868,13 +9023,829 @@ async function startApp() {
     }
 
     // -------------------------------------------------------------------------
-    // 11. LOGIN & ADMIN AUTHENTICATION LOGIC
+    // 11. LOGIN, ADMIN AUTHENTICATION & RBAC PERMISSION MANAGEMENT
     // -------------------------------------------------------------------------
     const loginScreen = document.getElementById('login-screen');
     const appContainer = document.getElementById('app-container');
     const formLogin = document.getElementById('form-login');
     const btnToggleLoginPass = document.getElementById('btn-toggle-login-pass');
     const btnLogout = document.getElementById('btn-logout-header');
+
+    const TAB_LABELS_MAP = {
+        'tab-trang-chu': 'Trang chủ',
+        'tab-cap-phat-list': 'Danh sách Cấp phát',
+        'tab-kho-thiet-bi': 'Thiết bị Lưu kho',
+        'tab-cong-ty': 'Chi nhánh',
+        'tab-account': 'Tài khoản (Account)',
+        'tab-ho-tro': 'Thông tin Hỗ trợ',
+        'tab-camera': 'Thông tin Camera',
+        'tab-tips': 'Tip & Trick',
+        'tab-gia-han': 'Gia hạn Bản quyền'
+    };
+
+    // Save RBAC config to LocalStorage + Node LAN Server + Supabase fallback
+    async function savePermissionsConfig() {
+        try {
+            localStorage.setItem(RBAC_STORAGE_KEY, JSON.stringify(rbacConfig));
+        } catch (e) {
+            console.warn('Error saving RBAC to localStorage:', e);
+        }
+
+        // Sync to local Node server (user_permissions.json) so LAN clients share permissions
+        try {
+            await fetch('/api/permissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rbacConfig)
+            });
+        } catch (e) {
+            // Ignore if static hosting without server.js
+        }
+
+        // Best-effort sync to Supabase system_settings
+        try {
+            if (supabaseClient) {
+                await supabaseClient
+                    .from('system_settings')
+                    .upsert({
+                        key: 'user_permissions',
+                        value: JSON.stringify(rbacConfig),
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'key' });
+            }
+        } catch (e) {
+            // Ignore RLS or missing table errors
+        }
+    }
+
+    // Load & merge RBAC config from Node LAN Server / Supabase / LocalStorage
+    async function syncPermissionsFromRemote() {
+        // 1. Load from localStorage first
+        try {
+            const rawLocal = localStorage.getItem(RBAC_STORAGE_KEY);
+            if (rawLocal) {
+                const parsed = JSON.parse(rawLocal);
+                if (parsed && Array.isArray(parsed.users)) {
+                    rbacConfig = parsed;
+                }
+            }
+        } catch (e) {}
+
+        // 2. Try loading from Node LAN Server (/api/permissions)
+        try {
+            const res = await fetch('/api/permissions', { cache: 'no-store' });
+            if (res.ok) {
+                const remoteData = await res.json();
+                if (remoteData && Array.isArray(remoteData.users) && remoteData.users.length > 0) {
+                    rbacConfig = {
+                        defaultNewUserRole: remoteData.defaultNewUserRole || rbacConfig.defaultNewUserRole || 'viewer',
+                        users: remoteData.users
+                    };
+                    localStorage.setItem(RBAC_STORAGE_KEY, JSON.stringify(rbacConfig));
+                    return rbacConfig;
+                } else if (rbacConfig.users && rbacConfig.users.length > 0) {
+                    // Push local config to server if server file was empty
+                    fetch('/api/permissions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(rbacConfig)
+                    }).catch(() => {});
+                }
+            }
+        } catch (e) {}
+
+        // 3. Try loading from Supabase system_settings if still empty
+        try {
+            if (supabaseClient && (!rbacConfig.users || rbacConfig.users.length === 0)) {
+                const { data, error } = await supabaseClient
+                    .from('system_settings')
+                    .select('value')
+                    .eq('key', 'user_permissions')
+                    .maybeSingle();
+                if (!error && data && data.value) {
+                    const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
+                    if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
+                        rbacConfig = parsed;
+                        localStorage.setItem(RBAC_STORAGE_KEY, JSON.stringify(rbacConfig));
+                    }
+                }
+            }
+        } catch (e) {}
+
+        return rbacConfig;
+    }
+
+    // Resolve permissions for a given email (auto-bootstraps first Admin so you never get locked out)
+    function resolveUserPermissions(rawEmail) {
+        const email = normalizeUserEmail(rawEmail);
+        if (!email) return null;
+
+        if (!rbacConfig || !Array.isArray(rbacConfig.users)) {
+            rbacConfig = { defaultNewUserRole: 'viewer', users: [] };
+        }
+
+        const nowStr = formatDateDMY(new Date());
+        const hasAnyActiveAdmin = rbacConfig.users.some(u => u.role === 'admin' && u.isActive !== false);
+
+        let userRecord = rbacConfig.users.find(u => normalizeUserEmail(u.email) === email);
+
+        // Auto-bootstrap: If system has NO active Admin yet, promote this logged-in user to Admin
+        if (!hasAnyActiveAdmin) {
+            const adminPreset = getRolePresetPermissions('admin');
+            if (userRecord) {
+                userRecord.role = 'admin';
+                userRecord.isActive = true;
+                userRecord.canAdd = true;
+                userRecord.canEdit = true;
+                userRecord.canDelete = true;
+                userRecord.canExport = true;
+                userRecord.allowedTabs = [...ALL_CONFIGURABLE_TABS];
+                userRecord.updatedAt = nowStr;
+            } else {
+                userRecord = {
+                    email: email,
+                    displayName: email.split('@')[0].toUpperCase(),
+                    dept: 'Ban Quản Trị / IT',
+                    role: 'admin',
+                    isActive: true,
+                    ...adminPreset,
+                    updatedAt: nowStr
+                };
+                rbacConfig.users.unshift(userRecord);
+            }
+            savePermissionsConfig();
+        } else if (!userRecord) {
+            // Auto-register new logged-in user with defaultNewUserRole so Admin can see & manage them
+            const defaultRole = rbacConfig.defaultNewUserRole || 'viewer';
+            const preset = getRolePresetPermissions(defaultRole);
+            userRecord = {
+                email: email,
+                displayName: email.split('@')[0],
+                dept: '',
+                role: defaultRole,
+                isActive: true,
+                ...preset,
+                updatedAt: nowStr
+            };
+            rbacConfig.users.push(userRecord);
+            savePermissionsConfig();
+        }
+
+        // Normalize fields
+        const fallbackPreset = getRolePresetPermissions(userRecord.role || 'viewer');
+        const resolved = {
+            email: normalizeUserEmail(userRecord.email),
+            displayName: userRecord.displayName || email.split('@')[0],
+            dept: userRecord.dept || '',
+            role: userRecord.role || 'viewer',
+            isActive: userRecord.isActive !== false,
+            canAdd: userRecord.role === 'admin' ? true : (userRecord.canAdd !== undefined ? !!userRecord.canAdd : fallbackPreset.canAdd),
+            canEdit: userRecord.role === 'admin' ? true : (userRecord.canEdit !== undefined ? !!userRecord.canEdit : fallbackPreset.canEdit),
+            canDelete: userRecord.role === 'admin' ? true : (userRecord.canDelete !== undefined ? !!userRecord.canDelete : fallbackPreset.canDelete),
+            canExport: userRecord.role === 'admin' ? true : (userRecord.canExport !== undefined ? !!userRecord.canExport : fallbackPreset.canExport),
+            allowedTabs: userRecord.role === 'admin'
+                ? [...ALL_CONFIGURABLE_TABS]
+                : (Array.isArray(userRecord.allowedTabs) && userRecord.allowedTabs.length > 0 ? userRecord.allowedTabs : fallbackPreset.allowedTabs)
+        };
+
+        currentUserPerm = resolved;
+        return resolved;
+    }
+
+    // Apply currentUserPerm restrictions across the entire UI
+    function applyUserPermissionsUI() {
+        const loggedUserEmail = localStorage.getItem('erg_asset_user') || '';
+        if (!currentUserPerm && loggedUserEmail) {
+            resolveUserPermissions(loggedUserEmail);
+        }
+        const perm = currentUserPerm;
+        if (!perm) return;
+
+        // 1. Update Header User Profile display
+        const elName = document.getElementById('header-user-name');
+        const elRole = document.getElementById('header-user-role');
+        const elAvatar = document.getElementById('header-user-avatar');
+        const elAvatarIcon = document.getElementById('header-user-avatar-icon');
+        const elInfoClickable = document.getElementById('header-user-info-clickable');
+
+        if (elName) {
+            elName.textContent = perm.displayName || perm.email || 'User';
+            elName.title = perm.email;
+        }
+        if (elRole) {
+            if (perm.role === 'admin') {
+                elRole.innerHTML = '<i class="fa-solid fa-crown" style="font-size:10px; color:#f43f5e;"></i> Quản trị viên (Admin)';
+                elRole.style.color = '#fb7185';
+            } else if (perm.role === 'editor') {
+                elRole.innerHTML = '<i class="fa-solid fa-user-gear" style="font-size:10px; color:#38bdf8;"></i> Quản lý / Kỹ thuật';
+                elRole.style.color = '#38bdf8';
+            } else {
+                elRole.innerHTML = '<i class="fa-solid fa-eye" style="font-size:10px; color:#4ade80;"></i> Chỉ xem (Viewer)';
+                elRole.style.color = '#4ade80';
+            }
+        }
+        if (elAvatar && elAvatarIcon) {
+            if (perm.role === 'admin') {
+                elAvatarIcon.className = 'fa-solid fa-user-shield';
+                elAvatar.style.borderColor = 'rgba(244, 63, 94, 0.5)';
+                elAvatar.style.color = '#fb7185';
+            } else if (perm.role === 'editor') {
+                elAvatarIcon.className = 'fa-solid fa-user-gear';
+                elAvatar.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+                elAvatar.style.color = '#38bdf8';
+            } else {
+                elAvatarIcon.className = 'fa-solid fa-user-check';
+                elAvatar.style.borderColor = 'rgba(74, 222, 128, 0.5)';
+                elAvatar.style.color = '#4ade80';
+            }
+        }
+        if (elInfoClickable) {
+            elInfoClickable.onclick = () => {
+                if (perm.role === 'admin') {
+                    switchToTab('tab-phan-quyen');
+                } else {
+                    const actions = [];
+                    if (perm.canAdd) actions.push('Thêm');
+                    if (perm.canEdit) actions.push('Sửa');
+                    if (perm.canDelete) actions.push('Xóa');
+                    if (perm.canExport) actions.push('Export');
+                    const actStr = actions.length > 0 ? actions.join(', ') : 'Chỉ xem dữ liệu';
+                    showToast('Thông tin quyền hạn', `Tài khoản: ${perm.email} | Quyền thao tác: ${actStr}`, 'info');
+                }
+            };
+        }
+
+        // 2. Toggle CSS classes on <body> for global button visibility
+        document.body.classList.toggle('perm-no-add', !hasActionPermission('canAdd'));
+        document.body.classList.toggle('perm-no-edit', !hasActionPermission('canEdit'));
+        document.body.classList.toggle('perm-no-delete', !hasActionPermission('canDelete'));
+        document.body.classList.toggle('perm-no-export', !hasActionPermission('canExport'));
+
+        // 3. Toggle Sidebar Menu Items based on allowedTabs & Admin role
+        const menuItems = document.querySelectorAll('.sidebar-menu .menu-item[data-tab]');
+        menuItems.forEach(item => {
+            const tabId = item.getAttribute('data-tab');
+            if (tabId === 'tab-phan-quyen') {
+                item.style.display = perm.role === 'admin' ? 'flex' : 'none';
+            } else {
+                item.style.display = canAccessTab(tabId) ? 'flex' : 'none';
+            }
+        });
+
+        // 4. Toggle Quick Add ("Thêm thông tin") button & modal options
+        const btnAddInfo = document.getElementById('btn-toggle-add-info');
+        if (btnAddInfo) {
+            btnAddInfo.style.display = hasActionPermission('canAdd') ? 'flex' : 'none';
+        }
+        const addActionToTabMap = {
+            'add-cap-phat': 'tab-cap-phat-list',
+            'add-kho': 'tab-kho-thiet-bi',
+            'add-cong-ty': 'tab-cong-ty',
+            'add-account': 'tab-account',
+            'add-ho-tro': 'tab-ho-tro',
+            'add-camera': 'tab-camera',
+            'add-tips': 'tab-tips',
+            'add-gia-han': 'tab-gia-han'
+        };
+        document.querySelectorAll('#modal-add-info-options .add-info-option-item').forEach(opt => {
+            const act = opt.getAttribute('data-action');
+            if (act === 'add-phan-quyen') {
+                opt.style.display = perm.role === 'admin' ? 'flex' : 'none';
+            } else if (addActionToTabMap[act]) {
+                opt.style.display = canAccessTab(addActionToTabMap[act]) ? 'flex' : 'none';
+            }
+        });
+
+        // 5. Toggle Export / Import Box in Sidebar
+        const exportBox = document.getElementById('sidebar-export-import-box');
+        if (exportBox) {
+            exportBox.style.display = hasActionPermission('canExport') ? 'flex' : 'none';
+        }
+
+        // 6. Toggle Maintenance Add Form Box inside Maintenance Modal
+        const maintAddBox = document.getElementById('maint-form-add-box');
+        if (maintAddBox) {
+            maintAddBox.style.display = hasActionPermission('canEdit') ? 'block' : 'none';
+        }
+
+        // 7. Ensure active tab is allowed; otherwise redirect to first allowed tab
+        const currentActiveSection = document.querySelector('.tab-content.active');
+        if (currentActiveSection && !canAccessTab(currentActiveSection.id)) {
+            switchToTab(getFirstAllowedTab());
+        }
+
+        // 8. Render RBAC table if Admin
+        if (perm.role === 'admin' && typeof renderPhanQuyen === 'function') {
+            renderPhanQuyen();
+        }
+    }
+
+    // =========================================================================
+    // 11.1. GIAO DIỆN QUẢN LÝ PHÂN QUYỀN USER (TAB-PHAN-QUYEN)
+    // =========================================================================
+    const formPhanQuyen = document.getElementById('form-phan-quyen');
+    const tbodyPhanQuyen = document.getElementById('tbody-phan-quyen');
+    const searchPhanQuyen = document.getElementById('search-phan-quyen');
+    const filterRolePhanQuyen = document.getElementById('filter-role-phan-quyen');
+    const editIndexPhanQuyen = document.getElementById('edit-index-phan-quyen');
+    const selectDefaultNewUserRole = document.getElementById('rbac-default-new-user-role');
+    const btnOpenAddRbacUser = document.getElementById('btn-open-add-rbac-user');
+    const btnRefreshRbac = document.getElementById('btn-refresh-rbac');
+    const btnCancelPhanQuyen = document.getElementById('btn-cancel-phan-quyen');
+    const btnBackPhanQuyen = document.getElementById('btn-back-phan-quyen');
+    const btnToggleRbacPass = document.getElementById('btn-toggle-rbac-pass');
+    const btnSelectAllTabs = document.getElementById('btn-rbac-select-all-tabs');
+    const btnSelectBasicTabs = document.getElementById('btn-rbac-select-basic-tabs');
+
+    function highlightRolePresetCard(role) {
+        const hiddenRoleInput = document.getElementById('rbac-user-role');
+        if (hiddenRoleInput) hiddenRoleInput.value = role;
+        document.querySelectorAll('.rbac-role-card').forEach(card => {
+            card.classList.toggle('active', card.getAttribute('data-role') === role);
+        });
+    }
+
+    function applyRolePresetToForm(role) {
+        highlightRolePresetCard(role);
+        const preset = getRolePresetPermissions(role);
+
+        const chkAdd = document.getElementById('rbac-act-add');
+        const chkEdit = document.getElementById('rbac-act-edit');
+        const chkDelete = document.getElementById('rbac-act-delete');
+        const chkExport = document.getElementById('rbac-act-export');
+
+        if (chkAdd) chkAdd.checked = preset.canAdd;
+        if (chkEdit) chkEdit.checked = preset.canEdit;
+        if (chkDelete) chkDelete.checked = preset.canDelete;
+        if (chkExport) chkExport.checked = preset.canExport;
+
+        document.querySelectorAll('.rbac-tab-chk').forEach(chk => {
+            chk.checked = preset.allowedTabs.includes(chk.value);
+        });
+    }
+
+    document.querySelectorAll('.rbac-role-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const role = card.getAttribute('data-role') || 'viewer';
+            applyRolePresetToForm(role);
+        });
+    });
+
+    if (btnSelectAllTabs) {
+        btnSelectAllTabs.addEventListener('click', () => {
+            document.querySelectorAll('.rbac-tab-chk').forEach(chk => { chk.checked = true; });
+        });
+    }
+
+    if (btnSelectBasicTabs) {
+        btnSelectBasicTabs.addEventListener('click', () => {
+            const basicTabs = ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-ho-tro', 'tab-tips'];
+            document.querySelectorAll('.rbac-tab-chk').forEach(chk => {
+                chk.checked = basicTabs.includes(chk.value);
+            });
+        });
+    }
+
+    if (btnToggleRbacPass) {
+        btnToggleRbacPass.addEventListener('click', () => {
+            const passInp = document.getElementById('rbac-user-password');
+            if (!passInp) return;
+            if (passInp.type === 'password') {
+                passInp.type = 'text';
+                btnToggleRbacPass.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+            } else {
+                passInp.type = 'password';
+                btnToggleRbacPass.innerHTML = '<i class="fa-regular fa-eye"></i>';
+            }
+        });
+    }
+
+    if (selectDefaultNewUserRole) {
+        selectDefaultNewUserRole.value = rbacConfig.defaultNewUserRole || 'viewer';
+        selectDefaultNewUserRole.addEventListener('change', () => {
+            if (!currentUserPerm || currentUserPerm.role !== 'admin') return;
+            rbacConfig.defaultNewUserRole = selectDefaultNewUserRole.value;
+            savePermissionsConfig();
+            showToast('Đã lưu cài đặt', `Đã đặt quyền mặc định cho tài khoản mới là: ${selectDefaultNewUserRole.options[selectDefaultNewUserRole.selectedIndex].text}`, 'success');
+        });
+    }
+
+    function resetFormPhanQuyen() {
+        if (editIndexPhanQuyen) editIndexPhanQuyen.value = '';
+        if (formPhanQuyen) formPhanQuyen.reset();
+        const emailInp = document.getElementById('rbac-user-email');
+        if (emailInp) emailInp.readOnly = false;
+        const passInp = document.getElementById('rbac-user-password');
+        if (passInp) passInp.type = 'password';
+        if (btnToggleRbacPass) btnToggleRbacPass.innerHTML = '<i class="fa-regular fa-eye"></i>';
+        const titleEl = document.getElementById('title-form-phan-quyen');
+        if (titleEl) titleEl.innerHTML = '<i class="fa-solid fa-user-plus"></i> Thêm / Cấu Hình Phân Quyền Tài Khoản';
+        const btnSave = document.getElementById('btn-save-phan-quyen');
+        if (btnSave) btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Phân Quyền User';
+        applyRolePresetToForm('viewer');
+    }
+
+    function returnToPhanQuyenTable() {
+        resetFormPhanQuyen();
+        showTabTableOnly('tab-phan-quyen');
+    }
+
+    if (btnOpenAddRbacUser) {
+        btnOpenAddRbacUser.addEventListener('click', () => {
+            resetFormPhanQuyen();
+            showTabFormOnly('tab-phan-quyen');
+        });
+    }
+
+    if (btnCancelPhanQuyen) btnCancelPhanQuyen.addEventListener('click', returnToPhanQuyenTable);
+    if (btnBackPhanQuyen) btnBackPhanQuyen.addEventListener('click', returnToPhanQuyenTable);
+
+    if (btnRefreshRbac) {
+        btnRefreshRbac.addEventListener('click', async () => {
+            await syncPermissionsFromRemote();
+            const loggedUser = localStorage.getItem('erg_asset_user');
+            if (loggedUser) resolveUserPermissions(loggedUser);
+            applyUserPermissionsUI();
+            renderPhanQuyen();
+            showToast('Đã làm mới', 'Đã đồng bộ danh sách phân quyền mới nhất!', 'success');
+        });
+    }
+
+    function updateRbacStats() {
+        const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
+        const totalEl = document.getElementById('rbac-stat-total');
+        const adminEl = document.getElementById('rbac-stat-admin');
+        const editorEl = document.getElementById('rbac-stat-editor');
+        const viewerEl = document.getElementById('rbac-stat-viewer');
+
+        if (totalEl) totalEl.textContent = users.length;
+        if (adminEl) adminEl.textContent = users.filter(u => u.role === 'admin').length;
+        if (editorEl) editorEl.textContent = users.filter(u => u.role === 'editor').length;
+        if (viewerEl) viewerEl.textContent = users.filter(u => u.role !== 'admin' && u.role !== 'editor').length;
+
+        if (selectDefaultNewUserRole) {
+            selectDefaultNewUserRole.value = rbacConfig.defaultNewUserRole || 'viewer';
+        }
+    }
+
+    function renderPhanQuyen() {
+        if (!tbodyPhanQuyen) return;
+        updateRbacStats();
+
+        const keyword = (searchPhanQuyen ? searchPhanQuyen.value.trim().toLowerCase() : '');
+        const roleFilter = (filterRolePhanQuyen ? filterRolePhanQuyen.value : 'all');
+        const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
+
+        const filtered = users.filter(u => {
+            const matchRole = roleFilter === 'all' || (u.role || 'viewer') === roleFilter;
+            const matchKw = !keyword ||
+                (u.email || '').toLowerCase().includes(keyword) ||
+                (u.displayName || '').toLowerCase().includes(keyword) ||
+                (u.dept || '').toLowerCase().includes(keyword);
+            return matchRole && matchKw;
+        });
+
+        tbodyPhanQuyen.innerHTML = '';
+
+        if (filtered.length === 0) {
+            tbodyPhanQuyen.innerHTML = `
+                <tr class="empty-row">
+                    <td colspan="7" class="text-center text-muted" style="padding: 28px;">
+                        Chưa có tài khoản nào khớp bộ lọc tìm kiếm!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const currentEmail = normalizeUserEmail(localStorage.getItem('erg_asset_user') || '');
+
+        filtered.forEach((u, idx) => {
+            const originalIndex = users.indexOf(u);
+            const tr = document.createElement('tr');
+            const isSelf = normalizeUserEmail(u.email) === currentEmail;
+
+            // Role badge
+            let roleBadge = `<span class="badge-role-viewer"><i class="fa-solid fa-eye"></i> Chỉ xem (Viewer)</span>`;
+            if (u.role === 'admin') {
+                roleBadge = `<span class="badge-role-admin"><i class="fa-solid fa-crown"></i> Quản trị viên (Admin)</span>`;
+            } else if (u.role === 'editor') {
+                roleBadge = `<span class="badge-role-editor"><i class="fa-solid fa-user-gear"></i> Quản lý / Kỹ thuật</span>`;
+            }
+
+            // Action badges
+            const actPills = [];
+            if (u.role === 'admin' || u.canAdd) actPills.push(`<span class="rbac-perm-pill active"><i class="fa-solid fa-plus"></i> Thêm</span>`);
+            if (u.role === 'admin' || u.canEdit) actPills.push(`<span class="rbac-perm-pill active"><i class="fa-solid fa-pen"></i> Sửa</span>`);
+            if (u.role === 'admin' || u.canDelete) actPills.push(`<span class="rbac-perm-pill active"><i class="fa-solid fa-trash"></i> Xóa</span>`);
+            if (u.role === 'admin' || u.canExport) actPills.push(`<span class="rbac-perm-pill active"><i class="fa-solid fa-file-export"></i> Export</span>`);
+            if (actPills.length === 0) {
+                actPills.push(`<span class="rbac-perm-pill"><i class="fa-solid fa-lock"></i> Chỉ xem</span>`);
+            }
+
+            // Allowed tabs summary
+            const tabs = u.role === 'admin' ? ALL_CONFIGURABLE_TABS : (Array.isArray(u.allowedTabs) ? u.allowedTabs : []);
+            let tabsHtml = '';
+            if (u.role === 'admin' || tabs.length >= ALL_CONFIGURABLE_TABS.length) {
+                tabsHtml = `<span class="badge badge-green" style="font-size: 11.5px;"><i class="fa-solid fa-check-double"></i> Toàn bộ (${ALL_CONFIGURABLE_TABS.length} Tab)</span>`;
+            } else {
+                const labels = tabs.map(t => TAB_LABELS_MAP[t] || t);
+                tabsHtml = `<div style="display:flex; flex-wrap:wrap; gap:4px;">` +
+                    labels.map(l => `<span class="rbac-perm-pill" style="color: var(--text-primary); border-color: rgba(148,163,184,0.28);">${l}</span>`).join('') +
+                    `</div>`;
+            }
+
+            // Status badge
+            const isActive = u.isActive !== false;
+            const statusHtml = isActive
+                ? `<span class="badge badge-green" style="cursor:pointer;" title="Nhấn để khóa tạm thời tài khoản này" data-toggle-status="${originalIndex}"><i class="fa-solid fa-circle-check"></i> Hoạt động</span>`
+                : `<span class="badge badge-danger" style="cursor:pointer;" title="Nhấn để mở khóa tài khoản này" data-toggle-status="${originalIndex}"><i class="fa-solid fa-ban"></i> Đã khóa</span>`;
+
+            tr.innerHTML = `
+                <td class="text-center" style="font-weight: 600; color: var(--text-muted);">${idx + 1}</td>
+                <td>
+                    <div style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-envelope" style="color: #818cf8; font-size: 12px;"></i>
+                        <span>${u.email}</span>
+                        ${isSelf ? `<span class="badge" style="background: rgba(123,202,15,0.18); color: var(--brand-green); font-size: 10px; padding: 2px 6px;">Bạn</span>` : ''}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">
+                        <strong>${u.displayName || '—'}</strong> ${u.dept ? `• <span style="color: var(--text-muted);">${u.dept}</span>` : ''}
+                    </div>
+                </td>
+                <td>${roleBadge}</td>
+                <td><div style="display:flex; flex-wrap:wrap; gap:4px;">${actPills.join('')}</div></td>
+                <td>${tabsHtml}</td>
+                <td>
+                    ${statusHtml}
+                    ${u.updatedAt ? `<div style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px;">Cập nhật: ${u.updatedAt}</div>` : ''}
+                </td>
+                <td>
+                    <div class="actions-cell">
+                        <button type="button" class="btn-icon-only edit btn-edit-rbac" data-index="${originalIndex}" title="Chỉnh sửa phân quyền">
+                            <i class="fa-solid fa-user-pen"></i>
+                        </button>
+                        <button type="button" class="btn-icon-only delete btn-delete-rbac" data-index="${originalIndex}" title="Xóa tài khoản khỏi danh sách">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            tbodyPhanQuyen.appendChild(tr);
+        });
+
+        // Bind edit / delete / status toggle events
+        tbodyPhanQuyen.querySelectorAll('.btn-edit-rbac').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                editPhanQuyen(idx);
+            });
+        });
+
+        tbodyPhanQuyen.querySelectorAll('.btn-delete-rbac').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-index'));
+                deletePhanQuyen(idx);
+            });
+        });
+
+        tbodyPhanQuyen.querySelectorAll('[data-toggle-status]').forEach(badge => {
+            badge.addEventListener('click', function() {
+                const idx = parseInt(this.getAttribute('data-toggle-status'));
+                toggleRbacUserStatus(idx);
+            });
+        });
+    }
+
+    function editPhanQuyen(index) {
+        const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
+        const u = users[index];
+        if (!u) return;
+
+        showTabFormOnly('tab-phan-quyen');
+        if (editIndexPhanQuyen) editIndexPhanQuyen.value = index;
+
+        const titleEl = document.getElementById('title-form-phan-quyen');
+        if (titleEl) {
+            titleEl.innerHTML = `<i class="fa-solid fa-user-pen"></i> Cập Nhật Phân Quyền: <span style="color: #818cf8;">${u.email}</span>`;
+        }
+        const btnSave = document.getElementById('btn-save-phan-quyen');
+        if (btnSave) {
+            btnSave.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Phân Quyền';
+        }
+
+        const emailInp = document.getElementById('rbac-user-email');
+        if (emailInp) emailInp.value = u.email || '';
+        const nameInp = document.getElementById('rbac-user-name');
+        if (nameInp) nameInp.value = u.displayName || '';
+        const deptInp = document.getElementById('rbac-user-dept');
+        if (deptInp) deptInp.value = u.dept || '';
+        const passInp = document.getElementById('rbac-user-password');
+        if (passInp) passInp.value = u.localPassword || '';
+        const statusSel = document.getElementById('rbac-user-status');
+        if (statusSel) statusSel.value = u.isActive === false ? 'locked' : 'active';
+
+        const role = u.role || 'viewer';
+        highlightRolePresetCard(role);
+
+        const chkAdd = document.getElementById('rbac-act-add');
+        const chkEdit = document.getElementById('rbac-act-edit');
+        const chkDelete = document.getElementById('rbac-act-delete');
+        const chkExport = document.getElementById('rbac-act-export');
+
+        if (chkAdd) chkAdd.checked = role === 'admin' ? true : !!u.canAdd;
+        if (chkEdit) chkEdit.checked = role === 'admin' ? true : !!u.canEdit;
+        if (chkDelete) chkDelete.checked = role === 'admin' ? true : !!u.canDelete;
+        if (chkExport) chkExport.checked = role === 'admin' ? true : !!u.canExport;
+
+        const allowed = role === 'admin'
+            ? ALL_CONFIGURABLE_TABS
+            : (Array.isArray(u.allowedTabs) ? u.allowedTabs : getRolePresetPermissions(role).allowedTabs);
+
+        document.querySelectorAll('.rbac-tab-chk').forEach(chk => {
+            chk.checked = allowed.includes(chk.value);
+        });
+
+        document.querySelector('.tab-container').scrollTop = 0;
+    }
+
+    function deletePhanQuyen(index) {
+        const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
+        const u = users[index];
+        if (!u) return;
+
+        // Prevent deleting the last active Admin
+        const activeAdmins = users.filter((item, i) => i !== index && item.role === 'admin' && item.isActive !== false);
+        if (u.role === 'admin' && activeAdmins.length === 0) {
+            showToast('Không thể xóa', 'Hệ thống phải có ít nhất 1 tài khoản Quản trị viên (Admin) đang hoạt động!', 'error');
+            return;
+        }
+
+        if (confirm(`Bạn có chắc chắn muốn xóa phân quyền của tài khoản "${u.email}"?`)) {
+            users.splice(index, 1);
+            savePermissionsConfig();
+            renderPhanQuyen();
+            showToast('Đã xóa', `Đã xóa cấu hình phân quyền của ${u.email}!`, 'warning');
+        }
+    }
+
+    function toggleRbacUserStatus(index) {
+        const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
+        const u = users[index];
+        if (!u) return;
+
+        const nextActive = u.isActive === false;
+        if (!nextActive && u.role === 'admin') {
+            const otherActiveAdmins = users.filter((item, i) => i !== index && item.role === 'admin' && item.isActive !== false);
+            if (otherActiveAdmins.length === 0) {
+                showToast('Không thể khóa', 'Không thể khóa tài khoản Admin duy nhất đang hoạt động!', 'error');
+                return;
+            }
+        }
+
+        u.isActive = nextActive;
+        u.updatedAt = formatDateDMY(new Date());
+        savePermissionsConfig();
+        renderPhanQuyen();
+        showToast(
+            nextActive ? 'Đã mở khóa' : 'Đã khóa tài khoản',
+            `Tài khoản ${u.email} hiện đang ở trạng thái: ${nextActive ? 'Hoạt động' : 'Đã khóa truy cập'}!`,
+            nextActive ? 'success' : 'warning'
+        );
+    }
+
+    if (searchPhanQuyen) {
+        searchPhanQuyen.addEventListener('input', () => renderPhanQuyen());
+    }
+    if (filterRolePhanQuyen) {
+        filterRolePhanQuyen.addEventListener('change', () => renderPhanQuyen());
+    }
+
+    if (formPhanQuyen) {
+        formPhanQuyen.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserPerm || currentUserPerm.role !== 'admin') {
+                showToast('Từ chối truy cập', 'Chỉ Quản trị viên (Admin) mới được phép thay đổi phân quyền!', 'error');
+                return;
+            }
+
+            const rawEmail = (document.getElementById('rbac-user-email')?.value || '').trim();
+            if (!rawEmail) {
+                showToast('Thiếu thông tin', 'Vui lòng nhập Email đăng nhập của người dùng!', 'warning');
+                return;
+            }
+            const email = normalizeUserEmail(rawEmail);
+            const displayName = (document.getElementById('rbac-user-name')?.value || '').trim() || email.split('@')[0];
+            const dept = (document.getElementById('rbac-user-dept')?.value || '').trim();
+            const rawPassword = (document.getElementById('rbac-user-password')?.value || '').trim();
+            const statusVal = document.getElementById('rbac-user-status')?.value || 'active';
+            const isActive = statusVal !== 'locked';
+            const role = document.getElementById('rbac-user-role')?.value || 'viewer';
+            const syncSupabaseAuth = document.getElementById('rbac-sync-supabase-auth')?.checked;
+
+            const canAdd = role === 'admin' ? true : !!document.getElementById('rbac-act-add')?.checked;
+            const canEdit = role === 'admin' ? true : !!document.getElementById('rbac-act-edit')?.checked;
+            const canDelete = role === 'admin' ? true : !!document.getElementById('rbac-act-delete')?.checked;
+            const canExport = role === 'admin' ? true : !!document.getElementById('rbac-act-export')?.checked;
+
+            const allowedTabs = [];
+            document.querySelectorAll('.rbac-tab-chk').forEach(chk => {
+                if (chk.checked || role === 'admin') {
+                    allowedTabs.push(chk.value);
+                }
+            });
+
+            if (allowedTabs.length === 0) {
+                showToast('Chưa chọn Tab', 'Vui lòng chọn ít nhất 1 Tab được phép hiển thị cho người dùng này!', 'warning');
+                return;
+            }
+
+            const editIdxStr = editIndexPhanQuyen ? editIndexPhanQuyen.value : '';
+            const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
+
+            // Check duplicate email when adding new or changing email
+            const existingIdx = users.findIndex(u => normalizeUserEmail(u.email) === email);
+            const targetIdx = editIdxStr !== '' ? parseInt(editIdxStr) : existingIdx;
+
+            // Prevent demoting or locking the last active Admin
+            if (targetIdx !== -1 && users[targetIdx]) {
+                const prevUser = users[targetIdx];
+                if (prevUser.role === 'admin' && (role !== 'admin' || !isActive)) {
+                    const otherActiveAdmins = users.filter((item, i) => i !== targetIdx && item.role === 'admin' && item.isActive !== false);
+                    if (otherActiveAdmins.length === 0) {
+                        showToast('Cảnh báo an toàn', 'Hệ thống phải giữ ít nhất 1 tài khoản Admin đang hoạt động! Không thể hạ quyền hoặc khóa Admin cuối cùng.', 'error');
+                        return;
+                    }
+                }
+            }
+
+            const nowStr = formatDateDMY(new Date());
+            const prevRecord = (targetIdx >= 0 && users[targetIdx]) ? users[targetIdx] : {};
+
+            const userObj = {
+                ...prevRecord,
+                email: email,
+                displayName: displayName,
+                dept: dept,
+                role: role,
+                isActive: isActive,
+                canAdd: canAdd,
+                canEdit: canEdit,
+                canDelete: canDelete,
+                canExport: canExport,
+                allowedTabs: allowedTabs,
+                updatedAt: nowStr
+            };
+
+            if (rawPassword) {
+                userObj.localPassword = rawPassword;
+            }
+
+            // Optional: Register on Supabase Auth using isolated non-persisting client
+            let supabaseSignUpMsg = '';
+            if (rawPassword && rawPassword.length >= 6 && syncSupabaseAuth && window.supabase && typeof window.supabase.createClient === 'function') {
+                try {
+                    const isolatedClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+                    });
+                    const { error: signUpErr } = await isolatedClient.auth.signUp({
+                        email: email,
+                        password: rawPassword,
+                        options: {
+                            data: { full_name: displayName, department: dept, role: role }
+                        }
+                    });
+                    if (!signUpErr) {
+                        supabaseSignUpMsg = ' (Đã đồng bộ tạo trên Supabase Auth)';
+                    } else if (!signUpErr.message?.includes('already registered')) {
+                        console.warn('Supabase Auth signUp notice:', signUpErr.message);
+                    }
+                } catch (e) {
+                    console.warn('Isolated Supabase signUp error:', e);
+                }
+            }
+
+            if (targetIdx >= 0 && targetIdx < users.length) {
+                users[targetIdx] = userObj;
+            } else {
+                users.push(userObj);
+            }
+
+            rbacConfig.users = users;
+            await savePermissionsConfig();
+
+            // If Admin edited their own permissions or current logged-in user, re-apply immediately
+            const currentLoggedEmail = normalizeUserEmail(localStorage.getItem('erg_asset_user') || '');
+            if (currentLoggedEmail === email) {
+                resolveUserPermissions(currentLoggedEmail);
+                applyUserPermissionsUI();
+            }
+
+            renderPhanQuyen();
+            returnToPhanQuyenTable();
+            showToast('Đã lưu phân quyền', `Cấu hình phân quyền cho "${email}" đã được áp dụng${supabaseSignUpMsg}!`, 'success');
+        });
+    }
 
     // Toggle Password Visibility on Login Screen (Delegates to centralized toggleLoginPassword)
     if (btnToggleLoginPass) {
@@ -8897,7 +9868,7 @@ async function startApp() {
         };
     }
 
-    // Handle Login Form Submit via Supabase Auth
+    // Handle Login Form Submit via Supabase Auth + RBAC Verification
     if (formLogin) {
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -8922,50 +9893,77 @@ async function startApp() {
             const originalText = btnSubmit ? btnSubmit.innerHTML : 'Đăng nhập';
             if (btnSubmit) {
                 btnSubmit.disabled = true;
-                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực Supabase...';
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xác thực & kiểm tra phân quyền...';
             }
 
             // Normalise Email: If user types username without @domain, auto-append @erasgroup.vn
-            const emailToAuth = rawUser.includes('@') ? rawUser : `${rawUser}@erasgroup.vn`;
+            const emailToAuth = normalizeUserEmail(rawUser);
 
             try {
-                if (!supabaseClient) {
-                    throw new Error('Không thể kết nối đến máy chủ Supabase. Vui lòng kiểm tra lại mạng!');
+                // 1. Sync latest RBAC permissions from server first
+                await syncPermissionsFromRemote();
+
+                // 2. Check if user is locked by Admin before authenticating
+                const preCheckUser = (rbacConfig.users || []).find(u => normalizeUserEmail(u.email) === emailToAuth);
+                if (preCheckUser && preCheckUser.isActive === false) {
+                    throw new Error('Tài khoản của bạn đã bị Quản trị viên (Admin) khóa quyền truy cập hệ thống!');
                 }
 
-                const { data, error } = await supabaseClient.auth.signInWithPassword({
-                    email: emailToAuth,
-                    password: rawPass
-                });
+                let authenticatedEmail = '';
 
-                if (error) {
-                    let errMsg = error.message || 'Email hoặc mật khẩu không chính xác!';
-                    if (errMsg.includes('Invalid login credentials')) {
-                        errMsg = 'Email hoặc mật khẩu không chính xác!';
-                    } else if (errMsg.includes('Email not confirmed')) {
-                        errMsg = 'Tài khoản chưa được kích hoạt email!';
+                // 3. Authenticate via Supabase Auth OR web-configured localPassword fallback
+                if (supabaseClient) {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email: emailToAuth,
+                        password: rawPass
+                    });
+
+                    if (!error && data && data.user) {
+                        authenticatedEmail = normalizeUserEmail(data.user.email || emailToAuth);
+                    } else if (preCheckUser && preCheckUser.localPassword && preCheckUser.localPassword === rawPass) {
+                        // Allow login if Admin created/set password directly in RBAC web panel
+                        authenticatedEmail = emailToAuth;
+                    } else {
+                        let errMsg = (error && error.message) ? error.message : 'Email hoặc mật khẩu không chính xác!';
+                        if (errMsg.includes('Invalid login credentials')) {
+                            errMsg = 'Email hoặc mật khẩu không chính xác!';
+                        } else if (errMsg.includes('Email not confirmed')) {
+                            errMsg = 'Tài khoản chưa được kích hoạt email!';
+                        }
+                        throw new Error(errMsg);
                     }
-                    throw new Error(errMsg);
+                } else if (preCheckUser && preCheckUser.localPassword && preCheckUser.localPassword === rawPass) {
+                    authenticatedEmail = emailToAuth;
+                } else {
+                    throw new Error('Không thể kết nối đến máy chủ xác thực Supabase!');
                 }
 
-                if (!data || !data.user) {
-                    throw new Error('Không nhận được phiên làm việc hợp lệ từ Supabase!');
+                // 4. Resolve RBAC permissions for the authenticated user
+                const perm = resolveUserPermissions(authenticatedEmail);
+                if (perm && perm.isActive === false) {
+                    throw new Error('Tài khoản của bạn hiện đang bị khóa quyền truy cập!');
                 }
 
-                // Supabase Auth Success!
-                const userEmail = data.user.email || emailToAuth;
                 localStorage.setItem('erg_asset_logged_in', 'true');
-                localStorage.setItem('erg_asset_user', userEmail);
+                localStorage.setItem('erg_asset_user', authenticatedEmail);
 
-                showToast('Đăng nhập thành công', `Xin chào ${userEmail}!`, 'success');
+                // 5. Apply RBAC UI restrictions (hide disallowed tabs & action buttons)
+                applyUserPermissionsUI();
+
+                const roleLabel = perm?.role === 'admin' ? 'Quản trị viên (Admin)' : (perm?.role === 'editor' ? 'Quản lý / Kỹ thuật' : 'Chỉ xem (Viewer)');
+                showToast('Đăng nhập thành công', `Xin chào ${perm?.displayName || authenticatedEmail} (${roleLabel})!`, 'success');
+
                 if (loginScreen) loginScreen.classList.add('hidden');
                 if (appContainer) appContainer.classList.remove('hidden');
-                switchToTab('tab-trang-chu');
+
+                const targetTab = getFirstAllowedTab();
+                switchToTab(targetTab);
+
                 initApp().catch(err => console.warn("Background initApp error:", err));
                 renderDashboard();
 
             } catch (err) {
-                console.error("Supabase Login Error:", err);
+                console.error("Login Error:", err);
                 if (errDiv) {
                     errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Lỗi xác thực!');
                     errDiv.classList.remove('hidden');
@@ -8973,7 +9971,7 @@ async function startApp() {
                     errDiv.offsetHeight; /* trigger reflow */
                     errDiv.style.animation = '';
                 }
-                showToast('Lỗi đăng nhập', err.message || 'Đăng nhập Supabase không thành công!', 'error');
+                showToast('Lỗi đăng nhập', err.message || 'Đăng nhập không thành công!', 'error');
             } finally {
                 if (btnSubmit) {
                     btnSubmit.disabled = false;
@@ -8991,6 +9989,7 @@ async function startApp() {
 
         // 1. Immediately wipe all local authentication & session state
         try {
+            currentUserPerm = null;
             localStorage.removeItem('erg_asset_logged_in');
             localStorage.removeItem('erg_asset_user');
             localStorage.removeItem('erg_asset_active_tab');
@@ -9488,33 +10487,49 @@ async function startApp() {
         });
     }
 
-    // Check auth status on load
-
+    // Check auth status & apply RBAC on load
     const isLocalLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
 
     // Initialize Theme immediately
     initTheme();
 
-    if (isLocalLoggedIn) {
+    async function bootstrapAuthenticatedSession(userEmail) {
+        await syncPermissionsFromRemote();
+        const email = normalizeUserEmail(userEmail || localStorage.getItem('erg_asset_user') || 'admin@erasgroup.vn');
+        localStorage.setItem('erg_asset_user', email);
+        const perm = resolveUserPermissions(email);
+
+        if (perm && perm.isActive === false) {
+            showToast('Tài khoản bị khóa', 'Tài khoản của bạn đã bị Quản trị viên khóa quyền truy cập!', 'error');
+            performAppLogout();
+            return;
+        }
+
+        applyUserPermissionsUI();
+
         if (loginScreen) loginScreen.classList.add('hidden');
         if (appContainer) appContainer.classList.remove('hidden');
+
         const activeTabToRestore = localStorage.getItem('erg_asset_active_tab');
-        if (activeTabToRestore && document.getElementById(activeTabToRestore)) {
+        if (activeTabToRestore && document.getElementById(activeTabToRestore) && canAccessTab(activeTabToRestore)) {
             switchToTab(activeTabToRestore);
+        } else {
+            switchToTab(getFirstAllowedTab());
         }
         initApp();
+    }
+
+    if (isLocalLoggedIn) {
+        const savedUser = localStorage.getItem('erg_asset_user') || '';
+        bootstrapAuthenticatedSession(savedUser);
     } else if (supabaseClient) {
         supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
+            if (session && session.user) {
                 localStorage.setItem('erg_asset_logged_in', 'true');
-                if (loginScreen) loginScreen.classList.add('hidden');
-                if (appContainer) appContainer.classList.remove('hidden');
-                const activeTabToRestore = localStorage.getItem('erg_asset_active_tab');
-                if (activeTabToRestore && document.getElementById(activeTabToRestore)) {
-                    switchToTab(activeTabToRestore);
-                }
-                initApp();
+                localStorage.setItem('erg_asset_user', session.user.email || '');
+                bootstrapAuthenticatedSession(session.user.email || '');
             } else {
+                syncPermissionsFromRemote().catch(() => {});
                 if (loginScreen) loginScreen.classList.remove('hidden');
                 if (appContainer) appContainer.classList.add('hidden');
             }
