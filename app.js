@@ -1455,7 +1455,7 @@ async function startApp() {
 
         let displayLogs = allLogs;
         if (query) {
-            const removeVietnameseTones = (str) => {
+            const removeAllDiacritics = (str) => {
                 if (!str) return '';
                 return String(str)
                     .normalize('NFD')
@@ -1463,18 +1463,120 @@ async function startApp() {
                     .replace(/[đĐ]/g, 'd')
                     .toLowerCase();
             };
+            const removeOnlyToneMarks = (str) => {
+                if (!str) return '';
+                return String(str)
+                    .normalize('NFD')
+                    .replace(/[\u0300\u0301\u0303\u0309\u0323]/g, '')
+                    .normalize('NFC')
+                    .toLowerCase();
+            };
+            const hasAnyDiacritic = (str) => str.toLowerCase() !== removeAllDiacritics(str);
+            const splitWords = (str) => String(str || '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).filter(Boolean);
 
-            const keywords = query.toLowerCase().split(/\s+/).filter(Boolean);
-            displayLogs = allLogs.filter(log => {
-                const plainDetails = (log.details || '').replace(/<[^>]*>/g, ' ');
-                const fullText = `${log.userName} ${log.userId} ${log.userDept} ${log.devId} ${log.devName} ${log.action} ${log.time} ${plainDetails}`.toLowerCase();
-                const fullTextNoTone = removeVietnameseTones(fullText);
+            const q = query.replace(/\s+/g, ' ').toLowerCase();
 
-                return keywords.every(kw => {
-                    const kwNoTone = removeVietnameseTones(kw);
-                    return fullText.includes(kw) || fullTextNoTone.includes(kwNoTone);
-                });
+            // Chuẩn bị dữ liệu tìm kiếm chỉ trên nội dung thực tế hiển thị của từng nhật ký
+            // (Loại bỏ chuỗi mã khôi phục ngẫu nhiên 48 ký tự của Key Element để tránh khớp nhầm từ ngắn)
+            const prepared = allLogs.map(log => {
+                const cleanDetails = (log.details || '')
+                    .replace(/<[^>]*>/g, ' ')
+                    .replace(/Key Element\s*:[^\n<]*/gi, 'Key Element')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                const headerText = `${log.userName} (${log.userId}) ${log.action} ${log.time}`.toLowerCase();
+                const visibleText = `${headerText} ${cleanDetails}`.toLowerCase();
+                const visibleNoDia = removeAllDiacritics(visibleText);
+                const headerNoDia = removeAllDiacritics(headerText);
+
+                const wordsFull = splitWords(visibleText);
+                const wordsBase = wordsFull.map(w => removeOnlyToneMarks(w));
+                const wordsNoDia = wordsFull.map(w => removeAllDiacritics(w));
+
+                const headerWordsFull = splitWords(headerText);
+                const headerWordsNoDia = headerWordsFull.map(w => removeAllDiacritics(w));
+
+                return {
+                    log,
+                    headerText,
+                    headerNoDia,
+                    visibleText,
+                    visibleNoDia,
+                    wordsFull,
+                    wordsBase,
+                    wordsNoDia,
+                    headerWordsFull,
+                    headerWordsNoDia
+                };
             });
+
+            const matchConsecutive = (wFullArr, wBaseArr, wNoDiaArr, qTokens, allowLastPrefix) => {
+                const k = qTokens.length;
+                if (k === 0 || wFullArr.length < k) return false;
+                for (let i = 0; i <= wFullArr.length - k; i++) {
+                    let ok = true;
+                    for (let j = 0; j < k; j++) {
+                        const qt = qTokens[j];
+                        const isLast = allowLastPrefix && (j === k - 1);
+                        if (!isLast) {
+                            if (hasAnyDiacritic(qt)) {
+                                if (wFullArr[i + j] !== qt) { ok = false; break; }
+                            } else {
+                                if (wNoDiaArr[i + j] !== qt) { ok = false; break; }
+                            }
+                        } else {
+                            if (hasAnyDiacritic(qt)) {
+                                const qtBase = removeOnlyToneMarks(qt);
+                                if (!wFullArr[i + j].startsWith(qt) && !wBaseArr[i + j].startsWith(qtBase)) { ok = false; break; }
+                            } else {
+                                if (!wNoDiaArr[i + j].startsWith(qt)) { ok = false; break; }
+                            }
+                        }
+                    }
+                    if (ok) return true;
+                }
+                return false;
+            };
+
+            let matchedPrepared = [];
+
+            // Nếu từ khóa chứa ký tự đặc biệt của ngày giờ / mã thiết bị / email (/, :, -, @, .)
+            if (/[\/:\-@.]/.test(q)) {
+                const qHasDia = hasAnyDiacritic(q);
+                const qNoDia = removeAllDiacritics(q);
+                matchedPrepared = prepared.filter(p => qHasDia ? p.visibleText.includes(q) : p.visibleNoDia.includes(qNoDia));
+            } else {
+                const qTokens = splitWords(q);
+                if (qTokens.length > 0) {
+                    // Bước 1: Khớp chính xác cụm từ nguyên vẹn (có dấu hoặc không dấu)
+                    matchedPrepared = prepared.filter(p => matchConsecutive(p.wordsFull, p.wordsBase, p.wordsNoDia, qTokens, false));
+
+                    // Bước 2: Nếu đang gõ dở từ cuối (ví dụ 'Lê P', 'Thu hô', 'tip', 'phuo', 'offb'), hỗ trợ khớp tiền tố từ cuối
+                    if (matchedPrepared.length === 0) {
+                        matchedPrepared = prepared.filter(p => matchConsecutive(p.wordsFull, p.wordsBase, p.wordsNoDia, qTokens, true));
+                    }
+
+                    // Bước 3: Nếu gõ nhiều từ rời nhau (ví dụ 'tiphu thu hồi', 'Nguyễn Mạnh'), khớp từng từ nguyên vẹn
+                    if (matchedPrepared.length === 0 && qTokens.length > 1) {
+                        matchedPrepared = prepared.filter(p => qTokens.every(qt => {
+                            if (hasAnyDiacritic(qt)) {
+                                return p.wordsFull.includes(qt);
+                            }
+                            return p.wordsNoDia.includes(qt);
+                        }));
+                    }
+
+                    // Ưu tiên kết quả khớp ngay trên tiêu đề (Tên NV, ID, Hành động, Thời gian) lên trước
+                    matchedPrepared.sort((a, b) => {
+                        const aHeader = matchConsecutive(a.headerWordsFull, a.headerWordsFull.map(w => removeOnlyToneMarks(w)), a.headerWordsNoDia, qTokens, true) ? 0 : 1;
+                        const bHeader = matchConsecutive(b.headerWordsFull, b.headerWordsFull.map(w => removeOnlyToneMarks(w)), b.headerWordsNoDia, qTokens, true) ? 0 : 1;
+                        if (aHeader !== bHeader) return aHeader - bHeader;
+                        return b.log.timestamp - a.log.timestamp;
+                    });
+                }
+            }
+
+            displayLogs = matchedPrepared.map(p => p.log);
         } else {
             // Mặc định hiển thị 8 hoạt động mới nhất
             displayLogs = allLogs.slice(0, 8);
