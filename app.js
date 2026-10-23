@@ -9349,19 +9349,28 @@ async function startApp() {
     const filterRolePhanQuyen = document.getElementById('filter-role-phan-quyen');
     const editIndexPhanQuyen = document.getElementById('edit-index-phan-quyen');
     const selectDefaultNewUserRole = document.getElementById('rbac-default-new-user-role');
-    const btnOpenAddRbacUser = document.getElementById('btn-open-add-rbac-user');
+    const btnOpenAddRbacUser = document.getElementById('btn-open-add-phan-quyen') || document.getElementById('btn-open-add-rbac-user');
     const btnRefreshRbac = document.getElementById('btn-refresh-rbac');
     const btnCancelPhanQuyen = document.getElementById('btn-cancel-phan-quyen');
-    const btnBackPhanQuyen = document.getElementById('btn-back-phan-quyen');
+    const btnBackPhanQuyen = document.getElementById('btn-back-to-rbac-table') || document.getElementById('btn-back-phan-quyen');
     const btnToggleRbacPass = document.getElementById('btn-toggle-rbac-pass');
     const btnSelectAllTabs = document.getElementById('btn-rbac-select-all-tabs');
     const btnSelectBasicTabs = document.getElementById('btn-rbac-select-basic-tabs');
 
+    function getRbacRoleInput() {
+        return document.getElementById('rbac-selected-role') || document.getElementById('rbac-user-role');
+    }
+    function getRbacNoteInput() {
+        return document.getElementById('rbac-user-notes') || document.getElementById('rbac-user-dept');
+    }
+
     function highlightRolePresetCard(role) {
-        const hiddenRoleInput = document.getElementById('rbac-user-role');
+        const hiddenRoleInput = getRbacRoleInput();
         if (hiddenRoleInput) hiddenRoleInput.value = role;
         document.querySelectorAll('.rbac-role-card').forEach(card => {
-            card.classList.toggle('active', card.getAttribute('data-role') === role);
+            const cardRole = card.getAttribute('data-role');
+            card.classList.remove('active', 'active-role-admin', 'active-role-editor', 'active-role-viewer');
+            if (cardRole === role) card.classList.add('active', `active-role-${role}`);
         });
     }
 
@@ -9497,7 +9506,7 @@ async function startApp() {
         const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
 
         const filtered = users.filter(u => {
-            const matchRole = roleFilter === 'all' || (u.role || 'viewer') === roleFilter;
+            const matchRole = !roleFilter || roleFilter === 'all' || (u.role || 'viewer') === roleFilter;
             const matchKw = !keyword ||
                 (u.email || '').toLowerCase().includes(keyword) ||
                 (u.displayName || '').toLowerCase().includes(keyword) ||
@@ -9638,7 +9647,7 @@ async function startApp() {
         if (emailInp) emailInp.value = u.email || '';
         const nameInp = document.getElementById('rbac-user-name');
         if (nameInp) nameInp.value = u.displayName || '';
-        const deptInp = document.getElementById('rbac-user-dept');
+        const deptInp = getRbacNoteInput();
         if (deptInp) deptInp.value = u.dept || '';
         const passInp = document.getElementById('rbac-user-password');
         if (passInp) passInp.value = u.localPassword || '';
@@ -9736,11 +9745,11 @@ async function startApp() {
             }
             const email = normalizeUserEmail(rawEmail);
             const displayName = (document.getElementById('rbac-user-name')?.value || '').trim() || email.split('@')[0];
-            const dept = (document.getElementById('rbac-user-dept')?.value || '').trim();
+            const dept = (getRbacNoteInput()?.value || '').trim();
             const rawPassword = (document.getElementById('rbac-user-password')?.value || '').trim();
             const statusVal = document.getElementById('rbac-user-status')?.value || 'active';
             const isActive = statusVal !== 'locked';
-            const role = document.getElementById('rbac-user-role')?.value || 'viewer';
+            const role = getRbacRoleInput()?.value || 'viewer';
             const syncSupabaseAuth = document.getElementById('rbac-sync-supabase-auth')?.checked;
 
             const canAdd = role === 'admin' ? true : !!document.getElementById('rbac-act-add')?.checked;
