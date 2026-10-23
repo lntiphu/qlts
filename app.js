@@ -815,7 +815,6 @@ async function startApp() {
     const pageTitle = document.getElementById('page-title');
 
     // RBAC (Role-Based Access Control) State & Presets
-    const RBAC_STORAGE_KEY = 'eras_rbac_config';
     const ALL_CONFIGURABLE_TABS = [
         { id: 'tab-trang-chu', name: 'Trang chủ' },
         { id: 'tab-cap-phat-list', name: 'Danh sách cấp phát' },
@@ -830,21 +829,15 @@ async function startApp() {
 
     function getRolePresetPermissions(role) {
         if (role === 'admin') {
-            return {
-                actions: { canAdd: true, canEdit: true, canDelete: true, canExportImport: true },
-                tabs: ALL_CONFIGURABLE_TABS.map(t => t.id)
-            };
-        } else if (role === 'editor') {
-            return {
-                actions: { canAdd: true, canEdit: true, canDelete: false, canExportImport: false },
-                tabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips', 'tab-gia-han']
-            };
-        } else {
-            return {
-                actions: { canAdd: false, canEdit: false, canDelete: false, canExportImport: false },
-                tabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips']
-            };
+            return { canAdd: true, canEdit: true, canDelete: true, canExport: true,
+                allowedTabs: ALL_CONFIGURABLE_TABS.map(t => t.id) };
         }
+        if (role === 'editor') {
+            return { canAdd: true, canEdit: true, canDelete: false, canExport: false,
+                allowedTabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips', 'tab-gia-han'] };
+        }
+        return { canAdd: false, canEdit: false, canDelete: false, canExport: false,
+            allowedTabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-ho-tro', 'tab-tips'] };
     }
 
     function normalizeUserEmail(raw) {
@@ -854,39 +847,27 @@ async function startApp() {
     }
 
     let rbacConfig = {
-        defaultRoleForNewUsers: 'viewer',
+        defaultNewUserRole: 'viewer',
         updatedAt: 0,
         users: []
     };
 
-    try {
-        const savedRbac = localStorage.getItem(RBAC_STORAGE_KEY);
-        if (savedRbac) {
-            const parsed = JSON.parse(savedRbac);
-            if (parsed && Array.isArray(parsed.users)) {
-                rbacConfig = parsed;
-            }
-        }
-    } catch (e) {
-        console.warn('Error loading initial RBAC config from localStorage:', e);
-    }
-
     let currentUserPerm = null;
 
     function hasActionPermission(actionKey) {
-        if (!currentUserPerm) return true;
+        if (!currentUserPerm) return false;
         if (currentUserPerm.role === 'admin') return true;
-        return !!(currentUserPerm.permissions && currentUserPerm.permissions.actions && currentUserPerm.permissions.actions[actionKey]);
+        return currentUserPerm[actionKey] === true;
     }
 
     function canAccessTab(tabId) {
-        if (!currentUserPerm) return true;
+        if (!currentUserPerm) return false;
         if (tabId === 'tab-phan-quyen') {
             return currentUserPerm.role === 'admin';
         }
         if (currentUserPerm.role === 'admin') return true;
-        const allowedTabs = (currentUserPerm.permissions && Array.isArray(currentUserPerm.permissions.tabs))
-            ? currentUserPerm.permissions.tabs
+        const allowedTabs = Array.isArray(currentUserPerm.allowedTabs)
+            ? currentUserPerm.allowedTabs
             : ['tab-trang-chu'];
         if (tabId === 'tab-cap-phat-form') {
             return allowedTabs.includes('tab-cap-phat-list') && (hasActionPermission('canAdd') || hasActionPermission('canEdit'));
@@ -904,8 +885,8 @@ async function startApp() {
 
     function getFirstAllowedTab() {
         if (!currentUserPerm || currentUserPerm.role === 'admin') return 'tab-trang-chu';
-        const allowed = currentUserPerm.permissions?.tabs || [];
-        return allowed.length > 0 ? allowed[0] : 'tab-trang-chu';
+        const allowed = currentUserPerm.allowedTabs || [];
+        return allowed.length > 0 ? allowed[0] : '';
     }
 
     function showTabFormOnly(tabId) {
@@ -1046,6 +1027,12 @@ async function startApp() {
     // -------------------------------------------------------------------------
     const toastContainer = document.getElementById('toast-container');
 
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        })[char]);
+    }
+
     function showToast(title, message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
@@ -1057,8 +1044,8 @@ async function startApp() {
         toast.innerHTML = `
             <i class="fa-solid ${iconClass} toast-icon"></i>
             <div class="toast-content">
-                <div class="toast-title">${title}</div>
-                <div class="toast-message">${message}</div>
+                <div class="toast-title">${escapeHtml(title)}</div>
+                <div class="toast-message">${escapeHtml(message)}</div>
             </div>
             <button class="toast-close"><i class="fa-solid fa-xmark"></i></button>
         `;
@@ -8699,7 +8686,7 @@ async function startApp() {
         if (data.rbacConfig && Array.isArray(data.rbacConfig.users)) {
             rbacConfig = data.rbacConfig;
             if (typeof savePermissionsConfig === 'function') {
-                savePermissionsConfig();
+                await savePermissionsConfig();
             }
         }
 
@@ -9043,181 +9030,96 @@ async function startApp() {
         'tab-gia-han': 'Gia hạn Bản quyền'
     };
 
-    // Save RBAC config to LocalStorage + Node LAN Server + Supabase fallback
-    async function savePermissionsConfig() {
-        try {
-            localStorage.setItem(RBAC_STORAGE_KEY, JSON.stringify(rbacConfig));
-        } catch (e) {
-            console.warn('Error saving RBAC to localStorage:', e);
-        }
-
-        // Sync to local Node server (user_permissions.json) so LAN clients share permissions
-        try {
-            await fetch('/api/permissions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(rbacConfig)
-            });
-        } catch (e) {
-            // Ignore if static hosting without server.js
-        }
-
-        // Best-effort sync to Supabase system_settings
-        try {
-            if (supabaseClient) {
-                await supabaseClient
-                    .from('system_settings')
-                    .upsert({
-                        key: 'user_permissions',
-                        value: JSON.stringify(rbacConfig),
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'key' });
-            }
-        } catch (e) {
-            // Ignore RLS or missing table errors
-        }
+    // Supabase is the only source of truth for RBAC.
+    function rowToPermission(row) {
+        const actions = row.permissions?.actions || {};
+        const preset = getRolePresetPermissions(row.role || 'viewer');
+        return {
+            email: normalizeUserEmail(row.email),
+            displayName: row.display_name || row.email,
+            dept: row.notes || '',
+            role: row.role || 'viewer',
+            isActive: row.is_active !== false,
+            canAdd: actions.canAdd === undefined ? preset.canAdd : actions.canAdd === true,
+            canEdit: actions.canEdit === undefined ? preset.canEdit : actions.canEdit === true,
+            canDelete: actions.canDelete === undefined ? preset.canDelete : actions.canDelete === true,
+            canExport: actions.canExport === undefined && actions.canExportImport === undefined
+                ? preset.canExport : (actions.canExport === true || actions.canExportImport === true),
+            allowedTabs: Array.isArray(row.permissions?.tabs)
+                ? row.permissions.tabs : preset.allowedTabs,
+            updatedAt: row.updated_at || ''
+        };
     }
 
-    // Load & merge RBAC config from Node LAN Server / Supabase / LocalStorage
+    async function savePermissionsConfig() {
+        if (!supabaseClient || currentUserPerm?.role !== 'admin') {
+            throw new Error('Chỉ Admin được lưu phân quyền');
+        }
+        const { error } = await supabaseClient.rpc('qlts_save_permissions', {
+            p_config: {
+                defaultNewUserRole: rbacConfig.defaultNewUserRole,
+                users: rbacConfig.users.map(u => ({
+                    email: normalizeUserEmail(u.email),
+                    displayName: u.displayName,
+                    dept: u.dept,
+                    role: u.role,
+                    isActive: u.isActive,
+                    canAdd: u.canAdd,
+                    canEdit: u.canEdit,
+                    canDelete: u.canDelete,
+                    canExport: u.canExport,
+                    allowedTabs: u.allowedTabs
+                }))
+            }
+        });
+        if (error) throw new Error(error.message || 'Không thể lưu phân quyền lên Supabase');
+        await syncPermissionsFromRemote();
+    }
+
     async function syncPermissionsFromRemote() {
-        // 1. Load from localStorage first
-        try {
-            const rawLocal = localStorage.getItem(RBAC_STORAGE_KEY);
-            if (rawLocal) {
-                const parsed = JSON.parse(rawLocal);
-                if (parsed && Array.isArray(parsed.users)) {
-                    rbacConfig = parsed;
-                }
-            }
-        } catch (e) {}
-
-        // 2. Try loading from Node LAN Server (/api/permissions)
-        try {
-            const res = await fetch('/api/permissions', { cache: 'no-store' });
-            if (res.ok) {
-                const remoteData = await res.json();
-                if (remoteData && Array.isArray(remoteData.users) && remoteData.users.length > 0) {
-                    rbacConfig = {
-                        defaultNewUserRole: remoteData.defaultNewUserRole || rbacConfig.defaultNewUserRole || 'viewer',
-                        users: remoteData.users
-                    };
-                    localStorage.setItem(RBAC_STORAGE_KEY, JSON.stringify(rbacConfig));
-                    return rbacConfig;
-                } else if (rbacConfig.users && rbacConfig.users.length > 0) {
-                    // Push local config to server if server file was empty
-                    fetch('/api/permissions', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(rbacConfig)
-                    }).catch(() => {});
-                }
-            }
-        } catch (e) {}
-
-        // 3. Try loading from Supabase system_settings if still empty
-        try {
-            if (supabaseClient && (!rbacConfig.users || rbacConfig.users.length === 0)) {
-                const { data, error } = await supabaseClient
-                    .from('system_settings')
-                    .select('value')
-                    .eq('key', 'user_permissions')
-                    .maybeSingle();
-                if (!error && data && data.value) {
-                    const parsed = typeof data.value === 'string' ? JSON.parse(data.value) : data.value;
-                    if (parsed && Array.isArray(parsed.users) && parsed.users.length > 0) {
-                        rbacConfig = parsed;
-                        localStorage.setItem(RBAC_STORAGE_KEY, JSON.stringify(rbacConfig));
-                    }
-                }
-            }
-        } catch (e) {}
-
+        if (!supabaseClient) throw new Error('Không thể kết nối Supabase');
+        const { error: ensureError } = await supabaseClient.rpc('qlts_ensure_my_permission');
+        if (ensureError) throw new Error(ensureError.message || 'Tài khoản chưa được cấp quyền');
+        const [{ data: users, error: userError }, { data: setting, error: settingError }] = await Promise.all([
+            supabaseClient.from('user_permissions')
+                .select('email,display_name,role,is_active,permissions,notes,updated_at'),
+            supabaseClient.from('rbac_settings').select('default_new_user_role').eq('id', 1).single()
+        ]);
+        if (userError) throw new Error(userError.message || 'Không thể đọc phân quyền');
+        if (settingError) throw new Error(settingError.message || 'Không thể đọc cấu hình phân quyền');
+        rbacConfig = {
+            defaultNewUserRole: setting.default_new_user_role || 'viewer',
+            users: (users || []).map(rowToPermission)
+        };
         return rbacConfig;
     }
 
-    // Resolve permissions for a given email (auto-bootstraps first Admin so you never get locked out)
+    // Resolve only the server-authorized record for the authenticated email.
     function resolveUserPermissions(rawEmail) {
         const email = normalizeUserEmail(rawEmail);
-        if (!email) return null;
-
-        if (!rbacConfig || !Array.isArray(rbacConfig.users)) {
-            rbacConfig = { defaultNewUserRole: 'viewer', users: [] };
+        const userRecord = rbacConfig.users.find(u => normalizeUserEmail(u.email) === email);
+        if (!userRecord || userRecord.isActive === false) {
+            currentUserPerm = null;
+            return null;
         }
-
-        const nowStr = formatDateDMY(new Date());
-        const hasAnyActiveAdmin = rbacConfig.users.some(u => u.role === 'admin' && u.isActive !== false);
-
-        let userRecord = rbacConfig.users.find(u => normalizeUserEmail(u.email) === email);
-
-        // Auto-bootstrap: If system has NO active Admin yet, promote this logged-in user to Admin
-        if (!hasAnyActiveAdmin) {
-            const adminPreset = getRolePresetPermissions('admin');
-            if (userRecord) {
-                userRecord.role = 'admin';
-                userRecord.isActive = true;
-                userRecord.canAdd = true;
-                userRecord.canEdit = true;
-                userRecord.canDelete = true;
-                userRecord.canExport = true;
-                userRecord.allowedTabs = [...ALL_CONFIGURABLE_TABS];
-                userRecord.updatedAt = nowStr;
-            } else {
-                userRecord = {
-                    email: email,
-                    displayName: email.split('@')[0].toUpperCase(),
-                    dept: 'Ban Quản Trị / IT',
-                    role: 'admin',
-                    isActive: true,
-                    ...adminPreset,
-                    updatedAt: nowStr
-                };
-                rbacConfig.users.unshift(userRecord);
-            }
-            savePermissionsConfig();
-        } else if (!userRecord) {
-            // Auto-register new logged-in user with defaultNewUserRole so Admin can see & manage them
-            const defaultRole = rbacConfig.defaultNewUserRole || 'viewer';
-            const preset = getRolePresetPermissions(defaultRole);
-            userRecord = {
-                email: email,
-                displayName: email.split('@')[0],
-                dept: '',
-                role: defaultRole,
-                isActive: true,
-                ...preset,
-                updatedAt: nowStr
-            };
-            rbacConfig.users.push(userRecord);
-            savePermissionsConfig();
-        }
-
-        // Normalize fields
-        const fallbackPreset = getRolePresetPermissions(userRecord.role || 'viewer');
-        const resolved = {
-            email: normalizeUserEmail(userRecord.email),
-            displayName: userRecord.displayName || email.split('@')[0],
-            dept: userRecord.dept || '',
-            role: userRecord.role || 'viewer',
-            isActive: userRecord.isActive !== false,
-            canAdd: userRecord.role === 'admin' ? true : (userRecord.canAdd !== undefined ? !!userRecord.canAdd : fallbackPreset.canAdd),
-            canEdit: userRecord.role === 'admin' ? true : (userRecord.canEdit !== undefined ? !!userRecord.canEdit : fallbackPreset.canEdit),
-            canDelete: userRecord.role === 'admin' ? true : (userRecord.canDelete !== undefined ? !!userRecord.canDelete : fallbackPreset.canDelete),
-            canExport: userRecord.role === 'admin' ? true : (userRecord.canExport !== undefined ? !!userRecord.canExport : fallbackPreset.canExport),
-            allowedTabs: userRecord.role === 'admin'
-                ? [...ALL_CONFIGURABLE_TABS]
-                : (Array.isArray(userRecord.allowedTabs) && userRecord.allowedTabs.length > 0 ? userRecord.allowedTabs : fallbackPreset.allowedTabs)
+        const role = userRecord.role || 'viewer';
+        const preset = getRolePresetPermissions(role);
+        currentUserPerm = {
+            email, displayName: userRecord.displayName || email,
+            dept: userRecord.dept || '', role, isActive: true,
+            canAdd: role === 'admin' || userRecord.canAdd === true,
+            canEdit: role === 'admin' || userRecord.canEdit === true,
+            canDelete: role === 'admin' || userRecord.canDelete === true,
+            canExport: role === 'admin' || userRecord.canExport === true,
+            allowedTabs: role === 'admin'
+                ? preset.allowedTabs
+                : (Array.isArray(userRecord.allowedTabs) ? userRecord.allowedTabs : preset.allowedTabs)
         };
-
-        currentUserPerm = resolved;
-        return resolved;
+        return currentUserPerm;
     }
 
     // Apply currentUserPerm restrictions across the entire UI
     function applyUserPermissionsUI() {
-        const loggedUserEmail = localStorage.getItem('erg_asset_user') || '';
-        if (!currentUserPerm && loggedUserEmail) {
-            resolveUserPermissions(loggedUserEmail);
-        }
         const perm = currentUserPerm;
         if (!perm) return;
 
@@ -9431,11 +9333,17 @@ async function startApp() {
 
     if (selectDefaultNewUserRole) {
         selectDefaultNewUserRole.value = rbacConfig.defaultNewUserRole || 'viewer';
-        selectDefaultNewUserRole.addEventListener('change', () => {
+        selectDefaultNewUserRole.addEventListener('change', async () => {
             if (!currentUserPerm || currentUserPerm.role !== 'admin') return;
             rbacConfig.defaultNewUserRole = selectDefaultNewUserRole.value;
-            savePermissionsConfig();
-            showToast('Đã lưu cài đặt', `Đã đặt quyền mặc định cho tài khoản mới là: ${selectDefaultNewUserRole.options[selectDefaultNewUserRole.selectedIndex].text}`, 'success');
+            try {
+                await savePermissionsConfig();
+                showToast('Đã lưu cài đặt', 'Đã cập nhật quyền mặc định trên Supabase', 'success');
+            } catch (err) {
+                await syncPermissionsFromRemote().catch(() => {});
+                selectDefaultNewUserRole.value = rbacConfig.defaultNewUserRole || 'viewer';
+                showToast('Lỗi lưu phân quyền', err.message, 'error');
+            }
         });
     }
 
@@ -9553,14 +9461,14 @@ async function startApp() {
             }
 
             // Allowed tabs summary
-            const tabs = u.role === 'admin' ? ALL_CONFIGURABLE_TABS : (Array.isArray(u.allowedTabs) ? u.allowedTabs : []);
+            const tabs = u.role === 'admin' ? ALL_CONFIGURABLE_TABS.map(t => t.id) : (Array.isArray(u.allowedTabs) ? u.allowedTabs : []);
             let tabsHtml = '';
             if (u.role === 'admin' || tabs.length >= ALL_CONFIGURABLE_TABS.length) {
                 tabsHtml = `<span class="badge badge-green" style="font-size: 11.5px;"><i class="fa-solid fa-check-double"></i> Toàn bộ (${ALL_CONFIGURABLE_TABS.length} Tab)</span>`;
             } else {
                 const labels = tabs.map(t => TAB_LABELS_MAP[t] || t);
                 tabsHtml = `<div style="display:flex; flex-wrap:wrap; gap:4px;">` +
-                    labels.map(l => `<span class="rbac-perm-pill" style="color: var(--text-primary); border-color: rgba(148,163,184,0.28);">${l}</span>`).join('') +
+                    labels.map(l => `<span class="rbac-perm-pill" style="color: var(--text-primary); border-color: rgba(148,163,184,0.28);">${escapeHtml(l)}</span>`).join('') +
                     `</div>`;
             }
 
@@ -9575,11 +9483,11 @@ async function startApp() {
                 <td>
                     <div style="font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 6px;">
                         <i class="fa-solid fa-envelope" style="color: #818cf8; font-size: 12px;"></i>
-                        <span>${u.email}</span>
+                        <span>${escapeHtml(u.email)}</span>
                         ${isSelf ? `<span class="badge" style="background: rgba(123,202,15,0.18); color: var(--brand-green); font-size: 10px; padding: 2px 6px;">Bạn</span>` : ''}
                     </div>
                     <div style="font-size: 12px; color: var(--text-secondary); margin-top: 3px;">
-                        <strong>${u.displayName || '—'}</strong> ${u.dept ? `• <span style="color: var(--text-muted);">${u.dept}</span>` : ''}
+                        <strong>${escapeHtml(u.displayName || '—')}</strong> ${u.dept ? `• <span style="color: var(--text-muted);">${escapeHtml(u.dept)}</span>` : ''}
                     </div>
                 </td>
                 <td>${roleBadge}</td>
@@ -9587,7 +9495,7 @@ async function startApp() {
                 <td>${tabsHtml}</td>
                 <td>
                     ${statusHtml}
-                    ${u.updatedAt ? `<div style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px;">Cập nhật: ${u.updatedAt}</div>` : ''}
+                    ${u.updatedAt ? `<div style="font-size: 10.5px; color: var(--text-muted); margin-top: 3px;">Cập nhật: ${escapeHtml(u.updatedAt)}</div>` : ''}
                 </td>
                 <td>
                     <div class="actions-cell">
@@ -9636,7 +9544,7 @@ async function startApp() {
 
         const titleEl = document.getElementById('title-form-phan-quyen');
         if (titleEl) {
-            titleEl.innerHTML = `<i class="fa-solid fa-user-pen"></i> Cập Nhật Phân Quyền: <span style="color: #818cf8;">${u.email}</span>`;
+            titleEl.innerHTML = `<i class="fa-solid fa-user-pen"></i> Cập Nhật Phân Quyền: <span style="color: #818cf8;">${escapeHtml(u.email)}</span>`;
         }
         const btnSave = document.getElementById('btn-save-phan-quyen');
         if (btnSave) {
@@ -9650,7 +9558,7 @@ async function startApp() {
         const deptInp = getRbacNoteInput();
         if (deptInp) deptInp.value = u.dept || '';
         const passInp = document.getElementById('rbac-user-password');
-        if (passInp) passInp.value = u.localPassword || '';
+        if (passInp) passInp.value = '';
         const statusSel = document.getElementById('rbac-user-status');
         if (statusSel) statusSel.value = u.isActive === false ? 'locked' : 'active';
 
@@ -9668,7 +9576,7 @@ async function startApp() {
         if (chkExport) chkExport.checked = role === 'admin' ? true : !!u.canExport;
 
         const allowed = role === 'admin'
-            ? ALL_CONFIGURABLE_TABS
+            ? ALL_CONFIGURABLE_TABS.map(t => t.id)
             : (Array.isArray(u.allowedTabs) ? u.allowedTabs : getRolePresetPermissions(role).allowedTabs);
 
         document.querySelectorAll('.rbac-tab-chk').forEach(chk => {
@@ -9678,7 +9586,7 @@ async function startApp() {
         document.querySelector('.tab-container').scrollTop = 0;
     }
 
-    function deletePhanQuyen(index) {
+    async function deletePhanQuyen(index) {
         const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
         const u = users[index];
         if (!u) return;
@@ -9692,13 +9600,19 @@ async function startApp() {
 
         if (confirm(`Bạn có chắc chắn muốn xóa phân quyền của tài khoản "${u.email}"?`)) {
             users.splice(index, 1);
-            savePermissionsConfig();
-            renderPhanQuyen();
-            showToast('Đã xóa', `Đã xóa cấu hình phân quyền của ${u.email}!`, 'warning');
+            try {
+                await savePermissionsConfig();
+                renderPhanQuyen();
+                showToast('Đã xóa', `Đã xóa cấu hình phân quyền của ${u.email}!`, 'warning');
+            } catch (err) {
+                await syncPermissionsFromRemote().catch(() => {});
+                renderPhanQuyen();
+                showToast('Lỗi xóa phân quyền', err.message, 'error');
+            }
         }
     }
 
-    function toggleRbacUserStatus(index) {
+    async function toggleRbacUserStatus(index) {
         const users = (rbacConfig && Array.isArray(rbacConfig.users)) ? rbacConfig.users : [];
         const u = users[index];
         if (!u) return;
@@ -9713,14 +9627,17 @@ async function startApp() {
         }
 
         u.isActive = nextActive;
-        u.updatedAt = formatDateDMY(new Date());
-        savePermissionsConfig();
-        renderPhanQuyen();
-        showToast(
-            nextActive ? 'Đã mở khóa' : 'Đã khóa tài khoản',
-            `Tài khoản ${u.email} hiện đang ở trạng thái: ${nextActive ? 'Hoạt động' : 'Đã khóa truy cập'}!`,
-            nextActive ? 'success' : 'warning'
-        );
+        try {
+            await savePermissionsConfig();
+            renderPhanQuyen();
+            showToast(nextActive ? 'Đã mở khóa' : 'Đã khóa tài khoản',
+                `Tài khoản ${u.email} hiện đang ở trạng thái: ${nextActive ? 'Hoạt động' : 'Đã khóa truy cập'}!`,
+                nextActive ? 'success' : 'warning');
+        } catch (err) {
+            await syncPermissionsFromRemote().catch(() => {});
+            renderPhanQuyen();
+            showToast('Lỗi cập nhật trạng thái', err.message, 'error');
+        }
     }
 
     if (searchPhanQuyen) {
@@ -9806,15 +9723,40 @@ async function startApp() {
                 updatedAt: nowStr
             };
 
-            if (rawPassword) {
-                userObj.localPassword = rawPassword;
-            }
-
             // Optional: Register on Supabase Auth using isolated non-persisting client
             let supabaseSignUpMsg = '';
-            if (rawPassword && rawPassword.length >= 6 && syncSupabaseAuth && window.supabase && typeof window.supabase.createClient === 'function') {
+            if (rawPassword && rawPassword.length < 6) {
+                showToast('Mật khẩu quá ngắn', 'Mật khẩu Supabase Auth cần ít nhất 6 ký tự.', 'error');
+                return;
+            }
+            if (rawPassword && targetIdx >= 0) {
+                showToast('Không thể đổi mật khẩu', 'Đổi mật khẩu tài khoản đã có qua Supabase Auth hoặc chức năng khôi phục mật khẩu.', 'error');
+                return;
+            }
+            if (rawPassword && !syncSupabaseAuth) {
+                showToast('Chưa tạo tài khoản', 'Mật khẩu chỉ được dùng khi đăng ký Supabase Auth.', 'error');
+                return;
+            }
+
+            if (targetIdx >= 0 && targetIdx < users.length) {
+                users[targetIdx] = userObj;
+            } else {
+                users.push(userObj);
+            }
+
+            rbacConfig.users = users;
+            try {
+                await savePermissionsConfig();
+            } catch (err) {
+                await syncPermissionsFromRemote().catch(() => {});
+                showToast('Lỗi lưu phân quyền', err.message, 'error');
+                return;
+            }
+
+            // Permission commit comes first; Auth signup is a separate operation.
+            if (rawPassword && syncSupabaseAuth && window.supabase && typeof window.supabase.createClient === 'function') {
                 try {
-                    const isolatedClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                    const isolatedClient = window.supabase.createClient(supabaseUrl, supabaseKey, {
                         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
                     });
                     const { error: signUpErr } = await isolatedClient.auth.signUp({
@@ -9825,23 +9767,15 @@ async function startApp() {
                         }
                     });
                     if (!signUpErr) {
-                        supabaseSignUpMsg = ' (Đã đồng bộ tạo trên Supabase Auth)';
-                    } else if (!signUpErr.message?.includes('already registered')) {
-                        console.warn('Supabase Auth signUp notice:', signUpErr.message);
+                        supabaseSignUpMsg = ' (Đã gửi yêu cầu tạo tài khoản Supabase Auth; có thể cần xác nhận email)';
+                    } else {
+                        throw new Error(signUpErr.message || 'Không thể tạo tài khoản Supabase Auth');
                     }
                 } catch (e) {
-                    console.warn('Isolated Supabase signUp error:', e);
+                    supabaseSignUpMsg = ' (chưa tạo được Supabase Auth: ' + (e.message || 'lỗi xác thực') + ')';
+                    showToast('Quyền đã lưu, tài khoản chưa tạo', e.message || 'Không thể tạo Supabase Auth', 'warning');
                 }
             }
-
-            if (targetIdx >= 0 && targetIdx < users.length) {
-                users[targetIdx] = userObj;
-            } else {
-                users.push(userObj);
-            }
-
-            rbacConfig.users = users;
-            await savePermissionsConfig();
 
             // If Admin edited their own permissions or current logged-in user, re-apply immediately
             const currentLoggedEmail = normalizeUserEmail(localStorage.getItem('erg_asset_user') || '');
@@ -9909,51 +9843,22 @@ async function startApp() {
             const emailToAuth = normalizeUserEmail(rawUser);
 
             try {
-                // 1. Sync latest RBAC permissions from server first
+                if (!supabaseClient) throw new Error('Không thể kết nối Supabase Auth');
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: emailToAuth,
+                    password: rawPass
+                });
+                if (error || !data?.user) {
+                    throw new Error(error?.message || 'Email hoặc mật khẩu không chính xác');
+                }
+                const authenticatedEmail = normalizeUserEmail(data.user.email || emailToAuth);
                 await syncPermissionsFromRemote();
-
-                // 2. Check if user is locked by Admin before authenticating
-                const preCheckUser = (rbacConfig.users || []).find(u => normalizeUserEmail(u.email) === emailToAuth);
-                if (preCheckUser && preCheckUser.isActive === false) {
-                    throw new Error('Tài khoản của bạn đã bị Quản trị viên (Admin) khóa quyền truy cập hệ thống!');
-                }
-
-                let authenticatedEmail = '';
-
-                // 3. Authenticate via Supabase Auth OR web-configured localPassword fallback
-                if (supabaseClient) {
-                    const { data, error } = await supabaseClient.auth.signInWithPassword({
-                        email: emailToAuth,
-                        password: rawPass
-                    });
-
-                    if (!error && data && data.user) {
-                        authenticatedEmail = normalizeUserEmail(data.user.email || emailToAuth);
-                    } else if (preCheckUser && preCheckUser.localPassword && preCheckUser.localPassword === rawPass) {
-                        // Allow login if Admin created/set password directly in RBAC web panel
-                        authenticatedEmail = emailToAuth;
-                    } else {
-                        let errMsg = (error && error.message) ? error.message : 'Email hoặc mật khẩu không chính xác!';
-                        if (errMsg.includes('Invalid login credentials')) {
-                            errMsg = 'Email hoặc mật khẩu không chính xác!';
-                        } else if (errMsg.includes('Email not confirmed')) {
-                            errMsg = 'Tài khoản chưa được kích hoạt email!';
-                        }
-                        throw new Error(errMsg);
-                    }
-                } else if (preCheckUser && preCheckUser.localPassword && preCheckUser.localPassword === rawPass) {
-                    authenticatedEmail = emailToAuth;
-                } else {
-                    throw new Error('Không thể kết nối đến máy chủ xác thực Supabase!');
-                }
 
                 // 4. Resolve RBAC permissions for the authenticated user
                 const perm = resolveUserPermissions(authenticatedEmail);
-                if (perm && perm.isActive === false) {
-                    throw new Error('Tài khoản của bạn hiện đang bị khóa quyền truy cập!');
-                }
+                if (!perm) throw new Error('Tài khoản chưa được cấp quyền hoặc đã bị khóa');
 
-                localStorage.setItem('erg_asset_logged_in', 'true');
+                localStorage.removeItem('erg_asset_logged_in');
                 localStorage.setItem('erg_asset_user', authenticatedEmail);
 
                 // 5. Apply RBAC UI restrictions (hide disallowed tabs & action buttons)
@@ -9972,6 +9877,8 @@ async function startApp() {
                 renderDashboard();
 
             } catch (err) {
+                currentUserPerm = null;
+                await supabaseClient?.auth.signOut().catch(() => {});
                 console.error("Login Error:", err);
                 if (errDiv) {
                     errDiv.textContent = 'Đăng nhập thất bại: ' + (err.message || 'Lỗi xác thực!');
@@ -10496,54 +10403,43 @@ async function startApp() {
         });
     }
 
-    // Check auth status & apply RBAC on load
-    const isLocalLoggedIn = localStorage.getItem('erg_asset_logged_in') === 'true';
-
-    // Initialize Theme immediately
+    // A localStorage flag is never proof of an authenticated session.
     initTheme();
 
-    async function bootstrapAuthenticatedSession(userEmail) {
-        await syncPermissionsFromRemote();
-        const email = normalizeUserEmail(userEmail || localStorage.getItem('erg_asset_user') || 'admin@erasgroup.vn');
-        localStorage.setItem('erg_asset_user', email);
-        const perm = resolveUserPermissions(email);
-
-        if (perm && perm.isActive === false) {
-            showToast('Tài khoản bị khóa', 'Tài khoản của bạn đã bị Quản trị viên khóa quyền truy cập!', 'error');
-            performAppLogout();
-            return;
+    async function bootstrapAuthenticatedSession(session) {
+        try {
+            await syncPermissionsFromRemote();
+            const email = normalizeUserEmail(session.user.email);
+            const perm = resolveUserPermissions(email);
+            if (!perm) throw new Error('Tài khoản chưa được cấp quyền hoặc đã bị khóa');
+            localStorage.setItem('erg_asset_user', email);
+            applyUserPermissionsUI();
+            if (loginScreen) loginScreen.classList.add('hidden');
+            if (appContainer) appContainer.classList.remove('hidden');
+            const activeTab = localStorage.getItem('erg_asset_active_tab');
+            switchToTab(activeTab && canAccessTab(activeTab) ? activeTab : getFirstAllowedTab());
+            initApp();
+        } catch (err) {
+            currentUserPerm = null;
+            localStorage.removeItem('erg_asset_logged_in');
+            localStorage.removeItem('erg_asset_user');
+            await supabaseClient?.auth.signOut().catch(() => {});
+            if (loginScreen) loginScreen.classList.remove('hidden');
+            if (appContainer) appContainer.classList.add('hidden');
+            showToast('Không thể vào hệ thống', err.message || 'Lỗi phân quyền', 'error');
         }
-
-        applyUserPermissionsUI();
-
-        if (loginScreen) loginScreen.classList.add('hidden');
-        if (appContainer) appContainer.classList.remove('hidden');
-
-        const activeTabToRestore = localStorage.getItem('erg_asset_active_tab');
-        if (activeTabToRestore && document.getElementById(activeTabToRestore) && canAccessTab(activeTabToRestore)) {
-            switchToTab(activeTabToRestore);
-        } else {
-            switchToTab(getFirstAllowedTab());
-        }
-        initApp();
     }
 
-    if (isLocalLoggedIn) {
-        const savedUser = localStorage.getItem('erg_asset_user') || '';
-        bootstrapAuthenticatedSession(savedUser);
-    } else if (supabaseClient) {
-        supabaseClient.auth.getSession().then(({ data: { session } }) => {
-            if (session && session.user) {
-                localStorage.setItem('erg_asset_logged_in', 'true');
-                localStorage.setItem('erg_asset_user', session.user.email || '');
-                bootstrapAuthenticatedSession(session.user.email || '');
-            } else {
-                syncPermissionsFromRemote().catch(() => {});
+    if (supabaseClient) {
+        supabaseClient.auth.getSession().then(({ data, error }) => {
+            if (error || !data?.session?.user) {
                 if (loginScreen) loginScreen.classList.remove('hidden');
                 if (appContainer) appContainer.classList.add('hidden');
+                return;
             }
+            bootstrapAuthenticatedSession(data.session);
         }).catch(err => {
-            console.error("Auth session error:", err);
+            console.error('Auth session error:', err);
             if (loginScreen) loginScreen.classList.remove('hidden');
             if (appContainer) appContainer.classList.add('hidden');
         });
@@ -10551,6 +10447,7 @@ async function startApp() {
         if (loginScreen) loginScreen.classList.remove('hidden');
         if (appContainer) appContainer.classList.add('hidden');
     }
+
 }
 
 if (document.readyState === 'loading') {
