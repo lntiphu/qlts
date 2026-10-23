@@ -252,6 +252,17 @@
                         <i class="fa-solid fa-right-to-bracket"></i> Đăng nhập Hệ thống
                     </button>
                 </form>
+                <script>
+                    // Keep credentials on this page if the main application fails to initialize.
+                    document.getElementById('form-login').addEventListener('submit', function (event) {
+                        if (window.qltsLoginReady) return;
+                        event.preventDefault();
+                        event.stopImmediatePropagation();
+                        const errorMessage = document.getElementById('login-error-msg');
+                        errorMessage.textContent = 'Ứng dụng chưa sẵn sàng. Vui lòng tải lại trang và thử lại.';
+                        errorMessage.classList.remove('hidden');
+                    });
+                </script>
             </div>
         </div>
     </div>
@@ -355,7 +366,7 @@
                     </button>
 
                     <!-- Profile User & Role -->
-                    <div class="user-profile" id="header-user-profile" style="display: flex; align-items: center; gap: 10px; background: rgba(37, 51, 141, 0.2); padding: 4px 6px 4px 12px; border-radius: 30px; border: 1px solid rgba(123, 202, 15, 0.3); user-select: none;">
+                    <div class="user-profile" id="header-user-profile" style="display: flex; align-items: center; gap: 10px; background: rgba(37, 51, 141, 0.2); padding: 4px 12px; border-radius: 30px; border: 1px solid rgba(123, 202, 15, 0.3); user-select: none;">
                         <div id="header-user-info-clickable" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="Thông tin tài khoản & quyền hạn hiện tại">
                             <div id="header-user-avatar" style="width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #7bca0f, #25338d); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; box-shadow: 0 2px 6px rgba(37, 51, 141, 0.4);">
                                 <i class="fa-solid fa-user-shield" id="header-user-avatar-icon"></i>
@@ -365,9 +376,6 @@
                                 <span id="header-user-role" style="font-size: 10px; color: #7bca0f; font-weight: 600; line-height: 1.1;">Quản trị viên</span>
                             </div>
                         </div>
-                        <button id="btn-logout-header" class="btn-logout-icon" onclick="triggerAppLogout(event)" title="Đăng xuất khỏi hệ thống" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; margin-left: 2px;">
-                            <i class="fa-solid fa-right-from-bracket" style="font-size: 13px;"></i>
-                        </button>
                     </div>
                 </div>
             </header>
@@ -2072,12 +2080,12 @@
                                     <div class="form-group col-span-2-lg">
                                         <label for="rbac-user-password">Mật khẩu đăng nhập (Tùy chọn)</label>
                                         <div class="password-input-wrapper">
-                                            <input type="password" id="rbac-user-password" placeholder="Nhập nếu tạo mới hoặc đổi mật khẩu...">
+                                            <input type="password" id="rbac-user-password" placeholder="Chỉ nhập khi đăng ký tài khoản mới...">
                                             <button type="button" class="btn-toggle-password" id="btn-toggle-rbac-pass" tabindex="-1">
                                                 <i class="fa-regular fa-eye"></i>
                                             </button>
                                         </div>
-                                        <span style="font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block;">Để trống nếu chỉ phân quyền cho Email đã có trên Supabase</span>
+                                        <span style="font-size: 11px; color: var(--text-muted); margin-top: 3px; display: block;">Để trống nếu Email đã có trong Supabase Auth. Đổi mật khẩu tài khoản cũ trong Supabase Auth.</span>
                                     </div>
                                     <div class="form-group col-span-2-lg">
                                         <label for="rbac-user-status">Trạng thái truy cập</label>
@@ -2094,7 +2102,7 @@
                                 <div style="margin-top: 10px; display: flex; align-items: center; gap: 8px;">
                                     <input type="checkbox" id="rbac-sync-supabase-auth" checked style="width: 16px; height: 16px; accent-color: #7bca0f; cursor: pointer;">
                                     <label for="rbac-sync-supabase-auth" style="font-size: 12.5px; color: var(--text-secondary); cursor: pointer; margin: 0;">
-                                        Đồng thời đăng ký tài khoản lên <strong>Supabase Auth</strong> nếu có nhập mật khẩu mới (Hỗ trợ đăng nhập cả Online & Nội bộ)
+                                        Đăng ký tài khoản mới lên <strong>Supabase Auth</strong> nếu có nhập mật khẩu (có thể cần xác nhận email)
                                     </label>
                                 </div>
                             </div>
@@ -2263,7 +2271,6 @@
                                     <select id="rbac-default-new-user-role" style="background: transparent; border: none; color: var(--text-primary); font-weight: 700; font-size: 12px; outline: none; cursor: pointer;">
                                         <option value="viewer" style="background: #131929; color: #fff;">👁️ Chỉ xem (Viewer)</option>
                                         <option value="editor" style="background: #131929; color: #fff;">🛠️ Quản lý / Kỹ thuật</option>
-                                        <option value="admin" style="background: #131929; color: #fff;">🛡️ Admin (Toàn quyền)</option>
                                         <option value="block" style="background: #131929; color: #ef4444;">🚫 Chặn nếu chưa cấp quyền</option>
                                     </select>
                                 </div>
@@ -3256,6 +3263,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="qrcode-gen.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=37.1"></script>
+    <script src="app.js?v=39"></script>
 </body>
 </html>

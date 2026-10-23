@@ -9016,7 +9016,6 @@ async function startApp() {
     const appContainer = document.getElementById('app-container');
     const formLogin = document.getElementById('form-login');
     const btnToggleLoginPass = document.getElementById('btn-toggle-login-pass');
-    const btnLogout = document.getElementById('btn-logout-header');
 
     const TAB_LABELS_MAP = {
         'tab-trang-chu': 'Trang chủ',
@@ -9816,7 +9815,7 @@ async function startApp() {
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault();
             const rawUser = (document.getElementById('login-username')?.value || '').trim();
-            const rawPass = (document.getElementById('login-password')?.value || '').trim();
+            const rawPass = document.getElementById('login-password')?.value || '';
 
             // Clear any previous error message
             const errDiv = document.getElementById('login-error-msg');
@@ -9957,14 +9956,6 @@ async function startApp() {
 
     // Expose globally for instant inline triggering
     window.performAppLogout = performAppLogout;
-
-    // Attach to Header logout button
-    if (btnLogout) {
-        btnLogout.onclick = (e) => {
-            e.preventDefault();
-            performAppLogout();
-        };
-    }
 
     // Attach to Sidebar logout button
     const btnLogoutSidebar = document.getElementById('btn-logout-sidebar');
@@ -10448,10 +10439,21 @@ async function startApp() {
         if (appContainer) appContainer.classList.add('hidden');
     }
 
+    window.qltsLoginReady = true;
+
+}
+
+function reportAppStartupError(error) {
+    console.error('Application startup failed:', error);
+    const errorMessage = document.getElementById('login-error-msg');
+    if (errorMessage) {
+        errorMessage.textContent = 'Ứng dụng chưa khởi tạo được. Vui lòng tải lại trang và thử lại.';
+        errorMessage.classList.remove('hidden');
+    }
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startApp);
+    document.addEventListener('DOMContentLoaded', () => startApp().catch(reportAppStartupError));
 } else {
-    startApp();
+    startApp().catch(reportAppStartupError);
 }
