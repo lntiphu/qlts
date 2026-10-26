@@ -8049,6 +8049,7 @@ async function startApp() {
             } else {
                 const idx = parseInt(indexStr);
                 const oldItem = khoList[idx];
+                let supabaseUpdateError = null;
                 try {
                     const dbData = mappers.khoThietBi.toDB(data);
                     let isDbSuccess = false;
@@ -8056,14 +8057,17 @@ async function startApp() {
                     if (supabaseClient && !isLocalId) {
                         // Asset codes are retained for existing rows and stay immutable in Supabase.
                         const { asset_code: _assetCode, ...updateData } = dbData;
-                        const { data: updatedData, error } = await supabaseClient
+                        const { error } = await supabaseClient
                             .from('kho_thiet_bi')
                             .update(updateData)
-                            .eq('id', oldItem.id)
-                            .select();
-                        if (!error && updatedData && updatedData.length > 0) {
-                            khoList[idx] = mappers.khoThietBi.fromDB(updatedData[0]);
+                            .eq('id', oldItem.id);
+                        if (!error) {
+                            data.id = oldItem.id;
+                            khoList[idx] = data;
                             isDbSuccess = true;
+                        } else {
+                            console.error('[SUPABASE UPDATE ERROR] kho_thiet_bi:', error);
+                            supabaseUpdateError = error;
                         }
                     }
                     if (!isDbSuccess) {
@@ -8071,7 +8075,15 @@ async function startApp() {
                         khoList[idx] = data;
                     }
                     saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                    showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin thiết bị lưu kho!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
+                    showToast(
+                        isDbSuccess ? 'Thành công' : (supabaseUpdateError ? 'Lỗi cập nhật DB' : 'Lưu Offline'),
+                        isDbSuccess
+                            ? 'Đã cập nhật thông tin thiết bị lưu kho!'
+                            : (supabaseUpdateError
+                                ? `Supabase báo lỗi: ${supabaseUpdateError.message || 'Không thể cập nhật thiết bị trong kho.'}`
+                                : 'Đã cập nhật tạm thời trên trình duyệt!'),
+                        isDbSuccess ? 'success' : (supabaseUpdateError ? 'error' : 'warning')
+                    );
                 } catch (err) {
                     console.error("Lỗi cập nhật kho:", err);
                     data.id = oldItem ? oldItem.id : ('local-' + Date.now());
