@@ -60,7 +60,6 @@ async function startApp() {
         "devMain": "",
         "devMonitor": "LG 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -91,7 +90,6 @@ async function startApp() {
         "devMain": "",
         "devMonitor": "LG 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -122,7 +120,6 @@ async function startApp() {
         "devMain": "",
         "devMonitor": "LG 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -153,7 +150,6 @@ async function startApp() {
         "devMain": "",
         "devMonitor": "Dell 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -184,7 +180,6 @@ async function startApp() {
         "devMain": "Asus Prime H610M-K D4",
         "devMonitor": "LG 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "HDMI và nguồn nhỏ",
         "warrantyEndDate": ""
     },
@@ -215,7 +210,6 @@ async function startApp() {
         "devMain": "Lenovo161216",
         "devMonitor": "",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -246,7 +240,6 @@ async function startApp() {
         "devMain": "Asus Prime A520M-R",
         "devMonitor": "LG 24 inch",
         "devMonitorSn": "507BODG0T130",
-        "monitorSize": "",
         "devCables": "HDMI và nguồn nhỏ",
         "warrantyEndDate": ""
     },
@@ -277,7 +270,6 @@ async function startApp() {
         "devMain": "",
         "devMonitor": "",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -308,7 +300,6 @@ async function startApp() {
         "devMain": "",
         "devMonitor": "Dell 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "VGA và nguồn lớn",
         "warrantyEndDate": ""
     },
@@ -339,7 +330,6 @@ async function startApp() {
         "devMain": "Lenovo161216",
         "devMonitor": "",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     },
@@ -370,7 +360,6 @@ async function startApp() {
         "devMain": "Asus Prime H610M-K D4",
         "devMonitor": "LG 24",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "HDMI và nguồn nhỏ",
         "warrantyEndDate": ""
     },
@@ -401,7 +390,6 @@ async function startApp() {
         "devMain": "Nitro ANV15-41",
         "devMonitor": "",
         "devMonitorSn": "",
-        "monitorSize": "",
         "devCables": "",
         "warrantyEndDate": ""
     }
@@ -566,7 +554,6 @@ async function startApp() {
                     assetGroup: db.asset_group || db.assetGroup || 'CCDC',
                     currentAssetGroup: db.current_asset_group || db.currentAssetGroup || db.asset_group || db.assetGroup || 'CCDC',
                     assetType: db.asset_type || db.assetType || 'LT',
-                    monitorSize: db.monitor_size || db.monitorSize || '',
                     warrantyEndDate: db.warranty_end_date || db.warrantyEndDate || ''
                 };
             },
@@ -624,7 +611,6 @@ async function startApp() {
                     asset_group: js.assetGroup || null,
                     current_asset_group: js.currentAssetGroup || js.assetGroup || null,
                     asset_type: js.assetType || null,
-                    monitor_size: js.monitorSize || null,
                     warranty_end_date: js.warrantyEndDate || null
                 };
             }
@@ -779,7 +765,6 @@ async function startApp() {
                     devMain: db.dev_main || db.devMain || specs.devMain || '',
                     devMonitor: db.dev_monitor || db.devMonitor || specs.devMonitor || '',
                     devMonitorSn: db.dev_monitor_sn || db.devMonitorSn || specs.devMonitorSn || '',
-                    monitorSize: db.monitor_size || db.monitorSize || specs.monitorSize || '',
                     devCables: db.dev_cables || db.devCables || specs.devCables || '',
                     warrantyEndDate: db.warranty_end_date || db.warrantyEndDate || specs.warrantyEndDate || ''
                 };
@@ -801,7 +786,6 @@ async function startApp() {
                 dev_cpu: js.devCpu || '',
                 dev_ram: js.devRam || '',
                 dev_ssd: js.devSsd || '',
-                monitor_size: js.monitorSize || '',
                 warranty_end_date: js.warrantyEndDate || ''
             })
         }
@@ -2613,6 +2597,13 @@ async function startApp() {
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         if (allocSelected) devAllocVal = allocSelected.value;
         const hasDevice = devAllocVal === 'yes' || devAllocVal === 'project';
+        const existingAsset = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
+        const assetCompany = existingAsset?.assetCompany || getAssetPrefix() || 'ERG';
+        const assetGroup = existingAsset?.assetGroup || 'CCDC';
+        const assetType = existingAsset?.assetType || 'LT';
+        const assetCode = existingAsset
+            ? (existingAsset.maTaiSan || existingAsset.assetCode || '')
+            : generateAssetCode(assetCompany, assetGroup, assetType);
 
         const data = {
             devAllocation: devAllocVal,
@@ -2660,25 +2651,12 @@ async function startApp() {
             depreciationYears: (document.getElementById('device-depreciation-years') ? document.getElementById('device-depreciation-years').value : '3'),
             maintenanceLogs: (indexStr !== '' && thietBiList[parseInt(indexStr)]) ? (thietBiList[parseInt(indexStr)].maintenanceLogs || []) : [],
             devId: devIdInput ? devIdInput.value.trim() : '',
-            maTaiSan: indexStr !== '' && thietBiList[parseInt(indexStr)]
-                ? (thietBiList[parseInt(indexStr)].maTaiSan || thietBiList[parseInt(indexStr)].assetCode || '')
-                : (document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : ''),
-            assetCode: indexStr !== '' && thietBiList[parseInt(indexStr)]
-                ? (thietBiList[parseInt(indexStr)].assetCode || thietBiList[parseInt(indexStr)].maTaiSan || '')
-                : (document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : ''),
-            assetCompany: indexStr !== '' && thietBiList[parseInt(indexStr)]
-                ? (thietBiList[parseInt(indexStr)].assetCompany || 'ERG')
-                : (document.getElementById('dev-asset-company') ? (document.getElementById('dev-asset-company').value.trim().toUpperCase() || 'ERG') : 'ERG'),
-            assetGroup: indexStr !== '' && thietBiList[parseInt(indexStr)]
-                ? (thietBiList[parseInt(indexStr)].assetGroup || 'CCDC')
-                : (document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC'),
-            currentAssetGroup: indexStr !== '' && thietBiList[parseInt(indexStr)]
-                ? (thietBiList[parseInt(indexStr)].currentAssetGroup || thietBiList[parseInt(indexStr)].assetGroup || 'CCDC')
-                : (document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC'),
-            assetType: indexStr !== '' && thietBiList[parseInt(indexStr)]
-                ? (thietBiList[parseInt(indexStr)].assetType || 'LT')
-                : (document.getElementById('dev-asset-type') ? document.getElementById('dev-asset-type').value : 'LT'),
-            monitorSize: document.getElementById('dev-monitor-size') ? document.getElementById('dev-monitor-size').value.trim() : '',
+            maTaiSan: assetCode,
+            assetCode,
+            assetCompany,
+            assetGroup,
+            currentAssetGroup: existingAsset?.currentAssetGroup || assetGroup,
+            assetType,
             warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : ''
         };
 
@@ -2977,7 +2955,6 @@ async function startApp() {
 
 
 
-        if (document.getElementById('dev-monitor-size')) document.getElementById('dev-monitor-size').value = item.monitorSize || '';
         if (document.getElementById('dev-warranty-exp')) document.getElementById('dev-warranty-exp').value = item.warrantyEndDate || '';
 
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Cấp Phát';
@@ -3110,7 +3087,6 @@ async function startApp() {
         }
 
 
-        if (document.getElementById('dev-monitor-size')) document.getElementById('dev-monitor-size').value = '';
         if (document.getElementById('dev-warranty-exp')) document.getElementById('dev-warranty-exp').value = '';
         const errSn = document.getElementById('err-dev-sn');
         if (errSn) errSn.style.display = 'none';
@@ -3937,7 +3913,6 @@ async function startApp() {
             targetUser.devMonitor2 = specsObj.devMonitor2 || '';
             targetUser.devMonitorSn = khoItem.devMonitorSn || specsObj.devMonitorSn || '';
             targetUser.devMonitorSn2 = specsObj.devMonitorSn2 || '';
-            targetUser.monitorSize = khoItem.monitorSize || specsObj.monitorSize || '';
             targetUser.warrantyEndDate = khoItem.warrantyEndDate || specsObj.warrantyEndDate || '';
             targetUser.devSn = khoItem.devSn || specsObj.devSn || khoItem.serial || specsObj.serial || '';
             targetUser.devKeyboard = specsObj.devKeyboard || '';
@@ -4504,7 +4479,6 @@ async function startApp() {
         if (monEl) {
             const monitors = [item.devMonitor, item.devMonitor2].filter(Boolean);
             let monStr = monitors.join(' | ');
-            if (!monStr && item.monitorSize) monStr = `${item.monitorSize}`;
             monEl.innerText = monStr || 'Theo máy';
         }
 
@@ -5048,7 +5022,6 @@ async function startApp() {
                 devVga: item.devVga || '',
                 devMain: item.devMain || '',
                 devMonitor: item.devMonitor || '',
-                monitorSize: item.monitorSize || '',
                 devCables: item.devCables || '',
                 warrantyEndDate: item.warrantyEndDate || '',
                 reason: `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
@@ -5493,7 +5466,6 @@ async function startApp() {
         const cpu = document.getElementById('batch-cpu')?.value.trim() || '';
         const ram = document.getElementById('batch-ram')?.value.trim() || '';
         const ssd = document.getElementById('batch-ssd')?.value.trim() || '';
-        const monitorSize = document.getElementById('batch-monitor-size')?.value.trim() || '';
         const warrantyExp = document.getElementById('batch-warranty-exp')?.value.trim() || '';
         const reason = document.getElementById('batch-reason')?.value.trim() || 'Nhập kho lô mới';
 
@@ -5519,9 +5491,8 @@ async function startApp() {
                 devCpu: cpu,
                 devRam: ram,
                 devSsd: ssd,
-                monitorSize: monitorSize,
                 warrantyEndDate: warrantyExp,
-                notes: `[Lô ${codes[0].code} - ${codes[codes.length - 1].code}] CPU: ${cpu} | RAM: ${ram} | SSD: ${ssd}`
+                notes: `CPU: ${cpu} | RAM: ${ram} | SSD: ${ssd}`
             };
             khoList.push(item);
             createdItems.push(item);
@@ -5553,7 +5524,7 @@ async function startApp() {
         renderKho();
         renderDashboard();
 
-        showToast('Tạo hàng loạt thành công', `Đã tạo thành công ${validQty} mã tài sản từ ${codes[0].code} đến ${codes[codes.length - 1].code} và nhập vào Kho!`, 'success');
+        showToast('Tạo hàng loạt thành công', `Đã nhập ${validQty} thiết bị vào Kho!`, 'success');
     }
 
     // Modal DOM Events Wiring
@@ -7876,7 +7847,6 @@ async function startApp() {
             if (item.devCpu) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-microchip"></i> ${item.devCpu}</span>`);
             if (item.devRam) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-memory"></i> ${item.devRam}</span>`);
             if (item.devSsd) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-hard-drive"></i> ${item.devSsd}</span>`);
-            if (item.monitorSize) specsPills.push(`<span style="background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 11px; white-space: nowrap;"><i class="fa-solid fa-desktop"></i> ${item.monitorSize}</span>`);
 
             let specsContent = specsPills.join(' ');
             if (!specsContent && item.notes) {
@@ -7981,11 +7951,14 @@ async function startApp() {
                 return;
             }
 
-            const companyVal = (document.getElementById('kho-asset-company')?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
-            const groupVal = document.getElementById('kho-asset-group')?.value || 'CCDC';
+            const editingKho = indexStr !== '' ? khoList[parseInt(indexStr)] : null;
+            const companyVal = editingKho?.assetCompany || (document.getElementById('kho-asset-company')?.value || getAssetPrefix() || 'ERG').trim().toUpperCase();
+            const groupVal = editingKho?.assetGroup || document.getElementById('kho-asset-group')?.value || 'CCDC';
             const currentGroupVal = groupVal;
-            const typeVal = document.getElementById('kho-asset-type')?.value || 'LT';
-            const maTaiSanVal = document.getElementById('kho-ma-tai-san')?.value.trim() || generateAssetCode(companyVal, groupVal, typeVal);
+            const typeVal = editingKho?.assetType || document.getElementById('kho-asset-type')?.value || 'LT';
+            const maTaiSanVal = editingKho
+                ? (editingKho.maTaiSan || editingKho.assetCode || editingKho.code || '')
+                : (document.getElementById('kho-ma-tai-san')?.value.trim() || generateAssetCode(companyVal, groupVal, typeVal));
 
             const userNotes = document.getElementById('kho-notes')?.value.trim() || '';
 
@@ -8010,7 +7983,6 @@ async function startApp() {
                 devVga: document.getElementById('kho-vga')?.value.trim() || '',
                 devMain: document.getElementById('kho-main')?.value.trim() || '',
                 devMonitor: document.getElementById('kho-monitor')?.value.trim() || '',
-                monitorSize: document.getElementById('kho-monitor-size')?.value.trim() || '',
                 devMonitorSn: document.getElementById('kho-monitor-sn')?.value.trim() || '',
                 devCables: document.getElementById('kho-cables')?.value.trim() || '',
                 warrantyEndDate: warrantyVal ? formatDateDMY(warrantyVal) : '',
@@ -8041,7 +8013,6 @@ async function startApp() {
                 devVga: data.devVga,
                 devMain: data.devMain,
                 devMonitor: data.devMonitor,
-                monitorSize: data.monitorSize,
                 devMonitorSn: data.devMonitorSn,
                 devCables: data.devCables,
                 warrantyEndDate: data.warrantyEndDate,
@@ -8088,9 +8059,11 @@ async function startApp() {
                     let isDbSuccess = false;
                     const isLocalId = oldItem && oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
                     if (supabaseClient && !isLocalId) {
+                        // Asset codes are retained for existing rows and stay immutable in Supabase.
+                        const { asset_code: _assetCode, ...updateData } = dbData;
                         const { data: updatedData, error } = await supabaseClient
                             .from('kho_thiet_bi')
-                            .update(dbData)
+                            .update(updateData)
                             .eq('id', oldItem.id)
                             .select();
                         if (!error && updatedData && updatedData.length > 0) {
@@ -8187,7 +8160,6 @@ async function startApp() {
         if (document.getElementById('kho-vga')) document.getElementById('kho-vga').value = item.devVga || specs.devVga || '';
         if (document.getElementById('kho-main')) document.getElementById('kho-main').value = item.devMain || specs.devMain || '';
         if (document.getElementById('kho-monitor')) document.getElementById('kho-monitor').value = item.devMonitor || specs.devMonitor || '';
-        if (document.getElementById('kho-monitor-size')) document.getElementById('kho-monitor-size').value = item.monitorSize || specs.monitorSize || '';
         if (document.getElementById('kho-monitor-sn')) document.getElementById('kho-monitor-sn').value = item.devMonitorSn || specs.devMonitorSn || '';
         if (document.getElementById('kho-cables')) document.getElementById('kho-cables').value = item.devCables || specs.devCables || '';
         if (document.getElementById('kho-warranty-exp')) document.getElementById('kho-warranty-exp').value = item.warrantyEndDate ? formatDateDMY(item.warrantyEndDate) : (specs.warrantyEndDate ? formatDateDMY(specs.warrantyEndDate) : '');

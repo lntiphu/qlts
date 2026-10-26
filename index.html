@@ -671,79 +671,11 @@
                                 </div>
                                 
                                 <div id="device-fields-wrapper" style="transition: all 0.3s ease;">
-                                    <!-- Asset Code Auto-Generation Control Banner -->
-                                    <!-- Asset Code Auto-Generation Control Banner -->
-                                    <div style="background: rgba(37, 51, 141, 0.15); border: 1px solid rgba(43, 57, 144, 0.35); border-radius: 8px; padding: 12px 14px; margin-bottom: 16px;">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                                            <span style="font-size: 13px; font-weight: 700; color: #93c5fd; display: flex; align-items: center; gap: 6px;">
-                                                <i class="fa-solid fa-barcode"></i> ĐỊNH DANH THIẾT BỊ & MÃ TÀI SẢN TỰ ĐỘNG (CHUẨN DOANH NGHIỆP)
-                                            </span>
-                                            <button type="button" id="btn-open-asset-settings" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 11px; background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.15);" title="Cài đặt Tiền tố mặc định & Danh mục Loại tài sản">
-                                                <i class="fa-solid fa-gear"></i> Cài Đặt Danh Mục Loại TS
-                                            </button>
-                                        </div>
-
-                                        <div class="grid grid-col-6" style="gap: 10px;">
-                                            <!-- ID Thiết bị độc lập trong hệ thống (kiểm tra không trùng lặp) -->
-                                            <div class="form-group col-span-2-lg">
-                                                <label for="dev-id" style="font-size: 12px; margin-bottom: 2px;">
-                                                    ID Thiết bị hệ thống (*)
-                                                </label>
-                                                <div style="display: flex; gap: 6px;">
-                                                    <input type="text" id="dev-id" placeholder="VD: PC-01, LT-01..." class="form-input" style="font-size: 12px; padding: 6px 10px; font-weight: 600;">
-                                                    <button type="button" id="btn-copy-ma-to-devid" class="btn btn-secondary btn-sm" title="Lấy ID Thiết bị theo Mã Tài Sản" style="padding: 0 8px; flex-shrink: 0; font-size: 11px;">
-                                                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                                    </button>
-                                                </div>
-                                                <span class="error-msg" id="err-dev-id" style="display: none; font-size: 11px; margin-top: 2px;"></span>
-                                            </div>
-
-                                            <!-- Chọn hoặc tự điền Mã Công ty (ERG, IOM, ERL...) -->
-                                            <div class="form-group col-span-1-lg">
-                                                <label for="dev-asset-company" style="font-size: 12px; margin-bottom: 2px;">Mã Cty (*)</label>
-                                                <input type="text" id="dev-asset-company" list="list-asset-company" class="form-input" placeholder="ERG, IOM..." value="ERG" maxlength="10" style="text-transform: uppercase; font-family: monospace; font-weight: 700; font-size: 12px; padding: 6px 10px;">
-                                                <datalist id="list-asset-company">
-                                                    <option value="ERG">ERG (Eras Group)</option>
-                                                    <option value="IOM">IOM</option>
-                                                    <option value="ERL">ERL</option>
-                                                </datalist>
-                                            </div>
-
-                                            <!-- Nhóm tài sản: CCDC / TSCD -->
-                                            <div class="form-group col-span-1-lg">
-                                                <label for="dev-asset-group" style="font-size: 12px; margin-bottom: 2px;">Nhóm TS (*)</label>
-                                                <select id="dev-asset-group" class="form-input" style="font-size: 12px; padding: 6px 10px;">
-                                                    <option value="CCDC" selected>CCDC</option>
-                                                    <option value="TSCD">TSCD</option>
-                                                </select>
-                                            </div>
-
-                                            <!-- Loại tài sản -->
-                                            <div class="form-group col-span-1-lg">
-                                                <label for="dev-asset-type" style="font-size: 12px; margin-bottom: 2px;">Loại TS (*)</label>
-                                                <select id="dev-asset-type" class="form-input" style="font-size: 12px; padding: 6px 10px;">
-                                                    <option value="PC">PC</option>
-                                                    <option value="LT" selected>LT</option>
-                                                    <option value="MH">MH</option>
-                                                </select>
-                                            </div>
-
-                                            <!-- Mã Tài Sản tự sinh theo quy tắc [Cty]-[Nhóm]-[Loại]-[STT] -->
-                                            <div class="form-group col-span-1-lg">
-                                                <label for="dev-ma-tai-san" style="font-size: 12px; margin-bottom: 2px;">Mã TS Tự Sinh (*)</label>
-                                                <div style="display: flex; gap: 6px;">
-                                                    <input type="text" id="dev-ma-tai-san" placeholder="ERG-CCDC-LT-001" style="font-family: monospace; font-weight: 800; font-size: 12px; color: var(--brand-green); background: rgba(123, 202, 15, 0.08); border: 1.5px solid var(--brand-green); padding: 6px 8px; width: 100%; box-sizing: border-box; letter-spacing: 0.5px;">
-                                                    <button type="button" id="btn-regen-asset-code" class="btn btn-secondary btn-sm" title="Sinh lại mã tiếp theo" style="padding: 0 8px; flex-shrink: 0;">
-                                                        <i class="fa-solid fa-arrows-rotate"></i>
-                                                    </button>
-                                                </div>
-                                                <span class="error-msg" id="err-dev-ma-tai-san" style="display: none; font-size: 11px; margin-top: 2px;"></span>
-                                            </div>
-
-
-                                        </div>
+                                    <div class="form-group col-span-2-lg">
+                                        <label for="dev-id">ID Thiết bị hệ thống (*)</label>
+                                        <input type="text" id="dev-id" placeholder="VD: PC-01, LT-01..." class="form-input">
+                                        <span class="error-msg" id="err-dev-id" style="display: none; font-size: 11px; margin-top: 2px;"></span>
                                     </div>
-
                                     <div class="grid grid-col-6">
                                         <div class="form-group col-span-2-lg">
                                             <label for="dev-type">Tên / Phân loại thiết bị</label>
@@ -849,10 +781,6 @@
                                             </select>
                                         </div>
 
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-monitor-size">Kích thước màn hình</label>
-                                            <input type="text" id="dev-monitor-size" placeholder="VD: 24 inch FHD, 27 inch 2K, 15.6 inch...">
-                                        </div>
                                         <div class="form-group col-span-2-lg">
                                             <label for="dev-warranty-exp">Ngày hết bảo hành</label>
                                             <input type="text" id="dev-warranty-exp" placeholder="dd/mm/yyyy" maxlength="10">
@@ -1269,66 +1197,9 @@
                         <form id="form-kho-thiet-bi" autocomplete="off">
                             <input type="hidden" id="edit-index-kho" value="">
                             
-                            <!-- TIỂU MỤC 1: ĐỊNH DANH THIẾT BỊ & MÃ TÀI SẢN DOANH NGHIỆP -->
-                            <div style="background: rgba(37, 51, 141, 0.15); border: 1px solid rgba(43, 57, 144, 0.35); border-radius: 8px; padding: 12px 14px; margin-bottom: 18px;">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
-                                    <span style="font-size: 13px; font-weight: 700; color: #93c5fd; display: flex; align-items: center; gap: 6px;">
-                                        <i class="fa-solid fa-barcode"></i> ĐỊNH DANH THIẾT BỊ & MÃ TÀI SẢN KHO (TỰ ĐỘNG CHUẨN DOANH NGHIỆP)
-                                    </span>
-                                </div>
-
-                                <div class="grid grid-col-6" style="gap: 10px;">
-                                    <!-- ID Thiết bị kho độc lập -->
-                                    <div class="form-group col-span-2-lg">
-                                        <label for="kho-code" style="font-size: 12px; margin-bottom: 2px;">
-                                            Mã / ID Thiết bị kho (*)
-                                        </label>
-                                        <div style="display: flex; gap: 6px;">
-                                            <input type="text" id="kho-code" required placeholder="VD: KHO-PC-01, LT-01..." class="form-input" style="font-size: 12px; padding: 6px 10px; font-weight: 600;">
-                                            <button type="button" id="btn-copy-kho-ma-to-devid" class="btn btn-secondary btn-sm" title="Lấy ID theo Mã Tài Sản" style="padding: 0 8px; flex-shrink: 0; font-size: 11px;">
-                                                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Chọn / Nhập Mã Công ty -->
-                                    <div class="form-group col-span-1-lg">
-                                        <label for="kho-asset-company" style="font-size: 12px; margin-bottom: 2px;">Mã Cty (*)</label>
-                                        <input type="text" id="kho-asset-company" list="list-asset-company" class="form-input" placeholder="ERG, IOM..." value="ERG" maxlength="10" style="text-transform: uppercase; font-family: monospace; font-weight: 700; font-size: 12px; padding: 6px 10px;">
-                                    </div>
-
-                                    <!-- Nhóm tài sản: CCDC / TSCD -->
-                                    <div class="form-group col-span-1-lg">
-                                        <label for="kho-asset-group" style="font-size: 12px; margin-bottom: 2px;">Nhóm TS (*)</label>
-                                        <select id="kho-asset-group" class="form-input" style="font-size: 12px; padding: 6px 10px;">
-                                            <option value="CCDC" selected>CCDC</option>
-                                            <option value="TSCD">TSCD</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Loại tài sản -->
-                                    <div class="form-group col-span-1-lg">
-                                        <label for="kho-asset-type" style="font-size: 12px; margin-bottom: 2px;">Loại TS (*)</label>
-                                        <select id="kho-asset-type" class="form-input" style="font-size: 12px; padding: 6px 10px;">
-                                            <option value="PC">PC</option>
-                                            <option value="LT" selected>LT</option>
-                                            <option value="MH">MH</option>
-                                        </select>
-                                    </div>
-
-                                    <!-- Mã Tài Sản tự sinh theo quy tắc [Cty]-[Nhóm]-[Loại]-[STT] -->
-                                    <div class="form-group col-span-1-lg">
-                                        <label for="kho-ma-tai-san" style="font-size: 12px; margin-bottom: 2px;">Mã TS Tự Sinh (*)</label>
-                                        <div style="display: flex; gap: 6px;">
-                                            <input type="text" id="kho-ma-tai-san" placeholder="ERG-CCDC-LT-001" style="font-family: monospace; font-weight: 800; font-size: 12px; color: var(--brand-green); background: rgba(123, 202, 15, 0.08); border: 1.5px solid var(--brand-green); padding: 6px 8px; width: 100%; box-sizing: border-box; letter-spacing: 0.5px;">
-                                            <button type="button" id="btn-regen-kho-asset-code" class="btn btn-secondary btn-sm" title="Sinh lại mã tiếp theo" style="padding: 0 8px; flex-shrink: 0;">
-                                                <i class="fa-solid fa-arrows-rotate"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-
-
-                                </div>
+                            <div class="form-group col-span-2-lg">
+                                <label for="kho-code">Mã / ID Thiết bị kho (*)</label>
+                                <input type="text" id="kho-code" required placeholder="VD: KHO-PC-01, LT-01..." class="form-input">
                             </div>
 
                             <!-- TIỂU MỤC 2: THÔNG TIN THIẾT BỊ & CẤU HÌNH PHẦN CỨNG -->
@@ -1394,10 +1265,6 @@
                                 <div class="form-group col-span-2-lg">
                                     <label for="kho-monitor">Màn hình (nếu có)</label>
                                     <input type="text" id="kho-monitor" placeholder="VD: Dell P2419H, LG 24MP...">
-                                </div>
-                                <div class="form-group col-span-2-lg">
-                                    <label for="kho-monitor-size">Kích thước màn hình</label>
-                                    <input type="text" id="kho-monitor-size" placeholder="VD: 24 inch FHD, 27 inch 2K, 15.6 inch...">
                                 </div>
 
                                 <div class="form-group col-span-2-lg">
@@ -3079,65 +2946,28 @@
         </div>
     </div>
 
-    <!-- Modal Tạo Tài Sản Hàng Loạt (Batch Asset Generation) -->
+    <!-- Modal Nhập Thiết Bị Theo Lô -->
     <div id="modal-batch-create-asset" class="backup-modal hidden">
         <div class="backup-modal-content" style="max-width: 640px; width: 94%;">
             <div class="backup-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 16px;">
                 <h3 class="backup-modal-title" style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: var(--primary-color);">
-                    <i class="fa-solid fa-layer-group"></i> Nhập Lô & Tạo Mã Tài Sản Hàng Loạt
+                    <i class="fa-solid fa-layer-group"></i> Nhập Thiết Bị Theo Lô
                 </h3>
                 <button type="button" class="backup-modal-close" id="btn-close-batch-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer; line-height: 1; margin: 0; padding: 0;">&times;</button>
             </div>
 
             <div class="backup-modal-body" style="display: flex; flex-direction: column; gap: 14px; padding: 0; max-height: 72vh; overflow-y: auto;">
-                <div style="background: rgba(37, 51, 141, 0.12); border: 1px solid rgba(43, 57, 144, 0.35); padding: 12px 14px; border-radius: 8px; font-size: 12px; color: var(--text-secondary);">
-                    Hệ thống sẽ tự động cấp phát dãy <strong>Mã Tài Sản liên tiếp</strong> theo quy tắc <code style="color: var(--brand-green); font-weight: 700;">[TIỀN_TỐ]-[NHÓM]-[LOẠI]-[STT]</code> và lưu đồng loạt vào Kho thiết bị.
-                </div>
-
                 <div class="grid grid-col-6" style="gap: 12px;">
                     <div class="form-group col-span-2-lg">
-                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">1. Mã công ty (*)</label>
-                        <input type="text" id="batch-asset-company" list="list-batch-asset-company" class="form-input" placeholder="VD: ERG, IOM, ERL..." value="ERG" maxlength="10" style="text-transform: uppercase; font-family: monospace; font-weight: 700;">
-                        <datalist id="list-batch-asset-company">
-                            <option value="ERG">ERG (Eras Group)</option>
-                            <option value="IOM">IOM</option>
-                            <option value="ERL">ERL</option>
-                        </datalist>
-                    </div>
-                    <div class="form-group col-span-2-lg">
-                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">2. Nhóm tài sản (*)</label>
-                        <select id="batch-asset-group" class="form-input">
-                            <option value="CCDC" selected>CCDC (Công cụ dụng cụ - Phân bổ)</option>
-                            <option value="TSCD">TSCD (Tài sản cố định - Khấu hao)</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-span-2-lg">
-                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">3. Loại tài sản (*)</label>
-                        <select id="batch-asset-type" class="form-input">
-                            <option value="PC">PC - Máy tính để bàn</option>
-                            <option value="LT" selected>LT - Laptop</option>
-                            <option value="MH">MH - Màn hình</option>
-                        </select>
-                    </div>
-                    <div class="form-group col-span-2-lg">
-                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">4. Số lượng tạo (*)</label>
+                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Số lượng tạo (*)</label>
                         <input type="number" id="batch-quantity" class="form-input" min="1" max="200" value="20" placeholder="VD: 20">
                     </div>
                     <div class="form-group col-span-4-lg">
-                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">5. Tên model / Lô thiết bị (*)</label>
+                        <label style="font-size: 12px; font-weight: 600; margin-bottom: 4px;">Tên model / Lô thiết bị (*)</label>
                         <input type="text" id="batch-device-name" class="form-input" placeholder="VD: Laptop Dell Latitude 3420 (Lô Q4-2026)">
                     </div>
                 </div>
 
-                <!-- Preview Box -->
-                <div style="background: rgba(123, 202, 15, 0.08); border: 1.5px dashed var(--brand-green); border-radius: 8px; padding: 12px 14px;">
-                    <div style="font-size: 11px; font-weight: 700; color: var(--brand-green); text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> Xem trước dãy mã tài sản sẽ sinh:
-                    </div>
-                    <div id="batch-preview-codes" style="font-family: monospace; font-size: 13px; font-weight: 700; color: var(--text-primary); word-break: break-all;">
-                        Từ ERG-CCDC-LT-001 đến ERG-CCDC-LT-020 (Tổng: 20 mã liên tiếp)
-                    </div>
-                </div>
 
                 <div class="grid grid-col-6" style="gap: 12px;">
                     <div class="form-group col-span-2-lg">
@@ -3153,10 +2983,6 @@
                         <input type="text" id="batch-ssd" class="form-input" placeholder="VD: 256GB NVMe">
                     </div>
                     <div class="form-group col-span-2-lg">
-                        <label style="font-size: 12px; margin-bottom: 4px;">Kích thước màn hình</label>
-                        <input type="text" id="batch-monitor-size" class="form-input" placeholder="VD: 14 inch / 24 inch">
-                    </div>
-                    <div class="form-group col-span-2-lg">
                         <label style="font-size: 12px; margin-bottom: 4px;">Ngày hết bảo hành</label>
                         <input type="text" id="batch-warranty-exp" class="form-input" placeholder="dd/mm/yyyy" maxlength="10">
                     </div>
@@ -3170,85 +2996,8 @@
             <div class="backup-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px; margin-top: 16px;">
                 <button type="button" class="btn btn-secondary" id="btn-cancel-batch-modal">Hủy</button>
                 <button type="button" class="btn btn-primary" id="btn-confirm-batch-create" style="background: linear-gradient(135deg, #7bca0f 0%, #25338d 100%); font-weight: 700;">
-                    <i class="fa-solid fa-check-double"></i> Sinh Mã & Nhập Vào Kho
+                    <i class="fa-solid fa-check-double"></i> Tạo Lô & Nhập Vào Kho
                 </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal Cài Đặt Hệ Thống: Tiền Tố & Loại Tài Sản -->
-    <div id="modal-asset-type-settings" class="backup-modal hidden">
-        <div class="backup-modal-content" style="max-width: 580px; width: 92%;">
-            <div class="backup-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 14px;">
-                <h3 class="backup-modal-title" style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: var(--primary-color);">
-                    <i class="fa-solid fa-sliders"></i> Cài Đặt Tiền Tố & Danh Mục Loại Tài Sản
-                </h3>
-                <button type="button" class="backup-modal-close" id="btn-close-asset-settings" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer; line-height: 1; margin: 0; padding: 0;">&times;</button>
-            </div>
-
-            <div class="backup-modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 0; max-height: 70vh; overflow-y: auto;">
-                <!-- Tiền tố cấu hình -->
-                <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px;">
-                    <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 6px;">
-                        Tiền tố mã tài sản (Hằng số doanh nghiệp):
-                    </label>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="setting-asset-prefix" class="form-input" style="font-family: monospace; font-weight: 700; text-transform: uppercase; width: 140px;" maxlength="6" value="ERG" placeholder="ERG">
-                        <button type="button" id="btn-save-asset-prefix" class="btn btn-primary" style="padding: 6px 14px; font-size: 12px;">
-                            <i class="fa-solid fa-floppy-disk"></i> Lưu Tiền Tố
-                        </button>
-                    </div>
-                    <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">
-                        Mặc định là <code style="color: var(--brand-green);">ERG</code>. Khi thay đổi, các mã tài sản sinh mới sẽ áp dụng tiền tố này.
-                    </span>
-                </div>
-
-                <!-- Danh mục loại tài sản -->
-                <div>
-                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 8px 0; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-list-check"></i> Danh mục loại tài sản:
-                    </h4>
-                    <div id="asset-types-table-wrapper" style="border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;">
-                        <table style="width: 100%; border-collapse: collapse; font-size: 12px; text-align: left;">
-                            <thead style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">
-                                <tr>
-                                    <th style="padding: 8px 12px;">Mã loại</th>
-                                    <th style="padding: 8px 12px;">Tên loại thiết bị</th>
-                                    <th style="padding: 8px 12px; text-align: center;">Thao tác</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tbody-asset-types">
-                                <!-- Filled by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Form thêm loại mới -->
-                <div style="background: rgba(123, 202, 15, 0.05); border: 1px solid rgba(123, 202, 15, 0.25); border-radius: 8px; padding: 12px 14px;">
-                    <div style="font-size: 12px; font-weight: 700; color: var(--brand-green); margin-bottom: 8px;">
-                        <i class="fa-solid fa-plus-circle"></i> Thêm loại tài sản mới:
-                    </div>
-                    <div class="grid grid-col-6" style="gap: 8px;">
-                        <div class="form-group col-span-2-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Mã loại (2-3 ký tự in hoa) (*)</label>
-                            <input type="text" id="new-type-code" class="form-input" placeholder="VD: PR, SV, TB" maxlength="4" style="text-transform: uppercase; font-family: monospace; font-weight: 700; padding: 6px 8px; font-size: 12px;">
-                        </div>
-                        <div class="form-group col-span-4-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Tên loại tài sản (*)</label>
-                            <input type="text" id="new-type-name" class="form-input" placeholder="VD: Máy in văn phòng, Máy chủ..." style="padding: 6px 8px; font-size: 12px;">
-                        </div>
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-                        <button type="button" id="btn-add-asset-type" class="btn btn-primary" style="padding: 5px 14px; font-size: 12px; background: linear-gradient(135deg, #7bca0f 0%, #25338d 100%);">
-                            <i class="fa-solid fa-plus"></i> Thêm Vào Danh Mục
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="backup-modal-footer" style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 14px;">
-                <button type="button" class="btn btn-secondary" id="btn-close-asset-settings-bottom">Đóng</button>
             </div>
         </div>
     </div>
@@ -3263,6 +3012,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="qrcode-gen.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=40"></script>
+    <script src="app.js?v=41"></script>
 </body>
 </html>
