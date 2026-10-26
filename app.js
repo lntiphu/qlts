@@ -2306,12 +2306,9 @@ async function startApp() {
                                 <i class="fa-solid fa-people-roof"></i> Dùng chung
                             </span>
                         ` : ''}
-                        ${item.devId || item.maTaiSan || item.assetCode ? `
+                        ${item.devId ? `
                             <span class="name" style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
                                 ${item.devId ? `<span class="badge badge-green" title="ID Thiết bị">${item.devId}</span>` : ''}
-                                ${(item.maTaiSan || item.assetCode) && (item.maTaiSan || item.assetCode) !== item.devId ? `
-                                    <span class="badge" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3); font-family: monospace; font-weight: 700; font-size: 11px;" title="Mã Tài Sản">${item.maTaiSan || item.assetCode}</span>
-                                ` : ''}
                                 ${item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span>` : ''}
                             </span>
                         ` : ''}
@@ -2962,7 +2959,7 @@ async function startApp() {
 
         const badgeMode = document.getElementById('badge-form-mode');
         if (badgeMode) {
-            badgeMode.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Đang chỉnh sửa: ${item.maTaiSan || item.devId || item.userName || '#' + (index + 1)}`;
+            badgeMode.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Đang chỉnh sửa: ${item.devId || item.userName || '#' + (index + 1)}`;
             badgeMode.style.background = 'rgba(249, 115, 22, 0.15)';
             badgeMode.style.color = '#fb923c';
             badgeMode.style.borderColor = 'rgba(249, 115, 22, 0.35)';
@@ -7834,8 +7831,6 @@ async function startApp() {
             });
 
             // 1. Mã Thiết Bị & Mã Tài Sản
-            const assetCodeVal = item.maTaiSan || item.assetCode || '';
-            const assetCodeBadge = assetCodeVal ? `<div style="margin-top: 3px;"><span class="badge" style="background: rgba(34, 211, 238, 0.12); color: #22d3ee; border: 1px solid rgba(34, 211, 238, 0.3); font-family: monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.5px;">${assetCodeVal}</span></div>` : '';
             const devIdBadge = item.code ? `<span class="badge badge-blue" style="font-weight: 700;">${item.code}</span>` : '<span class="text-muted">—</span>';
 
             // 2. Tên Thiết Bị & Serial
@@ -7868,7 +7863,7 @@ async function startApp() {
             const locationHtml = item.location ? `<div style="font-size: 11.5px; color: #94a3b8; margin-top: 3px;"><i class="fa-solid fa-location-dot" style="color: #60a5fa; font-size: 10px;"></i> ${item.location}</div>` : '';
 
             tr.innerHTML = `
-                <td>${devIdBadge}${assetCodeBadge}</td>
+                <td>${devIdBadge}</td>
                 <td><strong style="color: var(--text-primary); font-size: 13.5px;">${item.name || 'Thiết bị'}</strong>${snHtml}</td>
                 <td><div style="display: flex; flex-wrap: wrap; gap: 4px;">${specsContent}</div></td>
                 <td><span class="badge" style="${statusStyle} font-size: 11px; font-weight: 600;">${statusVal}</span>${locationHtml}</td>
