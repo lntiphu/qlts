@@ -2656,12 +2656,24 @@ async function startApp() {
             depreciationYears: (document.getElementById('device-depreciation-years') ? document.getElementById('device-depreciation-years').value : '3'),
             maintenanceLogs: (indexStr !== '' && thietBiList[parseInt(indexStr)]) ? (thietBiList[parseInt(indexStr)].maintenanceLogs || []) : [],
             devId: devIdInput ? devIdInput.value.trim() : '',
-            maTaiSan: document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : '',
-            assetCode: document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : '',
-            assetCompany: document.getElementById('dev-asset-company') ? (document.getElementById('dev-asset-company').value.trim().toUpperCase() || 'ERG') : 'ERG',
-            assetGroup: document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC',
-            currentAssetGroup: document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC',
-            assetType: document.getElementById('dev-asset-type') ? document.getElementById('dev-asset-type').value : 'LT',
+            maTaiSan: indexStr !== '' && thietBiList[parseInt(indexStr)]
+                ? (thietBiList[parseInt(indexStr)].maTaiSan || thietBiList[parseInt(indexStr)].assetCode || '')
+                : (document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : ''),
+            assetCode: indexStr !== '' && thietBiList[parseInt(indexStr)]
+                ? (thietBiList[parseInt(indexStr)].assetCode || thietBiList[parseInt(indexStr)].maTaiSan || '')
+                : (document.getElementById('dev-ma-tai-san') ? document.getElementById('dev-ma-tai-san').value.trim() : ''),
+            assetCompany: indexStr !== '' && thietBiList[parseInt(indexStr)]
+                ? (thietBiList[parseInt(indexStr)].assetCompany || 'ERG')
+                : (document.getElementById('dev-asset-company') ? (document.getElementById('dev-asset-company').value.trim().toUpperCase() || 'ERG') : 'ERG'),
+            assetGroup: indexStr !== '' && thietBiList[parseInt(indexStr)]
+                ? (thietBiList[parseInt(indexStr)].assetGroup || 'CCDC')
+                : (document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC'),
+            currentAssetGroup: indexStr !== '' && thietBiList[parseInt(indexStr)]
+                ? (thietBiList[parseInt(indexStr)].currentAssetGroup || thietBiList[parseInt(indexStr)].assetGroup || 'CCDC')
+                : (document.getElementById('dev-asset-group') ? document.getElementById('dev-asset-group').value : 'CCDC'),
+            assetType: indexStr !== '' && thietBiList[parseInt(indexStr)]
+                ? (thietBiList[parseInt(indexStr)].assetType || 'LT')
+                : (document.getElementById('dev-asset-type') ? document.getElementById('dev-asset-type').value : 'LT'),
             monitorSize: document.getElementById('dev-monitor-size') ? document.getElementById('dev-monitor-size').value.trim() : '',
             warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : ''
         };
@@ -2823,9 +2835,12 @@ async function startApp() {
                 let isDbSuccess = false;
                 const isLocalId = oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
                 if (supabaseClient && !isLocalId) {
+                    // asset_code is immutable in Supabase; omit it from updates so a stale
+                    // browser cache cannot accidentally send a changed code back to the DB.
+                    const { asset_code: _assetCode, ...updateData } = dbData;
                     const { data: updatedData, error } = await supabaseClient
                         .from('thiet_bi')
-                        .update(dbData)
+                        .update(updateData)
                         .eq('id', oldItem.id)
                         .select();
                     if (error) {
@@ -2934,28 +2949,27 @@ async function startApp() {
         const selAssetCompany = document.getElementById('dev-asset-company');
         if (selAssetCompany) {
             selAssetCompany.value = item.assetCompany || getAssetPrefix() || 'ERG';
-            selAssetCompany.readOnly = false;
-            selAssetCompany.disabled = false;
+            selAssetCompany.disabled = true;
         }
         const selAssetGroup = document.getElementById('dev-asset-group');
         if (selAssetGroup) {
             selAssetGroup.value = item.assetGroup || 'CCDC';
-            selAssetGroup.disabled = false;
+            selAssetGroup.disabled = true;
         }
 
         const selAssetType = document.getElementById('dev-asset-type');
         if (selAssetType) {
             selAssetType.value = item.assetType || 'LT';
-            selAssetType.disabled = false;
+            selAssetType.disabled = true;
         }
 
         const devMaTaiSan = document.getElementById('dev-ma-tai-san');
         if (devMaTaiSan) {
             devMaTaiSan.value = item.maTaiSan || item.assetCode || '';
-            devMaTaiSan.readOnly = false;
+            devMaTaiSan.readOnly = true;
         }
         const btnRegenCode = document.getElementById('btn-regen-asset-code');
-        if (btnRegenCode) btnRegenCode.style.display = 'inline-flex';
+        if (btnRegenCode) btnRegenCode.style.display = 'none';
 
 
 
@@ -3069,6 +3083,7 @@ async function startApp() {
         const selAssetCompany = document.getElementById('dev-asset-company');
         if (selAssetCompany) {
             selAssetCompany.readOnly = false;
+            selAssetCompany.disabled = false;
             selAssetCompany.value = getAssetPrefix() || 'ERG';
         }
         const btnRegenCode = document.getElementById('btn-regen-asset-code');
@@ -3087,6 +3102,7 @@ async function startApp() {
         const devMaTaiSan = document.getElementById('dev-ma-tai-san');
         if (devMaTaiSan) {
             devMaTaiSan.value = '';
+            devMaTaiSan.readOnly = false;
         }
 
 
@@ -5376,17 +5392,6 @@ async function startApp() {
         if (isCreate || force) {
             const code = generateAssetCode(company, groupEl.value, typeEl.value);
             codeInp.value = code;
-        } else {
-            // Khi đang chỉnh sửa thiết bị đã có:
-            // Nếu người dùng đổi Cty, Nhóm hoặc Loại, tự động cập nhật các thành phần tương ứng của mã tài sản
-            const curVal = codeInp.value.trim();
-            const parts = curVal.split('-');
-            if (parts.length >= 4) {
-                codeInp.value = `${company}-${groupEl.value}-${typeEl.value}-${parts.slice(3).join('-')}`;
-            } else if (!curVal) {
-                const code = generateAssetCode(company, groupEl.value, typeEl.value);
-                codeInp.value = code;
-            }
         }
     }
 
