@@ -1021,7 +1021,11 @@ async function startApp() {
 
     // Restore the tab selection before module state is initialized, without rendering yet.
     // Rendering here can access later `const` bindings (such as tbodyKho) in their TDZ.
-    switchToTab(tabToLoad, false, false, false);
+    try {
+        switchToTab(tabToLoad, false, false, false);
+    } catch (e) {
+        console.warn('Initial switchToTab failed:', e);
+    }
     try {
         history.replaceState({ tabId: tabToLoad }, '', `#${tabToLoad}`);
     } catch (e) {}
@@ -1100,8 +1104,8 @@ async function startApp() {
     const histTimeline = document.getElementById('hist-timeline');
 
     const closeModal = () => historyModal.classList.remove('show');
-    btnCloseModal.addEventListener('click', closeModal);
-    btnFooterCloseModal.addEventListener('click', closeModal);
+    btnCloseModal?.addEventListener('click', closeModal);
+    btnFooterCloseModal?.addEventListener('click', closeModal);
     window.addEventListener('click', (e) => {
         if (e.target === historyModal) closeModal();
     });
@@ -1122,8 +1126,8 @@ async function startApp() {
     const devIdInput = document.getElementById('dev-id');
 
     // Realtime inline validation triggers
-    userIdInput.addEventListener('input', () => validateDuplicateUser(editIndexThietBi.value));
-    devIdInput.addEventListener('input', () => validateDuplicateDevice(editIndexThietBi.value));
+    userIdInput?.addEventListener('input', () => validateDuplicateUser(editIndexThietBi.value));
+    devIdInput?.addEventListener('input', () => validateDuplicateDevice(editIndexThietBi.value));
     const devSnInput = document.getElementById('dev-sn');
     if (devSnInput) {
         devSnInput.addEventListener('input', () => validateDeviceSerial(editIndexThietBi.value));
@@ -2588,7 +2592,7 @@ async function startApp() {
     }
 
     // Submit Action for Asset management form
-    formCapPhat.addEventListener('submit', async (e) => {
+    formCapPhat?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexThietBi.value;
 
@@ -3118,7 +3122,7 @@ async function startApp() {
         }
     }
 
-    btnCancelThietBi.addEventListener('click', () => {
+    btnCancelThietBi?.addEventListener('click', () => {
         resetFormThietBi();
         switchToTab('tab-cap-phat-list');
         showToast('Thông báo', 'Đã hủy nhập liệu và quay về danh sách!', 'info');
@@ -4302,7 +4306,7 @@ async function startApp() {
     if (btnAddNewCongTy) btnAddNewCongTy.addEventListener('click', () => openAddInfoAction('add-cong-ty'));
     
     // Realtime search and pagination triggers for Device List
-    searchThietBi.addEventListener('input', (e) => {
+    searchThietBi?.addEventListener('input', (e) => {
         currentPageThietBi = 1;
         renderThietBi(e.target.value.trim());
     });
@@ -5707,10 +5711,11 @@ async function startApp() {
     });
 
     // Populate asset types & company datalists on startup
-    populateAssetCompanyDatalists();
-    populateAssetTypeDropdowns();
-    refreshFormAssetCode();
-    refreshKhoAssetCode();
+    // Each is wrapped so a single failure can never abort startup and lock the login screen.
+    try { populateAssetCompanyDatalists(); } catch (e) { console.warn('populateAssetCompanyDatalists failed:', e); }
+    try { populateAssetTypeDropdowns(); } catch (e) { console.warn('populateAssetTypeDropdowns failed:', e); }
+    try { refreshFormAssetCode(); } catch (e) { console.warn('refreshFormAssetCode failed:', e); }
+    try { refreshKhoAssetCode(); } catch (e) { console.warn('refreshKhoAssetCode failed:', e); }
 
 
     // =========================================================================
@@ -5830,7 +5835,7 @@ async function startApp() {
         });
     }
 
-    formCongTy.addEventListener('submit', async (e) => {
+    formCongTy?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexCongTy.value;
 
@@ -5974,8 +5979,8 @@ async function startApp() {
         showTabTableOnly('tab-cong-ty');
     }
 
-    btnCancelCongTy.addEventListener('click', resetFormCongTy);
-    searchCongTy.addEventListener('input', (e) => {
+    btnCancelCongTy?.addEventListener('click', resetFormCongTy);
+    searchCongTy?.addEventListener('input', (e) => {
         currentPageCongTy = 1;
         renderCongTy(e.target.value.trim());
     });
@@ -6144,7 +6149,7 @@ async function startApp() {
         });
     }
 
-    formAccount.addEventListener('submit', async (e) => {
+    formAccount?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexAccount.value;
 
@@ -6287,8 +6292,8 @@ async function startApp() {
         showTabTableOnly('tab-account');
     }
 
-    btnCancelAccount.addEventListener('click', resetFormAccount);
-    searchAccount.addEventListener('input', (e) => {
+    btnCancelAccount?.addEventListener('click', resetFormAccount);
+    searchAccount?.addEventListener('input', (e) => {
         currentPageAccount = 1;
         renderAccount(e.target.value.trim());
     });
@@ -6437,7 +6442,7 @@ async function startApp() {
         });
     }
 
-    formHoTro.addEventListener('submit', async (e) => {
+    formHoTro?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexHoTro.value;
 
@@ -6574,8 +6579,8 @@ async function startApp() {
         showTabTableOnly('tab-ho-tro');
     }
 
-    btnCancelHoTro.addEventListener('click', resetFormHoTro);
-    searchHoTro.addEventListener('input', (e) => {
+    btnCancelHoTro?.addEventListener('click', resetFormHoTro);
+    searchHoTro?.addEventListener('input', (e) => {
         currentPageHoTro = 1;
         renderHoTro(e.target.value.trim());
     });
@@ -6781,7 +6786,7 @@ async function startApp() {
         });
     }
 
-    formCamera.addEventListener('submit', async (e) => {
+    formCamera?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexCamera.value;
 
@@ -6928,8 +6933,8 @@ async function startApp() {
         showTabTableOnly('tab-camera');
     }
 
-    btnCancelCamera.addEventListener('click', resetFormCamera);
-    searchCamera.addEventListener('input', (e) => {
+    btnCancelCamera?.addEventListener('click', resetFormCamera);
+    searchCamera?.addEventListener('input', (e) => {
         currentPageCamera = 1;
         renderCamera(e.target.value.trim());
     });
@@ -7068,7 +7073,7 @@ async function startApp() {
         });
     }
 
-    formTips.addEventListener('submit', async (e) => {
+    formTips?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const indexStr = editIndexTips.value;
 
@@ -7193,8 +7198,8 @@ async function startApp() {
         showTabTableOnly('tab-tips');
     }
 
-    btnCancelTips.addEventListener('click', resetFormTips);
-    searchTips.addEventListener('input', (e) => {
+    btnCancelTips?.addEventListener('click', resetFormTips);
+    searchTips?.addEventListener('input', (e) => {
         currentPageTips = 1;
         renderTips(e.target.value.trim());
     });
@@ -7753,10 +7758,10 @@ async function startApp() {
         });
     }
 
-    attachDateMask(document.getElementById('company-gpkd-date'));
-    attachDateMask(document.getElementById('kho-date-stored'));
-    attachDateMask(document.getElementById('kho-warranty-exp'));
-    attachDateMask(document.getElementById('license-expiry'));
+    try { attachDateMask(document.getElementById('company-gpkd-date')); } catch (e) {}
+    try { attachDateMask(document.getElementById('kho-date-stored')); } catch (e) {}
+    try { attachDateMask(document.getElementById('kho-warranty-exp')); } catch (e) {}
+    try { attachDateMask(document.getElementById('license-expiry')); } catch (e) {}
     // =========================================================================
     // PHÂN HỆ MỚI: THIẾT BỊ LƯU KHO
     // =========================================================================
@@ -9857,7 +9862,14 @@ async function startApp() {
                     password: rawPass
                 });
                 if (error || !data?.user) {
-                    throw new Error(error?.message || 'Email hoặc mật khẩu không chính xác');
+                    const rawMsg = error?.message || '';
+                    let friendlyMsg = rawMsg;
+                    if (/invalid login credentials/i.test(rawMsg)) {
+                        friendlyMsg = 'Email hoặc mật khẩu không chính xác (hoặc tài khoản chưa được kích hoạt trong Supabase Auth)';
+                    } else if (/email not confirmed/i.test(rawMsg)) {
+                        friendlyMsg = 'Email chưa được xác nhận trong Supabase Auth';
+                    }
+                    throw new Error(friendlyMsg || 'Email hoặc mật khẩu không chính xác');
                 }
                 const authenticatedEmail = normalizeUserEmail(data.user.email || emailToAuth);
                 await syncPermissionsFromRemote();
@@ -9904,6 +9916,11 @@ async function startApp() {
             }
         });
     }
+
+    // The login form is fully wired at this point. Unlock the fail-safe guard in
+    // index.html NOW (instead of at the very end of startApp) so that any later
+    // initialization error can never leave the user locked out of the login form.
+    window.qltsLoginReady = true;
 
     // -------------------------------------------------------------------------
     // Centralized, Resilient Logout System (Never hangs on network)
@@ -10456,7 +10473,8 @@ function reportAppStartupError(error) {
     console.error('Application startup failed:', error);
     const errorMessage = document.getElementById('login-error-msg');
     if (errorMessage) {
-        errorMessage.textContent = 'Ứng dụng chưa khởi tạo được. Vui lòng tải lại trang và thử lại.';
+        const detail = (error && (error.message || error.toString())) ? ` (${error.message || error.toString()})` : '';
+        errorMessage.textContent = 'Ứng dụng chưa khởi tạo được' + detail + '. Vui lòng tải lại trang hoặc nhấn Ctrl+F5 để xóa cache.';
         errorMessage.classList.remove('hidden');
     }
 }
