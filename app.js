@@ -915,7 +915,7 @@ async function startApp() {
     let currentTabId = '';
 
     // Tab Navigation Logic
-    function switchToTab(targetTabId, keepFormVisible = false, pushState = true) {
+    function switchToTab(targetTabId, keepFormVisible = false, pushState = true, renderContent = true) {
         if (!targetTabId) return;
 
         // RBAC Guard: Check if user has permission to access this tab
@@ -973,12 +973,14 @@ async function startApp() {
             pageTitle.innerHTML = `<img src="favicon-32x32.png" alt="ERAS" style="width: 18px; height: 18px; object-fit: contain; margin-right: 8px; vertical-align: middle; flex-shrink: 0;">ERAS GROUP - Hệ Thống Quản Lý Thiết Bị & Tài Sản <small style="font-size: 14px; font-weight: 500; color: var(--text-secondary); margin-left: 10px;">/ ${tabName}</small>`;
         }
 
-        if (targetTabId === 'tab-trang-chu') {
-            renderDashboard();
-        } else if (targetTabId === 'tab-kho-thiet-bi') {
-            renderKho();
-        } else if (targetTabId === 'tab-phan-quyen' && typeof renderPhanQuyen === 'function') {
-            renderPhanQuyen();
+        if (renderContent) {
+            if (targetTabId === 'tab-trang-chu') {
+                renderDashboard();
+            } else if (targetTabId === 'tab-kho-thiet-bi') {
+                renderKho();
+            } else if (targetTabId === 'tab-phan-quyen' && typeof renderPhanQuyen === 'function') {
+                renderPhanQuyen();
+            }
         }
 
         // Persist active tab so F5 stays on the same page
@@ -1017,7 +1019,9 @@ async function startApp() {
         ? initialHash 
         : ((savedTab && document.getElementById(savedTab)) ? savedTab : 'tab-trang-chu');
 
-    switchToTab(tabToLoad, false, false);
+    // Restore the tab selection before module state is initialized, without rendering yet.
+    // Rendering here can access later `const` bindings (such as tbodyKho) in their TDZ.
+    switchToTab(tabToLoad, false, false, false);
     try {
         history.replaceState({ tabId: tabToLoad }, '', `#${tabToLoad}`);
     } catch (e) {}
