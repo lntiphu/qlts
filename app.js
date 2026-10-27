@@ -510,6 +510,7 @@ async function startApp() {
                     userDept: db.user_dept || db.userDept || '',
                     userEmail: db.user_email || db.userEmail || '',
                     userPhone: db.user_phone || db.userPhone || '',
+                    userBirthDate: db.user_birth_date || db.userBirthDate || '',
                     userElement: db.user_element || db.userElement || '',
                     userKeyElement: db.user_key_element || db.userKeyElement || '',
                     devId: db.dev_id || db.devId || '',
@@ -575,6 +576,7 @@ async function startApp() {
                     user_dept: js.userDept,
                     user_email: js.userEmail,
                     user_phone: js.userPhone,
+                    user_birth_date: js.userBirthDate || null,
                     user_element: js.userElement,
                     user_key_element: js.userKeyElement,
                     user_disabled: !!js.userDisabled,
@@ -2615,6 +2617,9 @@ async function startApp() {
         const resignationDateRaw = resignationDateInput?.value.trim() || '';
         const resignationDateISO = parseEmployeeDate(resignationDateRaw, 'Ngày nghỉ việc');
         if (resignationDateISO === null) return;
+        const birthDateRaw = document.getElementById('user-birth-date')?.value.trim() || '';
+        const birthDate = parseEmployeeBirthDate(birthDateRaw);
+        if (birthDate === null) return;
         const existingAsset = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
         const assetCompany = existingAsset?.assetCompany || getAssetPrefix() || 'ERG';
         const assetGroup = existingAsset?.assetGroup || 'CCDC';
@@ -2637,6 +2642,7 @@ async function startApp() {
             userDept: document.getElementById('user-dept').value.trim(),
             userEmail: document.getElementById('user-email').value.trim(),
             userPhone: document.getElementById('user-phone').value.trim(),
+            userBirthDate: birthDate,
             userElement: document.getElementById('user-element') ? document.getElementById('user-element').value.trim() : '',
             userKeyElement: document.getElementById('user-key-element') ? document.getElementById('user-key-element').value.trim() : '',
             devId: devIdInput ? devIdInput.value.trim() : '',
@@ -2899,6 +2905,7 @@ async function startApp() {
         document.getElementById('user-dept').value = item.userDept;
         document.getElementById('user-email').value = item.userEmail || '';
         document.getElementById('user-phone').value = item.userPhone || '';
+        document.getElementById('user-birth-date').value = item.userBirthDate || '';
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
         if (document.getElementById('user-status-select')) document.getElementById('user-status-select').value = item.userDisabled ? 'disabled' : 'active';
@@ -7327,6 +7334,31 @@ async function startApp() {
             return null;
         }
         return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function parseEmployeeBirthDate(dateValue) {
+        if (!dateValue) return '';
+        const yearOnly = dateValue.match(/^(\d{4})$/);
+        const dateParts = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        const year = Number(yearOnly?.[1] || dateParts?.[3]);
+        const currentYear = new Date().getFullYear();
+        if (!yearOnly && !dateParts) {
+            showToast('Ngày sinh chưa đúng định dạng', 'Vui lòng nhập dd/mm/yyyy hoặc chỉ năm sinh yyyy.', 'error');
+            return null;
+        }
+        if (year < 1900 || year > currentYear) {
+            showToast('Năm sinh không hợp lệ', `Vui lòng nhập năm từ 1900 đến ${currentYear}.`, 'error');
+            return null;
+        }
+        if (yearOnly) return yearOnly[1];
+        const day = Number(dateParts[1]);
+        const month = Number(dateParts[2]);
+        const parsedDate = new Date(year, month - 1, day);
+        if (parsedDate.getFullYear() !== year || parsedDate.getMonth() !== month - 1 || parsedDate.getDate() !== day) {
+            showToast('Ngày sinh không hợp lệ', 'Vui lòng kiểm tra lại ngày, tháng và năm.', 'error');
+            return null;
+        }
+        return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`;
     }
 
     function parseDateDMY(dateInput) {
