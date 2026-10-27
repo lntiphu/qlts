@@ -542,6 +542,7 @@ async function startApp() {
                     devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' || devStat === 'Cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' || devStat === 'Dùng chung' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
                     hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân' && devStat !== 'Cá nhân',
                     userDisabled: !!(db.user_disabled || db.userDisabled),
+                    userResignationDate: db.user_resignation_date || db.userResignationDate || '',
                     updatedAt: db.updated_at || db.updatedAt || '',
                     history: Array.isArray(db.history) ? db.history : [],
                     purchasePrice: db.purchase_price || db.purchasePrice || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).purchasePrice) || '',
@@ -576,6 +577,7 @@ async function startApp() {
                     user_element: js.userElement,
                     user_key_element: js.userKeyElement,
                     user_disabled: !!js.userDisabled,
+                    user_resignation_date: js.userResignationDate || null,
                     has_device: js.devAllocation === 'yes' || js.devAllocation === 'project',
                     dev_id: js.devId || null,
                     dev_type: js.devType,
@@ -1099,6 +1101,14 @@ async function startApp() {
     // 5. PHÂN HỆ 1: QUẢN LÝ CẤP PHÁT THIẾT BỊ (ASSET)
     // =========================================================================
     const formCapPhat = document.getElementById('form-cap-phat');
+    const userStatusSelect = document.getElementById('user-status-select');
+    const resignationDateGroup = document.getElementById('user-resignation-date-group');
+    const resignationDateInput = document.getElementById('user-resignation-date');
+    const syncResignationDateVisibility = () => {
+        if (resignationDateGroup) resignationDateGroup.style.display = userStatusSelect?.value === 'disabled' ? '' : 'none';
+    };
+    userStatusSelect?.addEventListener('change', syncResignationDateVisibility);
+    syncResignationDateVisibility();
     const tbodyThietBi = document.getElementById('tbody-thiet-bi');
     const searchThietBi = document.getElementById('search-thiet-bi');
     const btnCancelThietBi = document.getElementById('btn-cancel-thiet-bi');
@@ -2608,6 +2618,7 @@ async function startApp() {
             userDisabled: document.getElementById('user-status-select') 
                 ? (document.getElementById('user-status-select').value === 'disabled')
                 : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false),
+            userResignationDate: document.getElementById('user-resignation-date')?.value || '',
             userId: userIdInput.value.trim(),
             userName: document.getElementById('user-name').value.trim(),
             userTitle: document.getElementById('user-title').value.trim(),
@@ -2879,6 +2890,8 @@ async function startApp() {
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
         if (document.getElementById('user-status-select')) document.getElementById('user-status-select').value = item.userDisabled ? 'disabled' : 'active';
+        if (resignationDateInput) resignationDateInput.value = item.userResignationDate || '';
+        syncResignationDateVisibility();
         const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
         const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
@@ -3033,6 +3046,8 @@ async function startApp() {
         if (document.getElementById('user-status-select')) {
             document.getElementById('user-status-select').value = 'active';
         }
+        if (resignationDateInput) resignationDateInput.value = '';
+        syncResignationDateVisibility();
         const devAllocYes = document.getElementById('dev-alloc-yes');
         if (devAllocYes) {
             devAllocYes.checked = true;
