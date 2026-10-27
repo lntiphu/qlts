@@ -547,10 +547,10 @@ async function startApp() {
                     userResignationDate: db.user_resignation_date || db.userResignationDate || '',
                     updatedAt: db.updated_at || db.updatedAt || '',
                     history: Array.isArray(db.history) ? db.history : [],
-                    purchasePrice: db.purchase_price || db.purchasePrice || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).purchasePrice) || '',
-                    purchaseDate: db.purchase_date || db.purchaseDate || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).purchaseDate) || '',
-                    depreciationYears: db.depreciation_years || db.depreciationYears || (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).depreciationYears) || '3',
-                    maintenanceLogs: Array.isArray(db.maintenance_logs) ? db.maintenance_logs : (Array.isArray(db.maintenanceLogs) ? db.maintenanceLogs : (getDeviceExtras(db.user_id || db.userId || db.dev_id || db.devId || db.id).maintenanceLogs || [])),
+                    purchasePrice: db.purchase_price || db.purchasePrice || (getDeviceExtras(db.dev_id || db.devId || db.user_id || db.userId || db.id).purchasePrice) || '',
+                    purchaseDate: db.purchase_date || db.purchaseDate || (getDeviceExtras(db.dev_id || db.devId || db.user_id || db.userId || db.id).purchaseDate) || '',
+                    depreciationYears: db.depreciation_years || db.depreciationYears || (getDeviceExtras(db.dev_id || db.devId || db.user_id || db.userId || db.id).depreciationYears) || '3',
+                    maintenanceLogs: Array.isArray(db.maintenance_logs) ? db.maintenance_logs : (Array.isArray(db.maintenanceLogs) ? db.maintenanceLogs : (getDeviceExtras(db.dev_id || db.devId || db.user_id || db.userId || db.id).maintenanceLogs || [])),
                     maTaiSan: db.ma_tai_san || db.maTaiSan || db.asset_code || db.assetCode || '',
                     assetCode: db.asset_code || db.assetCode || db.ma_tai_san || db.maTaiSan || '',
                     assetCompany: db.asset_company || db.assetCompany || 'ERG',
@@ -617,7 +617,11 @@ async function startApp() {
                     asset_group: js.assetGroup || null,
                     current_asset_group: js.currentAssetGroup || js.assetGroup || null,
                     asset_type: js.assetType || null,
-                    warranty_end_date: js.warrantyEndDate || null
+                    warranty_end_date: js.warrantyEndDate || null,
+                    purchase_price: js.purchasePrice || null,
+                    purchase_date: js.purchaseDate || null,
+                    depreciation_years: js.depreciationYears || '3',
+                    maintenance_logs: Array.isArray(js.maintenanceLogs) ? js.maintenanceLogs : []
                 };
             }
         },
@@ -1109,11 +1113,18 @@ async function startApp() {
     const resignationDateGroup = document.getElementById('user-resignation-date-group');
     const resignationDateInput = document.getElementById('user-resignation-date');
     const hireDateInput = document.getElementById('user-hire-date');
-    const syncResignationDateVisibility = () => {
-        if (resignationDateGroup) resignationDateGroup.style.display = userStatusSelect?.value === 'disabled' ? '' : 'none';
+    const deviceInfoSubsection = document.getElementById('device-info-subsection');
+    const troubleshootingSubsection = document.getElementById('troubleshooting-subsection');
+    const depreciationSubsection = document.getElementById('depreciation-subsection');
+    const syncAccountStatusSections = () => {
+        const isDisabled = userStatusSelect?.value === 'disabled';
+        if (resignationDateGroup) resignationDateGroup.style.display = isDisabled ? '' : 'none';
+        if (deviceInfoSubsection) deviceInfoSubsection.style.display = isDisabled ? 'none' : '';
+        if (troubleshootingSubsection) troubleshootingSubsection.style.display = isDisabled ? 'none' : '';
+        if (depreciationSubsection) depreciationSubsection.style.display = isDisabled ? 'none' : '';
     };
-    userStatusSelect?.addEventListener('change', syncResignationDateVisibility);
-    syncResignationDateVisibility();
+    userStatusSelect?.addEventListener('change', syncAccountStatusSections);
+    syncAccountStatusSections();
     const tbodyThietBi = document.getElementById('tbody-thiet-bi');
     const searchThietBi = document.getElementById('search-thiet-bi');
     const btnCancelThietBi = document.getElementById('btn-cancel-thiet-bi');
@@ -2056,6 +2067,113 @@ async function startApp() {
         }
     }
 
+    function clearDeviceAllocationFields(item) {
+        item.hasDevice = false;
+        item.devAllocation = 'no';
+        item.devId = '';
+        item.devType = '';
+        item.devMain = '';
+        item.devCpu = '';
+        item.devRam = '';
+        item.devRamSlots = '';
+        item.devSsd = '';
+        item.devSsd2 = '';
+        item.devHdd = '';
+        item.devHdd2 = '';
+        item.devVga = '';
+        item.devMonitor = '';
+        item.devMonitor2 = '';
+        item.devMonitorSn = '';
+        item.devMonitorSn2 = '';
+        item.devSn = '';
+        item.devKeyboard = '';
+        item.devMouse = '';
+        item.devCables = '';
+        item.keyWin = '';
+        item.keyOffice = '';
+        item.keyPdf = '';
+        item.devNotes = '';
+        item.devApps = '';
+        item.devIssueDesc = '';
+        item.devIssueFix = '';
+        item.assetCode = '';
+        item.maTaiSan = '';
+        item.warrantyEndDate = '';
+        item.purchasePrice = '';
+        item.purchaseDate = '';
+        item.depreciationYears = '3';
+        item.maintenanceLogs = [];
+        item.devStatus = 'Không cấp';
+    }
+
+    async function returnDeviceToInventory(device, reason, options = {}) {
+        const now = new Date();
+        const dateStored = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+        const specsData = {};
+        [
+            'devId', 'devType', 'devMain', 'devCpu', 'devRam', 'devRamSlots', 'devSsd', 'devSsd2',
+            'devHdd', 'devHdd2', 'devVga', 'devMonitor', 'devMonitor2', 'devMonitorSn', 'devMonitorSn2',
+            'devSn', 'devKeyboard', 'devMouse', 'devCables', 'keyWin', 'keyOffice', 'keyPdf', 'devNotes',
+            'devApps', 'devStatus', 'devIssueDesc', 'devIssueFix', 'assetCode', 'maTaiSan', 'assetCompany',
+            'assetGroup', 'currentAssetGroup', 'assetType', 'warrantyEndDate', 'purchasePrice', 'purchaseDate',
+            'depreciationYears', 'maintenanceLogs'
+        ].forEach(key => { specsData[key] = device[key] || ''; });
+
+        const deviceCode = device.devId || device.maTaiSan || device.assetCode || `KHO-${Date.now()}`;
+        const humanSpecs = [device.devType, device.devCpu, device.devRam ? `RAM ${device.devRam}` : ''].filter(Boolean).join(' ');
+        const notes = `${options.notes ? `Ghi chú thu hồi: ${options.notes}\n` : ''}${device.devNotes ? `Ghi chú thiết bị: ${device.devNotes}\n` : ''}[SPECS_JSON:${JSON.stringify(specsData)}]`;
+        const khoItem = {
+            code: deviceCode,
+            assetCode: device.maTaiSan || device.assetCode || deviceCode,
+            maTaiSan: device.maTaiSan || device.assetCode || deviceCode,
+            assetCompany: device.assetCompany || 'ERG',
+            assetGroup: device.assetGroup || 'CCDC',
+            currentAssetGroup: device.currentAssetGroup || device.assetGroup || 'CCDC',
+            assetType: device.assetType || 'LT',
+            name: `${humanSpecs || 'Thiết bị'} (Thu hồi từ ${device.userName || device.currentUserName || 'nhân sự'})`,
+            quantity: 1,
+            status: options.condition || 'Sẵn sàng cấp phát',
+            reason,
+            dateStored,
+            notes,
+            devSn: device.devSn || '',
+            devCpu: device.devCpu || '',
+            devRam: device.devRam || '',
+            devSsd: device.devSsd || '',
+            devHdd: device.devHdd || '',
+            devVga: device.devVga || '',
+            devMain: device.devMain || '',
+            devMonitor: device.devMonitor || '',
+            devMonitorSn: device.devMonitorSn || '',
+            devCables: device.devCables || '',
+            warrantyEndDate: device.warrantyEndDate || ''
+        };
+
+        try {
+            if (supabaseClient) {
+                const { data: inserted, error } = await supabaseClient
+                    .from('kho_thiet_bi')
+                    .insert([mappers.khoThietBi.toDB(khoItem)])
+                    .select();
+                if (!error && inserted?.length) {
+                    khoList.push(mappers.khoThietBi.fromDB(inserted[0]));
+                    saveToLocalStorageFallback('kho_thiet_bi', khoList);
+                    renderKho();
+                    return true;
+                }
+                if (error) console.warn('Không lưu được thiết bị thu hồi lên Supabase, dùng lưu trữ cục bộ:', error);
+            }
+        } catch (error) {
+            console.warn('Không lưu được thiết bị thu hồi lên Supabase, dùng lưu trữ cục bộ:', error);
+        }
+
+        khoItem.id = 'local-kho-' + Date.now();
+        khoList.push(khoItem);
+        saveToLocalStorageFallback('kho_thiet_bi', khoList);
+        renderKho();
+        return true;
+    }
+
     function resetTroubleshootForm() {
         for (let i = 1; i <= 10; i++) {
             const dEl = document.getElementById(`dev-issue-desc-${i}`);
@@ -2610,7 +2728,14 @@ async function startApp() {
         let devAllocVal = 'yes';
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         if (allocSelected) devAllocVal = allocSelected.value;
-        const hasDevice = devAllocVal === 'yes' || devAllocVal === 'project';
+        const currentDeviceRecord = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
+        const hasDevice = (devAllocVal === 'yes' || devAllocVal === 'project') && (
+            !currentDeviceRecord ||
+            (currentDeviceRecord.hasDevice !== false && currentDeviceRecord.devStatus !== 'Không cấp') ||
+            !!devIdInput?.value.trim() ||
+            pendingKhoIndexToDeduct !== null
+        );
+        if (!hasDevice && devAllocVal !== 'personal') devAllocVal = 'no';
         const hireDateRaw = hireDateInput?.value.trim() || '';
         const hireDateISO = parseEmployeeDate(hireDateRaw, 'Ngày nhận việc');
         if (hireDateISO === null) return;
@@ -2621,12 +2746,11 @@ async function startApp() {
         const birthDate = parseEmployeeBirthDate(birthDateRaw);
         if (birthDate === null) return;
         const existingAsset = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
-        const assetCompany = existingAsset?.assetCompany || getAssetPrefix() || 'ERG';
-        const assetGroup = existingAsset?.assetGroup || 'CCDC';
-        const assetType = existingAsset?.assetType || 'LT';
-        const assetCode = existingAsset
-            ? (existingAsset.maTaiSan || existingAsset.assetCode || '')
-            : generateAssetCode(assetCompany, assetGroup, assetType);
+        const assetCompany = pendingKhoSpecsToAssign?.assetCompany || existingAsset?.assetCompany || getAssetPrefix() || 'ERG';
+        const assetGroup = pendingKhoSpecsToAssign?.assetGroup || existingAsset?.assetGroup || 'CCDC';
+        const assetType = pendingKhoSpecsToAssign?.assetType || existingAsset?.assetType || 'LT';
+        const assetCode = pendingKhoSpecsToAssign?.assetCode || pendingKhoSpecsToAssign?.maTaiSan ||
+            (existingAsset ? (existingAsset.maTaiSan || existingAsset.assetCode || '') : generateAssetCode(assetCompany, assetGroup, assetType));
 
         const data = {
             devAllocation: devAllocVal,
@@ -2662,7 +2786,7 @@ async function startApp() {
             devNotes: hasDevice ? document.getElementById('dev-notes').value.trim() : '',
             devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
             ...getTroubleshootDataFromForm(),
-            devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (document.getElementById('dev-status').value || (devAllocVal === 'project' ? 'Thiết bị dự án' : 'Mới')),
+            devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (hasDevice ? (document.getElementById('dev-status').value || (devAllocVal === 'project' ? 'Thiết bị dự án' : 'Mới')) : 'Không cấp'),
             devMonitor: hasDevice ? (document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '') : '',
             devMonitor2: hasDevice ? (document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '') : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
@@ -2675,34 +2799,45 @@ async function startApp() {
             purchasePrice: (document.getElementById('device-purchase-price') ? document.getElementById('device-purchase-price').value.trim() : ''),
             purchaseDate: (document.getElementById('device-purchase-date') ? document.getElementById('device-purchase-date').value.trim() : ''),
             depreciationYears: (document.getElementById('device-depreciation-years') ? document.getElementById('device-depreciation-years').value : '3'),
-            maintenanceLogs: (indexStr !== '' && thietBiList[parseInt(indexStr)]) ? (thietBiList[parseInt(indexStr)].maintenanceLogs || []) : [],
+            maintenanceLogs: pendingKhoSpecsToAssign?.devId === (devIdInput?.value.trim() || '')
+                ? (pendingKhoSpecsToAssign.maintenanceLogs || [])
+                : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? (thietBiList[parseInt(indexStr)].maintenanceLogs || []) : []),
             devId: devIdInput ? devIdInput.value.trim() : '',
             maTaiSan: assetCode,
             assetCode,
             assetCompany,
             assetGroup,
-            currentAssetGroup: existingAsset?.currentAssetGroup || assetGroup,
+            currentAssetGroup: pendingKhoSpecsToAssign?.currentAssetGroup || existingAsset?.currentAssetGroup || assetGroup,
             assetType,
-            warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : ''
+            warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : (pendingKhoSpecsToAssign?.warrantyEndDate || '')
         };
 
-        if (indexStr === '') {
-            // Commit sequence when saving brand new asset
-            commitAssetSequence(data.assetCompany, data.assetGroup, data.assetType, data.maTaiSan);
-        }
-
-        saveDeviceExtras(data.devId || data.userId, {
+        saveDeviceExtras(data.devId || data.assetCode || data.userId, {
             purchasePrice: data.purchasePrice,
             purchaseDate: data.purchaseDate,
             depreciationYears: data.depreciationYears,
             maintenanceLogs: data.maintenanceLogs
         });
 
+        let deviceReturnedToInventory = false;
+        if (data.userDisabled && data.hasDevice) {
+            await returnDeviceToInventory(data, `Thu hồi khi vô hiệu hóa tài khoản ${data.userName} (${data.userId})`);
+            clearDeviceAllocationFields(data);
+            deviceReturnedToInventory = true;
+        }
+
+        if (indexStr === '' && pendingKhoIndexToDeduct === null) {
+            // Commit sequence when saving brand new asset
+            commitAssetSequence(data.assetCompany, data.assetGroup, data.assetType, assetCode);
+        }
+
         if (indexStr === '') {
             data.history = [{
                 time: formattedDate,
                 action: 'Tạo mới',
-                details: 'Khởi tạo cấp phát thiết bị ban đầu.'
+                details: deviceReturnedToInventory
+                    ? 'Tạo hồ sơ nhân sự đã vô hiệu hóa; thiết bị được tự động thu hồi về kho.'
+                    : 'Khởi tạo cấp phát thiết bị ban đầu.'
             }];
             try {
                 const dbData = mappers.thietBi.toDB(data);
@@ -2728,7 +2863,13 @@ async function startApp() {
                 }
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
                 processPendingKhoDeduct();
-                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã lưu thông tin cấp phát thiết bị mới!' : 'Đã lưu tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
+                showToast(
+                    isDbSuccess ? 'Thành công' : 'Lưu Offline',
+                    deviceReturnedToInventory
+                        ? (isDbSuccess ? 'Đã tạo hồ sơ vô hiệu hóa và tự động đưa thiết bị về kho!' : 'Đã lưu hồ sơ và thiết bị về kho tạm thời trên trình duyệt!')
+                        : (isDbSuccess ? 'Đã lưu thông tin cấp phát thiết bị mới!' : 'Đã lưu tạm thời trên trình duyệt!'),
+                    isDbSuccess ? 'success' : 'warning'
+                );
             } catch (err) {
                 console.error("Lỗi thêm thiết bị:", err);
                 // Lưu offline dự phòng
@@ -2845,7 +2986,8 @@ async function startApp() {
                 if (supabaseClient && !isLocalId) {
                     // asset_code is immutable in Supabase; omit it from updates so a stale
                     // browser cache cannot accidentally send a changed code back to the DB.
-                    const { asset_code: _assetCode, ...updateData } = dbData;
+                    const { asset_code: _assetCode, ...updateDataWithoutAssetCode } = dbData;
+                    const updateData = oldItem.devId !== data.devId ? dbData : updateDataWithoutAssetCode;
                     const { data: updatedData, error } = await supabaseClient
                         .from('thiet_bi')
                         .update(updateData)
@@ -2867,7 +3009,13 @@ async function startApp() {
                 }
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
                 processPendingKhoDeduct();
-                showToast(isDbSuccess ? 'Thành công' : 'Lưu Offline', isDbSuccess ? 'Đã cập nhật thông tin cấp phát thiết bị!' : 'Đã cập nhật tạm thời trên trình duyệt!', isDbSuccess ? 'success' : 'warning');
+                showToast(
+                    isDbSuccess ? 'Thành công' : 'Lưu Offline',
+                    deviceReturnedToInventory
+                        ? (isDbSuccess ? 'Đã vô hiệu hóa tài khoản và tự động đưa thiết bị về kho!' : 'Đã lưu tạm việc vô hiệu hóa và đưa thiết bị về kho trên trình duyệt!')
+                        : (isDbSuccess ? 'Đã cập nhật thông tin cấp phát thiết bị!' : 'Đã cập nhật tạm thời trên trình duyệt!'),
+                    isDbSuccess ? 'success' : 'warning'
+                );
                 resetFormThietBi();
             } catch (err) {
                 console.error("Lỗi cập nhật thiết bị:", err);
@@ -2911,7 +3059,7 @@ async function startApp() {
         if (document.getElementById('user-status-select')) document.getElementById('user-status-select').value = item.userDisabled ? 'disabled' : 'active';
         if (hireDateInput) hireDateInput.value = item.userHireDate ? formatDateDMY(item.userHireDate) : '';
         if (resignationDateInput) resignationDateInput.value = item.userResignationDate ? formatDateDMY(item.userResignationDate) : '';
-        syncResignationDateVisibility();
+        syncAccountStatusSections();
         const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
         const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
@@ -3053,6 +3201,7 @@ async function startApp() {
     function resetFormThietBi() {
         editIndexThietBi.value = '';
         pendingKhoIndexToDeduct = null;
+        pendingKhoSpecsToAssign = null;
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới';
         const badgeMode = document.getElementById('badge-form-mode');
         if (badgeMode) {
@@ -3068,7 +3217,7 @@ async function startApp() {
         }
         if (resignationDateInput) resignationDateInput.value = '';
         if (hireDateInput) hireDateInput.value = '';
-        syncResignationDateVisibility();
+        syncAccountStatusSections();
         const devAllocYes = document.getElementById('dev-alloc-yes');
         if (devAllocYes) {
             devAllocYes.checked = true;
@@ -3248,7 +3397,20 @@ async function startApp() {
                 devSn: u.devSn || '',
                 devKeyboard: u.devKeyboard || '',
                 devMouse: u.devMouse || '',
-                devCables: u.devCables || ''
+                devCables: u.devCables || '',
+                devIssueDesc: u.devIssueDesc || '',
+                devIssueFix: u.devIssueFix || '',
+                assetCode: u.assetCode || u.maTaiSan || '',
+                maTaiSan: u.maTaiSan || u.assetCode || '',
+                assetCompany: u.assetCompany || 'ERG',
+                assetGroup: u.assetGroup || 'CCDC',
+                currentAssetGroup: u.currentAssetGroup || u.assetGroup || 'CCDC',
+                assetType: u.assetType || 'LT',
+                warrantyEndDate: u.warrantyEndDate || '',
+                purchasePrice: u.purchasePrice || getDeviceExtras(u.devId).purchasePrice || '',
+                purchaseDate: u.purchaseDate || getDeviceExtras(u.devId).purchaseDate || '',
+                depreciationYears: u.depreciationYears || getDeviceExtras(u.devId).depreciationYears || '3',
+                maintenanceLogs: Array.isArray(u.maintenanceLogs) ? u.maintenanceLogs : (getDeviceExtras(u.devId).maintenanceLogs || [])
             };
         }
 
@@ -3313,7 +3475,18 @@ async function startApp() {
             devSn: document.getElementById('dev-sn') ? document.getElementById('dev-sn').value.trim() : '',
             devKeyboard: document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '',
             devMouse: document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '',
-            devCables: document.getElementById('dev-cables') ? document.getElementById('dev-cables').value : ''
+            devCables: document.getElementById('dev-cables') ? document.getElementById('dev-cables').value : '',
+            assetCode: sourceUser?.assetCode || sourceUser?.maTaiSan || '',
+                maTaiSan: sourceUser?.maTaiSan || sourceUser?.assetCode || '',
+                assetCompany: sourceUser?.assetCompany || getAssetPrefix() || 'ERG',
+                assetGroup: sourceUser?.assetGroup || 'CCDC',
+                currentAssetGroup: sourceUser?.currentAssetGroup || sourceUser?.assetGroup || 'CCDC',
+                assetType: sourceUser?.assetType || 'LT',
+                warrantyEndDate: document.getElementById('dev-warranty-exp')?.value.trim() || '',
+                purchasePrice: document.getElementById('device-purchase-price')?.value.trim() || '',
+                purchaseDate: document.getElementById('device-purchase-date')?.value.trim() || '',
+                depreciationYears: document.getElementById('device-depreciation-years')?.value || '3',
+                maintenanceLogs: sourceUser?.maintenanceLogs || getDeviceExtras(devId).maintenanceLogs || []
         };
     }
 
@@ -3541,7 +3714,26 @@ async function startApp() {
                 targetUser.devKeyboard = specs.devKeyboard;
                 targetUser.devMouse = specs.devMouse;
                 targetUser.devCables = specs.devCables;
+                targetUser.devIssueDesc = specs.devIssueDesc || '';
+                targetUser.devIssueFix = specs.devIssueFix || '';
+                targetUser.purchasePrice = specs.purchasePrice || '';
+                targetUser.purchaseDate = specs.purchaseDate || '';
+                targetUser.depreciationYears = specs.depreciationYears || '3';
+                targetUser.maintenanceLogs = specs.maintenanceLogs || [];
+                targetUser.assetCode = specs.assetCode || specs.maTaiSan || '';
+                targetUser.maTaiSan = specs.maTaiSan || specs.assetCode || '';
+                targetUser.assetCompany = specs.assetCompany || targetUser.assetCompany || 'ERG';
+                targetUser.assetGroup = specs.assetGroup || targetUser.assetGroup || 'CCDC';
+                targetUser.currentAssetGroup = specs.currentAssetGroup || specs.assetGroup || 'CCDC';
+                targetUser.assetType = specs.assetType || targetUser.assetType || 'LT';
+                targetUser.warrantyEndDate = specs.warrantyEndDate || '';
                 targetUser.updatedAt = formattedDate;
+                saveDeviceExtras(specs.devId || specs.assetCode, {
+                    purchasePrice: specs.purchasePrice || '',
+                    purchaseDate: specs.purchaseDate || '',
+                    depreciationYears: specs.depreciationYears || '3',
+                    maintenanceLogs: specs.maintenanceLogs || []
+                });
 
                 if (!targetUser.history) targetUser.history = [];
                 targetUser.history.push({
@@ -3566,33 +3758,7 @@ async function startApp() {
                     const sourceIdx = thietBiList.findIndex(u => (specs.sourceUser.id && u.id === specs.sourceUser.id) || (specs.sourceUser.userId && u.userId.toLowerCase() === specs.sourceUser.userId.toLowerCase()));
                     if (sourceIdx !== -1) {
                         const sUser = thietBiList[sourceIdx];
-                        sUser.hasDevice = false;
-                        sUser.devAllocation = 'no';
-                        sUser.devId = '';
-                        sUser.devType = '';
-                        sUser.devMain = '';
-                        sUser.devCpu = '';
-                        sUser.devRam = '';
-                        sUser.devRamSlots = '';
-                        sUser.devSsd = '';
-                        sUser.devSsd2 = '';
-                        sUser.devHdd = '';
-                        sUser.devHdd2 = '';
-                        sUser.devVga = '';
-                        sUser.keyWin = '';
-                        sUser.keyOffice = '';
-                        sUser.keyPdf = '';
-                        sUser.devNotes = '';
-                        sUser.devApps = '';
-                        sUser.devStatus = 'Không cấp';
-                        sUser.devMonitor = '';
-                        sUser.devMonitor2 = '';
-                        sUser.devMonitorSn = '';
-                        sUser.devMonitorSn2 = '';
-                        sUser.devSn = '';
-                        sUser.devKeyboard = '';
-                        sUser.devMouse = '';
-                        sUser.devCables = '';
+                        clearDeviceAllocationFields(sUser);
                         sUser.updatedAt = formattedDate;
 
                         if (!sUser.history) sUser.history = [];
@@ -3671,7 +3837,20 @@ async function startApp() {
                     keyOffice: specs.keyOffice,
                     keyPdf: specs.keyPdf,
                     devApps: specs.devApps,
-                    devStatus: specs.devStatus
+                    devStatus: specs.devStatus,
+                    devIssueDesc: specs.devIssueDesc || '',
+                    devIssueFix: specs.devIssueFix || '',
+                    assetCode: specs.assetCode || '',
+                    maTaiSan: specs.maTaiSan || '',
+                    assetCompany: specs.assetCompany || 'ERG',
+                    assetGroup: specs.assetGroup || 'CCDC',
+                    currentAssetGroup: specs.currentAssetGroup || specs.assetGroup || 'CCDC',
+                    assetType: specs.assetType || 'LT',
+                    warrantyEndDate: specs.warrantyEndDate || '',
+                    purchasePrice: specs.purchasePrice || '',
+                    purchaseDate: specs.purchaseDate || '',
+                    depreciationYears: specs.depreciationYears || '3',
+                    maintenanceLogs: specs.maintenanceLogs || []
                 };
 
                 const fullNotes = `Cấu hình: ${specsDetail.join(', ')}` + (notes ? `. Ghi chú: ${notes}` : '') + `\n[SPECS_JSON:${JSON.stringify(specsData)}]`;
@@ -3714,33 +3893,7 @@ async function startApp() {
                     const sourceIdx = thietBiList.findIndex(u => (specs.sourceUser.id && u.id === specs.sourceUser.id) || (specs.sourceUser.userId && u.userId.toLowerCase() === specs.sourceUser.userId.toLowerCase()));
                     if (sourceIdx !== -1) {
                         const sUser = thietBiList[sourceIdx];
-                        sUser.hasDevice = false;
-                        sUser.devAllocation = 'no';
-                        sUser.devId = '';
-                        sUser.devType = '';
-                        sUser.devMain = '';
-                        sUser.devCpu = '';
-                        sUser.devRam = '';
-                        sUser.devRamSlots = '';
-                        sUser.devSsd = '';
-                        sUser.devSsd2 = '';
-                        sUser.devHdd = '';
-                        sUser.devHdd2 = '';
-                        sUser.devVga = '';
-                        sUser.keyWin = '';
-                        sUser.keyOffice = '';
-                        sUser.keyPdf = '';
-                        sUser.devNotes = '';
-                        sUser.devApps = '';
-                        sUser.devStatus = 'Không cấp';
-                        sUser.devMonitor = '';
-                        sUser.devMonitor2 = '';
-                        sUser.devMonitorSn = '';
-                        sUser.devMonitorSn2 = '';
-                        sUser.devSn = '';
-                        sUser.devKeyboard = '';
-                        sUser.devMouse = '';
-                        sUser.devCables = '';
+                        clearDeviceAllocationFields(sUser);
                         sUser.updatedAt = formattedDate;
 
                         if (!sUser.history) sUser.history = [];
@@ -4016,6 +4169,7 @@ async function startApp() {
     // MODAL POP-UP CHỌN NHẬN THIẾT BỊ TỪ KHO (ĐIỀN VÀO FORM)
     // =========================================================================
     let pendingKhoIndexToDeduct = null;
+    let pendingKhoSpecsToAssign = null;
 
     const btnOpenReceiveFromKhoModal = document.getElementById('btn-open-receive-from-kho-modal');
     const modalReceiveFromKho = document.getElementById('modal-receive-from-kho');
@@ -4102,6 +4256,7 @@ async function startApp() {
         // Trích xuất cấu hình chi tiết từ notes
         const specsObj = extractSpecsFromKhoNotes(khoItem.notes);
         const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+        pendingKhoSpecsToAssign = specsObj;
 
         // 2. Điền ĐẦY ĐỦ 100% CẤU HÌNH vào form
         if (devIdInput) devIdInput.value = khoItem.code || '';
@@ -4130,6 +4285,11 @@ async function startApp() {
         if (document.getElementById('key-pdf')) document.getElementById('key-pdf').value = specsObj.keyPdf || '';
         if (document.getElementById('dev-apps')) document.getElementById('dev-apps').value = specsObj.devApps || '';
         if (document.getElementById('dev-status')) document.getElementById('dev-status').value = specsObj.devStatus || 'Mới';
+        if (document.getElementById('dev-warranty-exp')) document.getElementById('dev-warranty-exp').value = specsObj.warrantyEndDate || '';
+        if (document.getElementById('device-purchase-price')) document.getElementById('device-purchase-price').value = specsObj.purchasePrice || '';
+        if (document.getElementById('device-purchase-date')) document.getElementById('device-purchase-date').value = specsObj.purchaseDate || '';
+        if (document.getElementById('device-depreciation-years')) document.getElementById('device-depreciation-years').value = specsObj.depreciationYears || '3';
+        populateTroubleshootForm(specsObj.devIssueDesc, specsObj.devIssueFix);
 
         const devNotesInput = document.getElementById('dev-notes');
         if (devNotesInput) devNotesInput.value = cleanNotes ? `Xuất từ kho: ${cleanNotes}` : 'Xuất từ kho thiết bị';
@@ -4164,6 +4324,7 @@ async function startApp() {
             saveToLocalStorageFallback('kho_thiet_bi', khoList);
             renderKho();
             pendingKhoIndexToDeduct = null;
+            pendingKhoSpecsToAssign = null;
         }
     }
 
@@ -5023,69 +5184,22 @@ async function startApp() {
         const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu;
         const oldDevId = item.devId || '';
         const oldDevType = item.devType || 'Máy tính';
-        const oldSpecs = [item.devMain, item.devCpu, item.devRam, item.devSsd, item.devHdd, item.devVga].filter(Boolean).join(' | ');
-
         item.userDisabled = true;
 
         const now = new Date();
         const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         if (hadDevice) {
-            const newKhoItem = {
-                id: 'kho-' + Date.now(),
-                code: oldDevId || item.maTaiSan || ('KHO-' + Date.now()),
-                assetCode: item.maTaiSan || item.assetCode || '',
-                maTaiSan: item.maTaiSan || item.assetCode || '',
-                assetCompany: item.assetCompany || 'ERG',
-                assetGroup: item.assetGroup || 'CCDC',
-                currentAssetGroup: item.currentAssetGroup || item.assetGroup || 'CCDC',
-                assetType: item.assetType || 'LT',
-                name: `${oldDevType} (Thu hồi từ ${item.userName})`,
-                type: oldDevType,
-                status: condition,
-                quantity: 1,
-                unit: 'Chiếc',
-                serial: item.devSn || '',
-                devSn: item.devSn || '',
-                devCpu: item.devCpu || '',
-                devRam: item.devRam || '',
-                devRamSlots: item.devRamSlots || '',
-                devSsd: item.devSsd || '',
-                devHdd: item.devHdd || '',
-                devVga: item.devVga || '',
-                devMain: item.devMain || '',
-                devMonitor: item.devMonitor || '',
-                devCables: item.devCables || '',
-                warrantyEndDate: item.warrantyEndDate || '',
-                reason: `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
-                dateStored: formattedDate.split(' lúc ')[0],
-                config: oldSpecs,
-                origin: `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
-                notes: `[Thu hồi nghỉ việc]: ${notes}`,
-                updatedAt: formattedDate
-            };
-
-            if (typeof khoList !== 'undefined') {
-                khoList.push(newKhoItem);
-                saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                try {
-                    if (supabaseClient && mappers && mappers.khoThietBi) {
-                        const dbKho = mappers.khoThietBi.toDB(newKhoItem);
-                        const { data: insertedKho, error } = await supabaseClient.from('kho_thiet_bi').insert([dbKho]).select();
-                        if (!error && insertedKho && insertedKho.length > 0) {
-                            khoList[khoList.length - 1] = mappers.khoThietBi.fromDB(insertedKho[0]);
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Kho insert error:', e);
-                }
-            }
-
-            item.devAllocation = 'no';
-            item.hasDevice = false;
-            item.devId = '';
-            item.devStatus = 'Không cấp';
-            item.devNotes = (item.devNotes ? item.devNotes + '\n' : '') + `[${formattedDate}] Đã thu hồi toàn bộ thiết bị về Kho. Ghi chú: ${notes}`;
+            item.purchasePrice = item.purchasePrice || getDeviceExtras(oldDevId).purchasePrice || '';
+            item.purchaseDate = item.purchaseDate || getDeviceExtras(oldDevId).purchaseDate || '';
+            item.depreciationYears = item.depreciationYears || getDeviceExtras(oldDevId).depreciationYears || '3';
+            item.maintenanceLogs = Array.isArray(item.maintenanceLogs) ? item.maintenanceLogs : (getDeviceExtras(oldDevId).maintenanceLogs || []);
+            await returnDeviceToInventory(
+                item,
+                `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
+                { condition, notes }
+            );
+            clearDeviceAllocationFields(item);
         }
 
         if (!Array.isArray(item.history)) item.history = [];
