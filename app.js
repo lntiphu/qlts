@@ -542,6 +542,7 @@ async function startApp() {
                     devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' || devStat === 'Cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' || devStat === 'Dùng chung' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
                     hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân' && devStat !== 'Cá nhân',
                     userDisabled: !!(db.user_disabled || db.userDisabled),
+                    userHireDate: db.user_hire_date || db.userHireDate || '',
                     userResignationDate: db.user_resignation_date || db.userResignationDate || '',
                     updatedAt: db.updated_at || db.updatedAt || '',
                     history: Array.isArray(db.history) ? db.history : [],
@@ -577,6 +578,7 @@ async function startApp() {
                     user_element: js.userElement,
                     user_key_element: js.userKeyElement,
                     user_disabled: !!js.userDisabled,
+                    user_hire_date: js.userHireDate || null,
                     user_resignation_date: js.userResignationDate || null,
                     has_device: js.devAllocation === 'yes' || js.devAllocation === 'project',
                     dev_id: js.devId || null,
@@ -1104,6 +1106,7 @@ async function startApp() {
     const userStatusSelect = document.getElementById('user-status-select');
     const resignationDateGroup = document.getElementById('user-resignation-date-group');
     const resignationDateInput = document.getElementById('user-resignation-date');
+    const hireDateInput = document.getElementById('user-hire-date');
     const syncResignationDateVisibility = () => {
         if (resignationDateGroup) resignationDateGroup.style.display = userStatusSelect?.value === 'disabled' ? '' : 'none';
     };
@@ -2297,6 +2300,7 @@ async function startApp() {
                         </span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
+                        ${item.userHireDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày nhận việc: ${formatDateDMY(item.userHireDate)}</span>` : ''}
                         ${item.userDisabled && item.userResignationDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày nghỉ việc: ${formatDateDMY(item.userResignationDate)}</span>` : ''}
                         ${item.userElement ? `
                             <span class="contact" style="display: flex; align-items: center; margin-top: 2px;">
@@ -2605,24 +2609,12 @@ async function startApp() {
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         if (allocSelected) devAllocVal = allocSelected.value;
         const hasDevice = devAllocVal === 'yes' || devAllocVal === 'project';
+        const hireDateRaw = hireDateInput?.value.trim() || '';
+        const hireDateISO = parseEmployeeDate(hireDateRaw, 'Ngày nhận việc');
+        if (hireDateISO === null) return;
         const resignationDateRaw = resignationDateInput?.value.trim() || '';
-        let resignationDateISO = '';
-        if (resignationDateRaw) {
-            const match = resignationDateRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-            if (!match) {
-                showToast('Ngày nghỉ việc chưa đúng định dạng', 'Vui lòng nhập ngày theo dạng dd/mm/yyyy (ví dụ: 05/03/2026).', 'error');
-                return;
-            }
-            const day = Number(match[1]);
-            const month = Number(match[2]);
-            const year = Number(match[3]);
-            const parsedDate = new Date(year, month - 1, day);
-            if (year < 1900 || year > 2100 || parsedDate.getFullYear() !== year || parsedDate.getMonth() !== month - 1 || parsedDate.getDate() !== day) {
-                showToast('Ngày nghỉ việc không hợp lệ', 'Vui lòng kiểm tra lại ngày, tháng và năm.', 'error');
-                return;
-            }
-            resignationDateISO = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        }
+        const resignationDateISO = parseEmployeeDate(resignationDateRaw, 'Ngày nghỉ việc');
+        if (resignationDateISO === null) return;
         const existingAsset = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
         const assetCompany = existingAsset?.assetCompany || getAssetPrefix() || 'ERG';
         const assetGroup = existingAsset?.assetGroup || 'CCDC';
@@ -2637,6 +2629,7 @@ async function startApp() {
             userDisabled: document.getElementById('user-status-select') 
                 ? (document.getElementById('user-status-select').value === 'disabled')
                 : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false),
+            userHireDate: hireDateISO,
             userResignationDate: resignationDateISO,
             userId: userIdInput.value.trim(),
             userName: document.getElementById('user-name').value.trim(),
@@ -2909,6 +2902,7 @@ async function startApp() {
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
         if (document.getElementById('user-status-select')) document.getElementById('user-status-select').value = item.userDisabled ? 'disabled' : 'active';
+        if (hireDateInput) hireDateInput.value = item.userHireDate ? formatDateDMY(item.userHireDate) : '';
         if (resignationDateInput) resignationDateInput.value = item.userResignationDate ? formatDateDMY(item.userResignationDate) : '';
         syncResignationDateVisibility();
         const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
@@ -3066,6 +3060,7 @@ async function startApp() {
             document.getElementById('user-status-select').value = 'active';
         }
         if (resignationDateInput) resignationDateInput.value = '';
+        if (hireDateInput) hireDateInput.value = '';
         syncResignationDateVisibility();
         const devAllocYes = document.getElementById('dev-alloc-yes');
         if (devAllocYes) {
@@ -7314,6 +7309,24 @@ async function startApp() {
         let year = date.getFullYear();
         
         return `${day}/${month}/${year}`;
+    }
+
+    function parseEmployeeDate(dateValue, fieldLabel) {
+        if (!dateValue) return '';
+        const match = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+        if (!match) {
+            showToast(`${fieldLabel} chưa đúng định dạng`, `Vui lòng nhập ngày theo dạng dd/mm/yyyy (ví dụ: 05/03/2026).`, 'error');
+            return null;
+        }
+        const day = Number(match[1]);
+        const month = Number(match[2]);
+        const year = Number(match[3]);
+        const parsedDate = new Date(year, month - 1, day);
+        if (year < 1900 || year > 2100 || parsedDate.getFullYear() !== year || parsedDate.getMonth() !== month - 1 || parsedDate.getDate() !== day) {
+            showToast(`${fieldLabel} không hợp lệ`, 'Vui lòng kiểm tra lại ngày, tháng và năm.', 'error');
+            return null;
+        }
+        return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
 
     function parseDateDMY(dateInput) {
