@@ -2420,6 +2420,7 @@ async function startApp() {
                         </span>
                         <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
                         <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
+                        ${item.userBirthDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày sinh: ${/^\d{4}-\d{2}-\d{2}/.test(item.userBirthDate) ? formatDateDMY(item.userBirthDate) : item.userBirthDate}</span>` : ''}
                         ${item.userHireDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày nhận việc: ${formatDateDMY(item.userHireDate)}</span>` : ''}
                         ${item.userDisabled && item.userResignationDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày nghỉ việc: ${formatDateDMY(item.userResignationDate)}</span>` : ''}
                         ${item.userElement ? `
