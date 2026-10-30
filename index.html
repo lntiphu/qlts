@@ -683,10 +683,20 @@
                                 </div>
                                 
                                 <div id="device-fields-wrapper" style="transition: all 0.3s ease;">
-                                    <div class="form-group col-span-2-lg">
-                                        <label for="dev-id">ID Thiết bị hệ thống (*)</label>
-                                        <input type="text" id="dev-id" placeholder="VD: PC-01, LT-01..." class="form-input">
-                                        <span class="error-msg" id="err-dev-id" style="display: none; font-size: 11px; margin-top: 2px;"></span>
+                                    <div class="grid grid-col-6">
+                                        <div class="form-group col-span-2-lg">
+                                            <label for="dev-id">ID Thiết bị hệ thống (*)</label>
+                                            <input type="text" id="dev-id" placeholder="VD: PC-01, LT-01..." class="form-input">
+                                            <span class="error-msg" id="err-dev-id" style="display: none; font-size: 11px; margin-top: 2px;"></span>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="dev-ups">UPS</label>
+                                            <select id="dev-ups">
+                                                <option value="">-- Chọn --</option>
+                                                <option value="Có UPS">Có UPS</option>
+                                                <option value="Không có UPS">Không có UPS</option>
+                                            </select>
+                                        </div>
                                     </div>
                                     <div class="grid grid-col-6">
                                         <div class="form-group col-span-2-lg">
