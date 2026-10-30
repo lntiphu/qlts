@@ -2456,6 +2456,8 @@ async function startApp() {
                             </span>
                             ${item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             ${item.devType ? `<span class="details" style="display: block;">Loại: ${item.devType}</span>` : ''}
+                            ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
+                            ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
                         ` : ''}
                         ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân') && !item.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
@@ -2464,6 +2466,8 @@ async function startApp() {
                         ` : ((item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus || item.devUps || item.devExtraDevices) ? `
                             ${!item.devId && item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             <span class="details" style="display: block;">Loại: ${item.devType || 'Chưa phân loại'}</span>
+                            ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
+                            ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
                         ` : (!item.devId && item.devAllocation !== 'project' && item.devStatus !== 'Thiết bị dự án' && item.devStatus !== 'Thiết bị dùng chung dự án' && item.devStatus !== 'Dùng chung' ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
                         ` : '')))}
