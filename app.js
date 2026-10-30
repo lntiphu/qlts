@@ -2463,7 +2463,7 @@ async function startApp() {
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
                         ` : ((item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
                             <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>
-                        ` : ((item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus || item.devUps || item.devExtraDevices) ? `
+                        ` : ((!item.devId && (item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus || item.devUps || item.devExtraDevices)) ? `
                             ${!item.devId && item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             <span class="details" style="display: block;">Loại: ${item.devType || 'Chưa phân loại'}</span>
                             ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
@@ -2997,8 +2997,6 @@ async function startApp() {
             
             try {
                 const dbData = mappers.thietBi.toDB(data);
-                console.log('[DEBUG UPDATE] dbData keys:', Object.keys(dbData));
-                console.log('[DEBUG UPDATE] dbData:', JSON.stringify(dbData));
                 let isDbSuccess = false;
                 const isLocalId = oldItem.id && typeof oldItem.id === 'string' && oldItem.id.startsWith('local-');
                 if (supabaseClient && !isLocalId) {
@@ -7390,21 +7388,6 @@ async function startApp() {
     
     let currentPageGiaHan = 1;
     const itemsPerPageGiaHan = 10;
-
-    function loadGiaHanFromLocalStorage() {
-        try {
-            const stored = localStorage.getItem('gia_han_list');
-            if (stored) {
-                giaHanList = JSON.parse(stored);
-            } else {
-                giaHanList = [];
-            }
-        } catch (e) {
-            console.error("Error reading LocalStorage for gia_han:", e);
-            giaHanList = [];
-        }
-        renderGiaHan();
-    }
 
     function saveGiaHanToLocalStorage() {
         try {
