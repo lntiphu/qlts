@@ -513,6 +513,7 @@ async function startApp() {
                     userBirthDate: db.user_birth_date || db.userBirthDate || '',
                     userElement: db.user_element || db.userElement || '',
                     userKeyElement: db.user_key_element || db.userKeyElement || '',
+                    userErgChat: db.user_erg_chat || db.userErgChat || 'not_installed',
                     devId: db.dev_id || db.devId || '',
                     devUps: db.dev_ups || db.devUps || '',
                     devExtraDevices: db.dev_extra_devices || db.devExtraDevices || '',
@@ -581,6 +582,7 @@ async function startApp() {
                     user_birth_date: js.userBirthDate || null,
                     user_element: js.userElement,
                     user_key_element: js.userKeyElement,
+                    user_erg_chat: js.userErgChat || 'not_installed',
                     user_disabled: !!js.userDisabled,
                     user_hire_date: js.userHireDate || null,
                     user_resignation_date: js.userResignationDate || null,
@@ -2441,6 +2443,7 @@ async function startApp() {
                                 <i class="fa-solid fa-key" style="font-size: 11px; margin-right: 5px;"></i> ${item.userKeyElement}
                             </span>
                         ` : ''}
+                        <span class="contact" style="display: block; margin-top: 2px;">ERG chat: ${item.userErgChat === 'installed' ? 'Đã cài' : 'Chưa cài'}</span>
                     </div>
                 </td>
                 <td>
@@ -2783,6 +2786,7 @@ async function startApp() {
             userBirthDate: birthDate,
             userElement: document.getElementById('user-element') ? document.getElementById('user-element').value.trim() : '',
             userKeyElement: document.getElementById('user-key-element') ? document.getElementById('user-key-element').value.trim() : '',
+            userErgChat: document.getElementById('user-erg-chat')?.value || 'not_installed',
             devId: devIdInput ? devIdInput.value.trim() : '',
             devUps: hasDevice ? (document.getElementById('dev-ups')?.value || '') : '',
             devExtraDevices: hasDevice ? (document.getElementById('dev-extra-devices')?.value.trim() || '') : '',
@@ -2921,6 +2925,7 @@ async function startApp() {
                 userPhone: "Số điện thoại",
                 userElement: "Element",
                 userKeyElement: "Key Element",
+                userErgChat: "ERG chat",
                 devIssueDesc: "Thông tin lỗi hay gặp",
                 devIssueFix: "Cách fix lỗi"
             };
@@ -3072,6 +3077,7 @@ async function startApp() {
         document.getElementById('user-birth-date').value = item.userBirthDate || '';
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
+        if (document.getElementById('user-erg-chat')) document.getElementById('user-erg-chat').value = item.userErgChat || 'not_installed';
         if (document.getElementById('user-status-select')) document.getElementById('user-status-select').value = item.userDisabled ? 'disabled' : 'active';
         if (hireDateInput) hireDateInput.value = item.userHireDate ? formatDateDMY(item.userHireDate) : '';
         if (resignationDateInput) resignationDateInput.value = item.userResignationDate ? formatDateDMY(item.userResignationDate) : '';
@@ -8619,8 +8625,8 @@ async function startApp() {
             const zip = new JSZip();
 
             // 1. Assets
-            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Email", "Số điện thoại", "Element", "Key Element", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Tên màn hình", "Serial màn hình", "Serial thiết bị", "Bàn phím", "Chuột", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
-            const assetsKeys = ["userDept", "userName", "userTitle", "userEmail", "userPhone", "userElement", "userKeyElement", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devMonitorSn", "devSn", "devKeyboard", "devMouse", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
+            const assetsHeaders = ["Phòng ban", "Họ và tên", "Chức vụ", "Email", "Số điện thoại", "Element", "Key Element", "ERG chat", "Model máy", "Cấu hình RAM", "Số khe RAM", "Ổ cứng", "Tên màn hình", "Serial màn hình", "Serial thiết bị", "Bàn phím", "Chuột", "Dây cáp", "Key Windows", "Key Office", "Key PDF", "Ghi chú", "Ứng dụng"];
+            const assetsKeys = ["userDept", "userName", "userTitle", "userEmail", "userPhone", "userElement", "userKeyElement", "userErgChat", "devMain", "devRam", "devRamSlots", "devSsd", "devMonitor", "devMonitorSn", "devSn", "devKeyboard", "devMouse", "devCables", "keyWin", "keyOffice", "keyPdf", "devNotes", "devApps"];
             zip.file("1_Danh_sach_cap_phat.csv", convertToCSV(thietBiList, assetsHeaders, assetsKeys));
 
             // 2. Companies
@@ -8703,6 +8709,7 @@ async function startApp() {
         "Key PDF": "keyPdf",
         "Element": "userElement",
         "Key Element": "userKeyElement",
+        "ERG chat": "userErgChat",
         "Ghi chú thiết bị": "devNotes",
         "Ghi chú": "notes",
         "Ứng dụng": "devApps",
