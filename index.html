@@ -580,6 +580,28 @@
                                     </span>
                                 </div>
 
+                                <div class="device-allocation-toggle" style="display:flex; align-items:stretch; gap:8px; background:rgba(15,23,42,.55); padding:4px; border-radius:10px; border:1px solid rgba(148,163,184,.22); user-select:none; flex-wrap:wrap; margin-left:auto;">
+                                    <label class="allocation-option allocation-option-primary" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#bbf7d0; padding:8px 13px; border-radius:7px; background:rgba(34,197,94,.14); border:1px solid rgba(34,197,94,.35);">
+                                        <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked style="width:16px; height:16px; accent-color:#22c55e; cursor:pointer;">
+                                        <span><i class="fa-solid fa-box-open"></i> Cấp phát thiết bị</span>
+                                    </label>
+                                    <label class="allocation-option allocation-option-personal" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#e9d5ff; padding:8px 13px; border-radius:7px; background:rgba(168,85,247,.12); border:1px solid rgba(168,85,247,.32);">
+                                        <input type="radio" name="dev-allocation" id="dev-alloc-personal" value="personal" style="width:16px; height:16px; accent-color:#a855f7; cursor:pointer;">
+                                        <span><i class="fa-solid fa-laptop-code"></i> Thiết bị cá nhân</span>
+                                    </label>
+                                </div>
+
+                                <div id="device-count-row" style="display:inline-flex; align-items:center; gap:9px; padding:6px 10px; border:1px solid rgba(59,130,246,.3); border-radius:9px; background:linear-gradient(135deg,rgba(37,51,141,.18),rgba(15,23,42,.65));">
+                                    <label for="device-count" style="font-size:12px; font-weight:700; color:#bfdbfe; white-space:nowrap;"><i class="fa-solid fa-computer" style="color:#60a5fa; margin-right:5px;"></i>Số thiết bị</label>
+                                    <select id="device-count" class="form-input" style="width:112px; min-width:112px; padding:6px 9px; font-size:12px; border-color:rgba(96,165,250,.35);">
+                                        <option value="1">1 thiết bị</option>
+                                        <option value="2">2 thiết bị</option>
+                                        <option value="3">3 thiết bị</option>
+                                        <option value="4">4 thiết bị</option>
+                                        <option value="5">5 thiết bị</option>
+                                    </select>
+                                </div>
+
                                 <div class="form-actions" style="margin: 0; display: flex; gap: 10px; align-items: center;">
                                     <button type="submit" class="btn btn-primary" id="btn-save-thiet-bi" style="padding: 9px 20px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(123, 202, 15, 0.25); cursor: pointer;">
                                         <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới
@@ -673,26 +695,8 @@
                                             <i class="fa-solid fa-box-open" style="color: #ffffff;"></i> Nhận thiết bị từ kho
                                         </button>
                                     </div>
-                                    <div class="device-allocation-toggle" style="display:flex; align-items:stretch; gap:8px; background:rgba(15,23,42,.55); padding:4px; border-radius:10px; border:1px solid rgba(148,163,184,.22); user-select:none; flex-wrap:wrap;">
-                                        <label class="allocation-option allocation-option-primary" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#bbf7d0; padding:8px 13px; border-radius:7px; background:rgba(34,197,94,.14); border:1px solid rgba(34,197,94,.35);">
-                                            <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked style="width:16px; height:16px; accent-color:#22c55e; cursor:pointer;">
-                                            <span><i class="fa-solid fa-box-open"></i> Cấp phát thiết bị</span>
-                                        </label>
-                                        <label class="allocation-option allocation-option-personal" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#e9d5ff; padding:8px 13px; border-radius:7px; background:rgba(168,85,247,.12); border:1px solid rgba(168,85,247,.32);">
-                                            <input type="radio" name="dev-allocation" id="dev-alloc-personal" value="personal" style="width:16px; height:16px; accent-color:#a855f7; cursor:pointer;">
-                                            <span><i class="fa-solid fa-laptop-code"></i> Thiết bị cá nhân</span>
-                                        </label>
-                                    </div>
                                 </div>
                                 
-                                <div id="device-count-row" style="display:flex; align-items:center; gap:10px; margin: 0 0 12px 0; padding: 9px 12px; border: 1px solid rgba(123,202,15,.25); border-radius: 8px; background: rgba(123,202,15,.06);">
-                                    <label for="device-count" style="font-size:13px; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-computer" style="color:#7bca0f; margin-right:5px;"></i>Số thiết bị user sử dụng</label>
-                                    <select id="device-count" class="form-input" style="width:120px; padding:6px 10px;">
-                                        <option value="1">1 thiết bị</option>
-                                        <option value="2">2 thiết bị</option>
-                                    </select>
-                                    <span style="font-size:11px; color:var(--text-secondary);">Chọn 2 để nhập riêng thông tin cho cả hai máy.</span>
-                                </div>
                                 <div id="device-fields-wrapper" style="transition: all 0.3s ease;">
                                     <div class="grid grid-col-6">
                                         <div class="form-group col-span-2-lg">
@@ -862,7 +866,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div id="device-fields-wrapper-2" style="display:none; margin-top:16px; padding-top:14px; border-top:2px solid rgba(123,202,15,.28); transition: all 0.3s ease;"></div>
+                                <div id="device-fields-extra"></div>
                             </div>
 
                             <!-- Subsection 3: Các lỗi thường gặp -->

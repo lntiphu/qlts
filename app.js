@@ -1136,10 +1136,12 @@ async function startApp() {
     const depreciationSubsection = document.getElementById('depreciation-subsection');
     const syncAccountStatusSections = () => {
         const isDisabled = userStatusSelect?.value === 'disabled';
+        const allocation = document.querySelector('input[name="dev-allocation"]:checked')?.value || 'yes';
+        const showDeviceSections = !isDisabled && allocation !== 'personal';
         if (resignationDateGroup) resignationDateGroup.style.display = isDisabled ? '' : 'none';
-        if (deviceInfoSubsection) deviceInfoSubsection.style.display = isDisabled ? 'none' : '';
-        if (troubleshootingSubsection) troubleshootingSubsection.style.display = isDisabled ? 'none' : '';
-        if (depreciationSubsection) depreciationSubsection.style.display = isDisabled ? 'none' : '';
+        if (deviceInfoSubsection) deviceInfoSubsection.style.display = showDeviceSections ? '' : 'none';
+        if (troubleshootingSubsection) troubleshootingSubsection.style.display = showDeviceSections ? '' : 'none';
+        if (depreciationSubsection) depreciationSubsection.style.display = showDeviceSections ? '' : 'none';
     };
     userStatusSelect?.addEventListener('change', syncAccountStatusSections);
     syncAccountStatusSections();
@@ -1153,7 +1155,7 @@ async function startApp() {
     const userIdInput = document.getElementById('user-id');
     const devIdInput = document.getElementById('dev-id');
 
-    // Một user có thể được cấp tối đa hai máy. Thiết bị đầu tiên vẫn dùng các
+    // Một user có thể được cấp tối đa năm máy. Thiết bị đầu tiên vẫn dùng các
     // cột cũ để không làm ảnh hưởng dữ liệu hiện có; máy thứ hai được lưu trong
     // mảng devices và có thể đồng bộ xuống cột devices_json khi DB đã nâng cấp.
     const DEVICE_FORM_FIELDS = [
@@ -1198,23 +1200,36 @@ async function startApp() {
         return devices.map((d, i) => `${i + 1}. ${d.devId || d.devType || 'Thiết bị'}${d.devSn ? ` (S/N: ${d.devSn})` : ''}`).join(' | ');
     }
 
-    function renderSecondDeviceForm() {
+    function renderSecondDeviceForm(savedDevices = null) {
         const select = document.getElementById('device-count');
-        const target = document.getElementById('device-fields-wrapper-2');
+        const target = document.getElementById('device-fields-extra');
         const source = document.getElementById('device-fields-wrapper');
         if (!select || !target || !source) return;
-        const count = Number(select.value || 1);
-        if (count < 2) { target.style.display = 'none'; target.innerHTML = ''; return; }
-        if (!target.innerHTML) {
+        const count = Math.max(1, Math.min(5, Number(select.value || 1)));
+        const previous = savedDevices || Array.from({ length: 4 }, (_, i) => getFormDevice(`-device${i + 2}`));
+        target.innerHTML = '';
+        for (let deviceNo = 2; deviceNo <= count; deviceNo++) {
+            const suffix = `-device${deviceNo}`;
+            const panel = document.createElement('section');
+            panel.className = 'extra-device-panel';
+            panel.style.cssText = 'margin-top:18px;padding:16px 14px 10px;border:1px solid rgba(123,202,15,.3);border-radius:12px;background:linear-gradient(135deg,rgba(123,202,15,.055),rgba(15,23,42,.28));box-shadow:0 8px 20px rgba(0,0,0,.12);';
             const html = source.innerHTML
-                .replace(/id="([^"]+)"/g, 'id="$1-device2"')
-                .replace(/for="([^"]+)"/g, 'for="$1-device2"');
-            target.innerHTML = `<div style="font-size:13px;font-weight:800;color:#7bca0f;margin-bottom:10px;"><i class="fa-solid fa-computer"></i> Thiết bị 2</div>${html}`;
+                .replace(/id="([^"]+)"/g, `id="$1${suffix}"`)
+                .replace(/for="([^"]+)"/g, `for="$1${suffix}"`);
+            panel.innerHTML = `<div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(123,202,15,.2);"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(123,202,15,.16);color:#a3e635;font-weight:800;">${deviceNo}</span><div><div style="font-size:13px;font-weight:800;color:#d9f99d;">Thiết bị ${deviceNo}</div><div style="font-size:11px;color:var(--text-secondary);">Nhập cấu hình riêng cho máy này</div></div></div>${html}`;
+            target.appendChild(panel);
+            const device = previous[deviceNo - 2] || {};
+            DEVICE_FORM_FIELDS.forEach(([key, id]) => {
+                const el = document.getElementById(`${id}${suffix}`);
+                if (el) el.value = device[key] || '';
+            });
         }
-        target.style.display = 'block';
     }
 
-    document.getElementById('device-count')?.addEventListener('change', renderSecondDeviceForm);
+    document.getElementById('device-count')?.addEventListener('change', () => {
+        const current = Array.from({ length: 4 }, (_, i) => getFormDevice(`-device${i + 2}`));
+        renderSecondDeviceForm(current);
+    });
 
     // Realtime inline validation triggers
     userIdInput?.addEventListener('input', () => validateDuplicateUser(editIndexThietBi.value));
@@ -2909,16 +2924,20 @@ async function startApp() {
             warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : (pendingKhoSpecsToAssign?.warrantyEndDate || '')
         };
 
-        const selectedDeviceCount = Math.max(1, Math.min(2, Number(document.getElementById('device-count')?.value || 1)));
+        const selectedDeviceCount = devAllocVal === 'yes' ? Math.max(1, Math.min(5, Number(document.getElementById('device-count')?.value || 1))) : 1;
         const primaryDevice = { ...getFormDevice(''), ...data, hasDevice };
+        if (devAllocVal === 'yes' && !getFormDevice('').hasDevice) {
+            showToast('Thiếu thông tin', 'Vui lòng nhập ít nhất ID, tên hoặc cấu hình cho thiết bị 1.', 'warning');
+            return;
+        }
         const assignedDevices = [primaryDevice];
-        if (selectedDeviceCount > 1) {
-            const secondDevice = getFormDevice('-device2');
-            if (!secondDevice.hasDevice) {
-                showToast('Thiếu thông tin', 'Vui lòng nhập ít nhất ID, tên hoặc cấu hình cho thiết bị 2.', 'warning');
+        for (let deviceNo = 2; deviceNo <= selectedDeviceCount; deviceNo++) {
+            const currentDevice = getFormDevice(`-device${deviceNo}`);
+            if (!currentDevice.hasDevice) {
+                showToast('Thiếu thông tin', `Vui lòng nhập ít nhất ID, tên hoặc cấu hình cho thiết bị ${deviceNo}.`, 'warning');
                 return;
             }
-            assignedDevices.push(secondDevice);
+            assignedDevices.push(currentDevice);
         }
         data.deviceCount = assignedDevices.length;
         data.devices = assignedDevices;
@@ -3162,8 +3181,8 @@ async function startApp() {
         if (devIdInput) devIdInput.value = item.devId || '';
         const editDeviceCount = document.getElementById('device-count');
         if (editDeviceCount) {
-            editDeviceCount.value = String(Math.max(1, Math.min(2, Number(item.deviceCount || getAssignedDevices(item).length || 1))));
-            renderSecondDeviceForm();
+            editDeviceCount.value = String(Math.max(1, Math.min(5, Number(item.deviceCount || getAssignedDevices(item).length || 1))));
+            renderSecondDeviceForm(getAssignedDevices(item).slice(1));
         }
         document.getElementById('user-name').value = item.userName || '';
         document.getElementById('user-title').value = item.userTitle;
@@ -3184,6 +3203,7 @@ async function startApp() {
             radioTarget.checked = true;
             toggleDeviceFields(alloc === 'yes');
         }
+        syncAccountStatusSections();
         document.getElementById('dev-type').value = item.devType || '';
         document.getElementById('dev-main').value = item.devMain;
         document.getElementById('dev-cpu').value = item.devCpu;
@@ -3255,13 +3275,6 @@ async function startApp() {
 
         if (document.getElementById('dev-warranty-exp')) document.getElementById('dev-warranty-exp').value = item.warrantyEndDate || '';
         const editDevices = getAssignedDevices(item);
-        if (editDevices.length > 1) {
-            const second = editDevices[1];
-            DEVICE_FORM_FIELDS.forEach(([key, id]) => {
-                const el = document.getElementById(`${id}-device2`);
-                if (el) el.value = second[key] || '';
-            });
-        }
 
         btnSaveThietBi.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Cấp Phát';
         btnCancelThietBi.classList.remove('hidden');
@@ -3422,7 +3435,7 @@ async function startApp() {
         const countRow = document.getElementById('device-count-row');
         if (hasDevice) {
             deviceFieldsWrapper.style.display = 'block';
-            if (countRow) countRow.style.display = 'flex';
+            if (countRow) countRow.style.display = 'inline-flex';
         } else {
             deviceFieldsWrapper.style.display = 'none';
             if (countRow) countRow.style.display = 'none';
@@ -3446,9 +3459,11 @@ async function startApp() {
         radio.addEventListener('change', (e) => {
             const val = e.target.value;
             toggleDeviceFields(val === 'yes');
+            syncAccountStatusSections();
         });
     });
     toggleDeviceFields(document.getElementById('dev-alloc-yes')?.checked === true);
+    syncAccountStatusSections();
 
     // =========================================================================
     // MODAL CHUYỂN CẤU HÌNH THIẾT BỊ
