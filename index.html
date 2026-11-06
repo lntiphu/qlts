@@ -591,15 +591,18 @@
                                     </label>
                                 </div>
 
-                                <div id="device-count-row" style="display:inline-flex; align-items:center; gap:9px; padding:6px 10px; border:1px solid rgba(59,130,246,.3); border-radius:9px; background:linear-gradient(135deg,rgba(37,51,141,.18),rgba(15,23,42,.65));">
-                                    <label for="device-count" style="font-size:12px; font-weight:700; color:#bfdbfe; white-space:nowrap;"><i class="fa-solid fa-computer" style="color:#60a5fa; margin-right:5px;"></i>Số thiết bị</label>
-                                    <select id="device-count" class="form-input" style="width:112px; min-width:112px; padding:6px 9px; font-size:12px; border-color:rgba(96,165,250,.35);">
+                                <div id="device-count-row" style="display:inline-flex; align-items:center; gap:10px; min-height:42px; padding:5px 7px 5px 11px; border:1px solid rgba(96,165,250,.34); border-radius:11px; background:linear-gradient(135deg,rgba(37,51,141,.28),rgba(15,23,42,.88)); box-shadow:0 5px 16px rgba(15,23,42,.22), inset 0 1px 0 rgba(255,255,255,.06);">
+                                    <label for="device-count" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#dbeafe; white-space:nowrap; letter-spacing:.1px;"><span style="display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; border-radius:7px; color:#93c5fd; background:rgba(59,130,246,.18); border:1px solid rgba(96,165,250,.22);"><i class="fa-solid fa-computer"></i></span>Số thiết bị</label>
+                                    <span style="position:relative; display:inline-flex; align-items:center;">
+                                        <select id="device-count" class="form-input" style="appearance:none; -webkit-appearance:none; width:122px; min-width:122px; height:32px; padding:0 30px 0 11px; font-size:12px; font-weight:700; color:#f8fafc; background:rgba(15,23,42,.92); border:1px solid rgba(147,197,253,.42); border-radius:8px; outline:none; cursor:pointer; box-shadow:inset 0 1px 2px rgba(0,0,0,.18);">
                                         <option value="1">1 thiết bị</option>
                                         <option value="2">2 thiết bị</option>
                                         <option value="3">3 thiết bị</option>
                                         <option value="4">4 thiết bị</option>
                                         <option value="5">5 thiết bị</option>
-                                    </select>
+                                        </select>
+                                        <i class="fa-solid fa-chevron-down" style="position:absolute; right:10px; pointer-events:none; color:#93c5fd; font-size:10px;"></i>
+                                    </span>
                                 </div>
 
                                 <div class="form-actions" style="margin: 0; display: flex; gap: 10px; align-items: center;">
