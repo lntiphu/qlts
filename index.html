@@ -263,8 +263,8 @@
                         errorMessage.classList.remove('hidden');
                     });
                 </script>
-            </div>
-        </div>
+                         </div>
+                     </div>
     </div>
 
     <div class="app-container hidden" id="app-container">
@@ -689,6 +689,14 @@
                                     </div>
                                 </div>
                                 
+                                <div id="device-count-row" style="display:flex; align-items:center; gap:10px; margin: 0 0 12px 0; padding: 9px 12px; border: 1px solid rgba(123,202,15,.25); border-radius: 8px; background: rgba(123,202,15,.06);">
+                                    <label for="device-count" style="font-size:13px; font-weight:700; color:var(--text-primary);"><i class="fa-solid fa-computer" style="color:#7bca0f; margin-right:5px;"></i>Số thiết bị user sử dụng</label>
+                                    <select id="device-count" class="form-input" style="width:120px; padding:6px 10px;">
+                                        <option value="1">1 thiết bị</option>
+                                        <option value="2">2 thiết bị</option>
+                                    </select>
+                                    <span style="font-size:11px; color:var(--text-secondary);">Chọn 2 để nhập riêng thông tin cho cả hai máy.</span>
+                                </div>
                                 <div id="device-fields-wrapper" style="transition: all 0.3s ease;">
                                     <div class="grid grid-col-6">
                                         <div class="form-group col-span-2-lg">
@@ -858,6 +866,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                <div id="device-fields-wrapper-2" style="display:none; margin-top:16px; padding-top:14px; border-top:2px solid rgba(123,202,15,.28); transition: all 0.3s ease;"></div>
                             </div>
 
                             <!-- Subsection 3: Các lỗi thường gặp -->
@@ -2434,9 +2443,10 @@
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Chuột:</span><span id="receipt-dev-mouse" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Details / Keys / Software -->
+                     </div>
+                     <div id="receipt-devices-extra" style="display:none; margin-top:16px;"></div>
+                     
+                     <!-- Details / Keys / Software -->
                     <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 40px; font-size: 13px;">
                         <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0;">III. Chi Tiết Bản Quyền & Phần Mềm</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
