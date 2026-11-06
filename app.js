@@ -500,7 +500,8 @@ async function startApp() {
                     kbVal = db.devKeyboard;
                 }
                 const cleanCables = cablesStr.replace('[KBD_WIRELESS]', '').trim();
-                const devStat = db.dev_status || db.devStatus || '';
+                const devStatRaw = db.dev_status || db.devStatus || '';
+                const devStat = ['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung'].includes(devStatRaw) ? 'Mới' : devStatRaw;
 
                 let parsedDevices = [];
                 const rawDevices = db.devices_json || db.devicesJson || db.devices;
@@ -549,7 +550,8 @@ async function startApp() {
                     devIssueDesc: db.dev_issue_desc || db.devIssueDesc || '',
                     devIssueFix: db.dev_issue_fix || db.devIssueFix || '',
                     devStatus: devStat,
-                    devAllocation: db.dev_allocation || db.devAllocation || (devStat === 'Thiết bị cá nhân' || devStat === 'Cá nhân' ? 'personal' : (devStat === 'Thiết bị dùng chung dự án' || devStat === 'Thiết bị dự án' || devStat === 'Dùng chung' ? 'project' : (devStat === 'Không cấp' ? 'no' : 'yes'))),
+                    // Dữ liệu cũ từng có trạng thái "Dùng chung"; nay quy về cấp phát cá nhân/user.
+                    devAllocation: db.dev_allocation === 'personal' || db.devAllocation === 'personal' || devStat === 'Thiết bị cá nhân' || devStat === 'Cá nhân' ? 'personal' : (devStat === 'Không cấp' ? 'no' : 'yes'),
                     hasDevice: db.has_device !== false && db.hasDevice !== false && devStat !== 'Không cấp' && devStat !== 'Thiết bị cá nhân' && devStat !== 'Cá nhân',
                     userDisabled: !!(db.user_disabled || db.userDisabled),
                     userHireDate: db.user_hire_date || db.userHireDate || '',
@@ -594,7 +596,7 @@ async function startApp() {
                     user_disabled: !!js.userDisabled,
                     user_hire_date: js.userHireDate || null,
                     user_resignation_date: js.userResignationDate || null,
-                    has_device: js.devAllocation === 'yes' || js.devAllocation === 'project',
+                    has_device: js.devAllocation === 'yes',
                     dev_id: js.devId || null,
                     dev_ups: js.devUps || null,
                     dev_extra_devices: js.devExtraDevices || null,
@@ -623,7 +625,7 @@ async function startApp() {
                     dev_apps: js.devApps,
                     dev_issue_desc: js.devIssueDesc || '',
                     dev_issue_fix: js.devIssueFix || '',
-                    dev_status: js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : (js.devStatus || (js.devAllocation === 'project' ? 'Thiết bị dự án' : 'Mới')),
+                    dev_status: js.devAllocation === 'personal' ? 'Thiết bị cá nhân' : (js.devStatus || 'Mới'),
                     updated_at: new Date().toISOString(),
                     history: js.history,
                     asset_code: js.maTaiSan || js.assetCode || null,
@@ -1849,19 +1851,15 @@ async function startApp() {
         let totalPc = 0;
         let totalLaptop = 0;
         let totalPersonal = 0;
-        let totalProject = 0;
         let totalNoDevice = 0;
 
         thietBiList.forEach(item => {
-            const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
+            const alloc = item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' ? 'personal' : (item.devStatus === 'Không cấp' ? 'no' : 'yes');
             if (alloc === 'personal' || item.devStatus === 'Thiết bị cá nhân') {
                 totalPersonal++;
             } else if (alloc === 'no' || item.devStatus === 'Không cấp') {
                 totalNoDevice++;
             } else {
-                if (alloc === 'project' || item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án') {
-                    totalProject++;
-                }
                 const type = (item.devType || '').toLowerCase().trim();
                 if (type.includes('laptop') || type.includes('macbook') || type.includes('notebook')) {
                     totalLaptop++;
@@ -1890,7 +1888,7 @@ async function startApp() {
         if (elTotalPc) elTotalPc.innerText = totalPc;
         if (elTotalLaptop) elTotalLaptop.innerText = totalLaptop;
         if (elTotalPersonal) elTotalPersonal.innerText = totalPersonal + totalNoDevice;
-        if (elPersonalSub) elPersonalSub.innerText = `${totalPersonal} Cá nhân${totalProject > 0 ? ' | ' + totalProject + ' Dự án' : ''}${totalNoDevice > 0 ? ' | ' + totalNoDevice + ' Không cấp' : ''}`;
+        if (elPersonalSub) elPersonalSub.innerText = `${totalPersonal} Cá nhân${totalNoDevice > 0 ? ' | ' + totalNoDevice + ' Không cấp' : ''}`;
 
         const totalKhoItems = khoList ? khoList.length : 0;
         const readyKhoItems = khoList ? khoList.filter(k => (k.status || '').toLowerCase().includes('sẵn sàng')).length : 0;
@@ -2531,16 +2529,11 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${item.devAllocation === 'project' || item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? `
-                            <span class="badge" style="background: rgba(6, 182, 212, 0.15); color: #06b6d4; border: 1px solid rgba(6, 182, 212, 0.3); font-weight: 700; width: fit-content; margin-bottom: 4px; display: inline-flex; align-items: center; gap: 4px;">
-                                <i class="fa-solid fa-people-roof"></i> Dùng chung
-                            </span>
-                        ` : ''}
                         ${item.devId ? `
                             <span class="name" style="display: block; margin-bottom: 4px;">
                                 <span class="badge badge-green" title="ID Thiết bị">${item.devId}</span>
                             </span>
-                            ${item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
+                            ${item.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             ${item.devType ? `<span class="details" style="display: block;">Loại: ${item.devType}</span>` : ''}
                             ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
                             ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
@@ -2551,11 +2544,11 @@ async function startApp() {
                         ` : ((item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
                             <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>
                         ` : ((!item.devId && (item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus || item.devUps || item.devExtraDevices)) ? `
-                            ${!item.devId && item.devStatus && !['Thiết bị dự án', 'Thiết bị dùng chung dự án', 'Dùng chung', 'Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
+                            ${!item.devId && item.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
                             <span class="details" style="display: block;">Loại: ${item.devType || 'Chưa phân loại'}</span>
                             ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
                             ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
-                        ` : (!item.devId && item.devAllocation !== 'project' && item.devStatus !== 'Thiết bị dự án' && item.devStatus !== 'Thiết bị dùng chung dự án' && item.devStatus !== 'Dùng chung' ? `
+                        ` : (!item.devId ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
                         ` : '')))}
                     </div>
@@ -2830,7 +2823,7 @@ async function startApp() {
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         if (allocSelected) devAllocVal = allocSelected.value;
         const currentDeviceRecord = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
-        const hasDevice = (devAllocVal === 'yes' || devAllocVal === 'project') && (
+        const hasDevice = devAllocVal === 'yes' && (
             !currentDeviceRecord ||
             (currentDeviceRecord.hasDevice !== false && currentDeviceRecord.devStatus !== 'Không cấp') ||
             !!devIdInput?.value.trim() ||
@@ -2890,7 +2883,7 @@ async function startApp() {
             devNotes: hasDevice ? document.getElementById('dev-notes').value.trim() : '',
             devApps: hasDevice ? document.getElementById('dev-apps').value.trim() : '',
             ...getTroubleshootDataFromForm(),
-            devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (hasDevice ? (document.getElementById('dev-status').value || (devAllocVal === 'project' ? 'Thiết bị dự án' : 'Mới')) : 'Không cấp'),
+            devStatus: devAllocVal === 'personal' ? 'Thiết bị cá nhân' : (hasDevice ? (document.getElementById('dev-status').value || 'Mới') : 'Không cấp'),
             devMonitor: hasDevice ? (document.getElementById('dev-monitor') ? document.getElementById('dev-monitor').value.trim() : '') : '',
             devMonitor2: hasDevice ? (document.getElementById('dev-monitor-2') ? document.getElementById('dev-monitor-2').value.trim() : '') : '',
             devMonitorSn: (hasDevice && document.getElementById('dev-monitor-sn')) ? document.getElementById('dev-monitor-sn').value.trim() : '',
@@ -3185,11 +3178,11 @@ async function startApp() {
         if (hireDateInput) hireDateInput.value = item.userHireDate ? formatDateDMY(item.userHireDate) : '';
         if (resignationDateInput) resignationDateInput.value = item.userResignationDate ? formatDateDMY(item.userResignationDate) : '';
         syncAccountStatusSections();
-        const alloc = item.devAllocation || (item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Thiết bị dự án' || item.devStatus === 'Thiết bị dùng chung dự án' || item.devStatus === 'Dùng chung' ? 'project' : (item.devStatus === 'Không cấp' ? 'no' : 'yes')));
+        const alloc = item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân' ? 'personal' : (item.devStatus === 'Không cấp' ? 'no' : 'yes');
         const radioTarget = document.querySelector(`input[name="dev-allocation"][value="${alloc}"]`) || document.getElementById('dev-alloc-yes');
         if (radioTarget) {
             radioTarget.checked = true;
-            toggleDeviceFields(alloc === 'yes' || alloc === 'project');
+            toggleDeviceFields(alloc === 'yes');
         }
         document.getElementById('dev-type').value = item.devType || '';
         document.getElementById('dev-main').value = item.devMain;
@@ -3426,25 +3419,36 @@ async function startApp() {
     function toggleDeviceFields(hasDevice) {
         const deviceFieldsWrapper = document.getElementById('device-fields-wrapper');
         if (!deviceFieldsWrapper) return;
+        const countRow = document.getElementById('device-count-row');
         if (hasDevice) {
             deviceFieldsWrapper.style.display = 'block';
+            if (countRow) countRow.style.display = 'flex';
         } else {
             deviceFieldsWrapper.style.display = 'none';
+            if (countRow) countRow.style.display = 'none';
             const errDevId = document.getElementById('err-dev-id');
             if (errDevId) errDevId.style.display = 'none';
             if (devIdInput) devIdInput.style.borderColor = '';
             const count = document.getElementById('device-count');
             if (count) { count.value = '1'; renderSecondDeviceForm(); }
         }
+        document.querySelectorAll('.allocation-option').forEach(option => {
+            const radio = option.querySelector('input[type="radio"]');
+            if (!radio) return;
+            option.style.filter = radio.checked ? 'brightness(1.15)' : 'grayscale(.35)';
+            option.style.opacity = radio.checked ? '1' : '.72';
+            option.style.boxShadow = radio.checked ? '0 0 0 2px rgba(123,202,15,.18)' : 'none';
+        });
     }
 
     const devAllocRadios = document.querySelectorAll('input[name="dev-allocation"]');
     devAllocRadios.forEach(radio => {
         radio.addEventListener('change', (e) => {
             const val = e.target.value;
-            toggleDeviceFields(val === 'yes' || val === 'project');
+            toggleDeviceFields(val === 'yes');
         });
     });
+    toggleDeviceFields(document.getElementById('dev-alloc-yes')?.checked === true);
 
     // =========================================================================
     // MODAL CHUYỂN CẤU HÌNH THIẾT BỊ
