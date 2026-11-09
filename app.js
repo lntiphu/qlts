@@ -10635,7 +10635,7 @@ async function startApp() {
         const extraEl = document.getElementById('receipt-devices-extra');
         if (extraEl) {
             extraEl.innerHTML = extraDevices.length ? extraDevices.map((d, i) => `
-                <div style="background:rgba(123,202,15,.06);border:1px solid rgba(123,202,15,.25);padding:14px 16px;border-radius:8px;margin-top:10px;font-size:12px;">
+                <div style="background:rgba(123,202,15,.06);border:1px solid rgba(123,202,15,.25);padding:12px 14px;border-radius:8px;font-size:11px;">
                     <div style="font-weight:800;color:var(--primary-color);margin-bottom:8px;">Thiết bị ${i + 2}</div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;">
                         <div><span style="color:#94a3b8;">ID / Tên:</span> <strong>${[d.devId, d.devType].filter(Boolean).join(' — ') || '—'}</strong></div>
@@ -10648,7 +10648,7 @@ async function startApp() {
                         <div><span style="color:#94a3b8;">Tình trạng:</span> <strong>${d.devStatus || '—'}</strong></div>
                     </div>
                 </div>`).join('') : '';
-            extraEl.style.display = extraDevices.length ? 'block' : 'none';
+            extraEl.style.display = extraDevices.length ? 'contents' : 'none';
         }
 
         if (document.getElementById('receipt-user-sign-name')) document.getElementById('receipt-user-sign-name').innerText = userName || '—';
