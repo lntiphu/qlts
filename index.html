@@ -2319,40 +2319,55 @@
                         <span id="receipt-handover-date" style="font-size: 13px; color: #94a3b8;">Ngày bàn giao: —</span>
                     </div>
                     
-                    <div style="display: grid; grid-template-columns: 280px 1fr; gap: 20px; margin-bottom: 25px;">
-                        <!-- Column 1: Người nhận -->
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 18px 20px; border-radius: 8px; height: 100%; box-sizing: border-box;">
-                            <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px;">I. Thông Tin Người Nhận</h4>
-                            <div style="display: flex; flex-direction: column; gap: 10px; font-size: 12px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 10px;">Họ và Tên:</span><span id="receipt-user-name" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 10px;">Chức danh:</span><span id="receipt-user-title" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 10px;">Phòng ban:</span><span id="receipt-user-dept" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 10px;">Email:</span><span id="receipt-user-email" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
+                    <section style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 18px 20px; border-radius: 8px; margin-bottom: 16px;">
+                        <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px;">I. Thông Tin Người Nhận</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 20px; font-size: 12px;">
+                            <div><span style="color: #94a3b8;">Họ và Tên:</span> <strong id="receipt-user-name" style="color: #fff;">—</strong></div>
+                            <div><span style="color: #94a3b8;">Chức danh:</span> <strong id="receipt-user-title" style="color: #fff;">—</strong></div>
+                            <div><span style="color: #94a3b8;">Phòng ban:</span> <strong id="receipt-user-dept" style="color: #fff;">—</strong></div>
+                            <div><span style="color: #94a3b8;">Email:</span> <strong id="receipt-user-email" style="color: #fff;">—</strong></div>
+                        </div>
+                    </section>
+
+                    <section style="margin-bottom: 16px;">
+                        <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin: 0 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px;">II. Thông Tin Thiết Bị</h4>
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px 18px; border-radius: 8px; font-size: 12px;">
+                            <div style="font-weight: 800; color: var(--primary-color); margin-bottom: 9px;">Thiết bị 1</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 20px;">
+                                <div><span style="color:#94a3b8;">ID / Tên thiết bị:</span> <strong id="receipt-dev-name">—</strong></div>
+                                <div><span style="color:#94a3b8;">Mainboard:</span> <strong id="receipt-dev-main">—</strong></div>
+                                <div><span style="color:#94a3b8;">CPU:</span> <strong id="receipt-dev-cpu">—</strong></div>
+                                <div><span style="color:#94a3b8;">RAM:</span> <strong id="receipt-dev-ram">—</strong></div>
+                                <div><span style="color:#94a3b8;">Ổ cứng:</span> <strong id="receipt-dev-disk">—</strong></div>
+                                <div><span style="color:#94a3b8;">Serial thiết bị:</span> <strong id="receipt-dev-sn">—</strong></div>
+                                <div><span style="color:#94a3b8;">VGA:</span> <strong id="receipt-dev-vga">—</strong></div>
+                                <div><span style="color:#94a3b8;">Tình trạng:</span> <strong id="receipt-dev-status">—</strong></div>
                             </div>
                         </div>
-                        
-                        <!-- Column 2: Thiết bị -->
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 18px 20px; border-radius: 8px; box-sizing: border-box;">
-                            <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 8px; margin: 0 0 14px 0; text-transform: uppercase; letter-spacing: 0.5px;">II. Thông Tin Thiết Bị</h4>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; font-size: 12px;">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Thiết bị:</span><span id="receipt-dev-name" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Mainboard:</span><span id="receipt-dev-main" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">CPU:</span><span id="receipt-dev-cpu" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">RAM:</span><span id="receipt-dev-ram" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Ổ cứng:</span><span id="receipt-dev-disk" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Màn hình:</span><span id="receipt-dev-monitor" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Serial TB:</span><span id="receipt-dev-sn" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Serial MH:</span><span id="receipt-dev-monitor-sn" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Bàn phím:</span><span id="receipt-dev-keyboard" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;"><span style="color: #94a3b8; white-space: nowrap; margin-right: 8px;">Chuột:</span><span id="receipt-dev-mouse" style="font-weight: 600; color: #fff; text-align: right; word-break: break-word;">—</span></div>
-                            </div>
+                        <div id="receipt-devices-extra" style="display:none;"></div>
+                    </section>
+
+                    <section style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
+                        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0;">3. Thông Tin Màn Hình</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 20px;">
+                            <div><span style="color:#94a3b8;">Màn hình:</span> <strong id="receipt-dev-monitor">—</strong></div>
+                            <div><span style="color:#94a3b8;">Serial màn hình:</span> <strong id="receipt-dev-monitor-sn">—</strong></div>
+                            <div><span style="color:#94a3b8;">Dây kết nối:</span> <strong id="receipt-dev-cables">—</strong></div>
                         </div>
-                     </div>
-                     <div id="receipt-devices-extra" style="display:none; margin-top:16px;"></div>
-                     
-                     <!-- Details / Keys / Software -->
+                    </section>
+
+                    <section style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 16px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 12px;">
+                        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0;">4. Thông Tin Thiết Bị Rời</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 20px;">
+                            <div><span style="color:#94a3b8;">Bàn phím:</span> <strong id="receipt-dev-keyboard">—</strong></div>
+                            <div><span style="color:#94a3b8;">Chuột:</span> <strong id="receipt-dev-mouse">—</strong></div>
+                            <div><span style="color:#94a3b8;">UPS:</span> <strong id="receipt-dev-ups">—</strong></div>
+                            <div><span style="color:#94a3b8;">Thiết bị khác:</span> <strong id="receipt-dev-extra-devices">—</strong></div>
+                        </div>
+                    </section>
+
                     <div style="background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03); padding: 20px; border-radius: 8px; margin-bottom: 40px; font-size: 13px;">
-                        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0;">III. Chi Tiết Bản Quyền & Phần Mềm</h4>
+                        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 12px 0;">5. Thông Tin Bản Quyền</h4>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div>
                                 <div style="margin-bottom: 8px;"><span style="color: #94a3b8;">Key Windows:</span> <span id="receipt-key-win" style="font-weight: 600; color: #fff;">—</span></div>
@@ -2365,7 +2380,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <!-- Signatures -->
                     <div style="display: grid; grid-template-columns: 1fr 1fr; text-align: center; font-size: 14px;">
                         <div>

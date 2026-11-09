@@ -10498,7 +10498,7 @@ async function startApp() {
             userDept = item.userDept || '—';
             userEmail = item.userEmail || '—';
 
-            devName = item.devType || item.devName || '—';
+            devName = [item.devId, item.devType || item.devName].filter(Boolean).join(' — ') || '—';
             devMain = item.devMain || '—';
             devCpu = item.devCpu || '—';
 
@@ -10528,6 +10528,11 @@ async function startApp() {
             devSn = item.devSn || '—';
             devKeyboard = item.devKeyboard || '—';
             devMouse = item.devMouse || '—';
+            var devVga = item.devVga || '—';
+            var devStatus = item.devStatus || '—';
+            var devCables = item.devCables || '—';
+            var devUps = item.devUps || '—';
+            var devExtraDevices = item.devExtraDevices || '—';
 
             keyWin = item.keyWin || '—';
             keyOffice = item.keyOffice || '—';
@@ -10549,7 +10554,9 @@ async function startApp() {
             userDept = (document.getElementById('user-dept') ? document.getElementById('user-dept').value.trim() : '') || '—';
             userEmail = (document.getElementById('user-email') ? document.getElementById('user-email').value.trim() : '') || '—';
 
-            devName = (document.getElementById('dev-type') ? document.getElementById('dev-type').value.trim() : '') || '—';
+            const formDevId = document.getElementById('dev-id') ? document.getElementById('dev-id').value.trim() : '';
+            const formDevType = document.getElementById('dev-type') ? document.getElementById('dev-type').value.trim() : '';
+            devName = [formDevId, formDevType].filter(Boolean).join(' — ') || '—';
             devMain = (document.getElementById('dev-main') ? document.getElementById('dev-main').value.trim() : '') || '—';
             devCpu = (document.getElementById('dev-cpu') ? document.getElementById('dev-cpu').value.trim() : '') || '—';
 
@@ -10579,6 +10586,11 @@ async function startApp() {
             devSn = (document.getElementById('dev-sn') ? document.getElementById('dev-sn').value.trim() : '') || '—';
             devKeyboard = (document.getElementById('dev-keyboard') ? document.getElementById('dev-keyboard').value : '') || '—';
             devMouse = (document.getElementById('dev-mouse') ? document.getElementById('dev-mouse').value : '') || '—';
+            var devVga = (document.getElementById('dev-vga') ? document.getElementById('dev-vga').value.trim() : '') || '—';
+            var devStatus = (document.getElementById('dev-status') ? document.getElementById('dev-status').value : '') || '—';
+            var devCables = (document.getElementById('dev-cables') ? document.getElementById('dev-cables').value : '') || '—';
+            var devUps = (document.getElementById('dev-ups') ? document.getElementById('dev-ups').value : '') || '—';
+            var devExtraDevices = (document.getElementById('dev-extra-devices') ? document.getElementById('dev-extra-devices').value.trim() : '') || '—';
 
             keyWin = (document.getElementById('key-win') ? document.getElementById('key-win').value.trim() : '') || '—';
             keyOffice = (document.getElementById('key-office') ? document.getElementById('key-office').value.trim() : '') || '—';
@@ -10587,7 +10599,7 @@ async function startApp() {
             devApps = (document.getElementById('dev-apps') ? document.getElementById('dev-apps').value.trim() : '') || '—';
             devNotes = (document.getElementById('dev-notes') ? document.getElementById('dev-notes').value.trim() : '') || '—';
             const count = Number(document.getElementById('device-count')?.value || 1);
-            if (count > 1) extraDevices = [getFormDevice('-device2')];
+            if (count > 1) extraDevices = Array.from({ length: count - 1 }, (_, i) => getFormDevice(`-device${i + 2}`));
         }
 
         currentExportUserId = userId || 'user';
@@ -10607,6 +10619,11 @@ async function startApp() {
         if (document.getElementById('receipt-dev-sn')) document.getElementById('receipt-dev-sn').innerText = devSn;
         if (document.getElementById('receipt-dev-keyboard')) document.getElementById('receipt-dev-keyboard').innerText = devKeyboard;
         if (document.getElementById('receipt-dev-mouse')) document.getElementById('receipt-dev-mouse').innerText = devMouse;
+        if (document.getElementById('receipt-dev-vga')) document.getElementById('receipt-dev-vga').innerText = devVga;
+        if (document.getElementById('receipt-dev-status')) document.getElementById('receipt-dev-status').innerText = devStatus;
+        if (document.getElementById('receipt-dev-cables')) document.getElementById('receipt-dev-cables').innerText = devCables;
+        if (document.getElementById('receipt-dev-ups')) document.getElementById('receipt-dev-ups').innerText = devUps;
+        if (document.getElementById('receipt-dev-extra-devices')) document.getElementById('receipt-dev-extra-devices').innerText = devExtraDevices;
 
         if (document.getElementById('receipt-key-win')) document.getElementById('receipt-key-win').innerText = keyWin;
         if (document.getElementById('receipt-key-office')) document.getElementById('receipt-key-office').innerText = keyOffice;
@@ -10621,13 +10638,13 @@ async function startApp() {
                 <div style="background:rgba(123,202,15,.06);border:1px solid rgba(123,202,15,.25);padding:14px 16px;border-radius:8px;margin-top:10px;font-size:12px;">
                     <div style="font-weight:800;color:var(--primary-color);margin-bottom:8px;">Thiết bị ${i + 2}</div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;">
-                        <div><span style="color:#94a3b8;">ID:</span> <strong>${d.devId || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">Tên:</span> <strong>${d.devType || '—'}</strong></div>
+                        <div><span style="color:#94a3b8;">ID / Tên:</span> <strong>${[d.devId, d.devType].filter(Boolean).join(' — ') || '—'}</strong></div>
+                        <div><span style="color:#94a3b8;">Mainboard:</span> <strong>${d.devMain || '—'}</strong></div>
                         <div><span style="color:#94a3b8;">CPU:</span> <strong>${d.devCpu || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">RAM:</span> <strong>${d.devRam || '—'}</strong></div>
+                        <div><span style="color:#94a3b8;">RAM:</span> <strong>${d.devRam ? `${d.devRam}${d.devRamSlots ? ` (${d.devRamSlots})` : ''}` : '—'}</strong></div>
                         <div><span style="color:#94a3b8;">Ổ cứng:</span> <strong>${[d.devSsd, d.devSsd2, d.devHdd, d.devHdd2].filter(Boolean).join(' / ') || '—'}</strong></div>
                         <div><span style="color:#94a3b8;">Serial:</span> <strong>${d.devSn || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">Màn hình:</span> <strong>${[d.devMonitor, d.devMonitor2].filter(Boolean).join(' | ') || '—'}</strong></div>
+                        <div><span style="color:#94a3b8;">VGA:</span> <strong>${d.devVga || '—'}</strong></div>
                         <div><span style="color:#94a3b8;">Tình trạng:</span> <strong>${d.devStatus || '—'}</strong></div>
                     </div>
                 </div>`).join('') : '';
