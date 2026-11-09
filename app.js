@@ -1216,6 +1216,8 @@ async function startApp() {
             panel.className = 'extra-device-panel';
             panel.style.cssText = 'margin-top:18px;padding:16px 14px 10px;border:1px solid rgba(123,202,15,.3);border-radius:12px;background:linear-gradient(135deg,rgba(123,202,15,.055),rgba(15,23,42,.28));box-shadow:0 8px 20px rgba(0,0,0,.12);';
             const clonedSection = primaryDeviceSection.cloneNode(true);
+            const clonedHeading = clonedSection.querySelector('.device-field-section-title');
+            if (clonedHeading) clonedHeading.remove();
             const clonedExtraFields = clonedSection.querySelector('#device-fields-extra');
             if (clonedExtraFields) clonedExtraFields.remove();
             const html = clonedSection.outerHTML
@@ -2502,9 +2504,16 @@ async function startApp() {
                     ${details.length ? details.join('') : '<div>Chưa nhập cấu hình</div>'}
                 </div>`;
             };
-            const configText = allAssignedDevices.length
-                ? allAssignedDevices.map(formatAssignedDeviceConfig).join('')
-                : 'Chưa nhập cấu hình';
+            const populatedAssignedDevices = allAssignedDevices.filter(device => device && (
+                device.hasDevice === true || [
+                    device.devId, device.devType, device.devSn, device.devMain, device.devCpu,
+                    device.devRam, device.devSsd, device.devSsd2, device.devHdd, device.devHdd2,
+                    device.devVga
+                ].some(value => String(value || '').trim() !== '')
+            ));
+            const configText = populatedAssignedDevices.length
+                ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
+                : '—';
 
             const troubleshootPairs = formatTroubleshootForDisplay(item.devIssueDesc, item.devIssueFix);
 
