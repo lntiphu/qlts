@@ -10633,11 +10633,14 @@ async function startApp() {
         if (document.getElementById('receipt-dev-notes')) document.getElementById('receipt-dev-notes').innerText = devNotes;
 
         const receiptGrid = document.getElementById('receipt-devices-grid');
-        if (receiptGrid) receiptGrid.style.gridTemplateColumns = extraDevices.length ? 'repeat(2, minmax(0, 1fr))' : '1fr';
+        if (receiptGrid) {
+            receiptGrid.style.gridTemplateColumns = extraDevices.length ? 'repeat(2, minmax(0, 1fr))' : '1fr';
+            receiptGrid.style.alignItems = 'stretch';
+        }
         const extraEl = document.getElementById('receipt-devices-extra');
         if (extraEl) {
             extraEl.innerHTML = extraDevices.length ? extraDevices.map((d, i) => `
-                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:12px 14px;border-radius:8px;font-size:11px;">
+                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:12px 14px;border-radius:8px;font-size:11px;height:100%;box-sizing:border-box;">
                     <div style="font-weight:800;color:var(--primary-color);margin-bottom:8px;">Thiết bị ${i + 2}</div>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;">
                         <div><span style="color:#94a3b8;">ID / Tên:</span> <strong>${[d.devId, d.devType].filter(Boolean).join(' — ') || '—'}</strong></div>
