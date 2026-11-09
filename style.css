@@ -286,6 +286,13 @@ body {
     margin-bottom: 0;
 }
 
+.device-instance-title {
+    margin: 0 0 12px;
+    color: #d9f99d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 .device-field-section-title {
     margin: 0 0 16px;
     padding-bottom: 9px;

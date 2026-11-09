@@ -1215,11 +1215,14 @@ async function startApp() {
             const panel = document.createElement('section');
             panel.className = 'extra-device-panel';
             panel.style.cssText = 'margin-top:18px;padding:16px 14px 10px;border:1px solid rgba(123,202,15,.3);border-radius:12px;background:linear-gradient(135deg,rgba(123,202,15,.055),rgba(15,23,42,.28));box-shadow:0 8px 20px rgba(0,0,0,.12);';
-            const html = primaryDeviceSection.outerHTML
+            const clonedSection = primaryDeviceSection.cloneNode(true);
+            const clonedExtraFields = clonedSection.querySelector('#device-fields-extra');
+            if (clonedExtraFields) clonedExtraFields.remove();
+            const html = clonedSection.outerHTML
                 .replace(/id="([^"]+)"/g, `id="$1${suffix}"`)
                 .replace(/for="([^"]+)"/g, `for="$1${suffix}"`)
-                .replace('1. Thông tin của thiết bị (PC / Laptop)', 'Thông tin PC / Laptop');
-            panel.innerHTML = `<div style="display:flex;align-items:center;gap:9px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(123,202,15,.2);"><span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:rgba(123,202,15,.16);color:#a3e635;font-weight:800;">${deviceNo}</span><div><div style="font-size:13px;font-weight:800;color:#d9f99d;">Thiết bị ${deviceNo}</div><div style="font-size:11px;color:var(--text-secondary);">Nhập thông tin riêng cho PC / Laptop này</div></div></div>${html}`;
+                .replace('Thiết bị 1', `Thiết bị ${deviceNo}`);
+            panel.innerHTML = html;
             target.appendChild(panel);
             const device = previous[deviceNo - 2] || {};
             DEVICE_FORM_FIELDS.forEach(([key, id]) => {
