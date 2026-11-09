@@ -2466,50 +2466,39 @@ async function startApp() {
                 }
             };
 
-            const configArr = [];
             const allAssignedDevices = getAssignedDevices(item);
-            if (allAssignedDevices.length > 1) {
-                allAssignedDevices.slice(1).forEach((d, i) => {
-                    const parts = [d.devId || d.devType || `Thiết bị ${i + 2}`];
-                    if (d.devCpu) parts.push(`CPU: ${d.devCpu}`);
-                    if (d.devRam) parts.push(`RAM: ${d.devRam}`);
-                    if (d.devSn) parts.push(`S/N: ${d.devSn}`);
-                    configArr.push(parts.join(' — '));
-                });
-            }
-            if (item.devMain) configArr.push(`Main: ${item.devMain}`);
-            if (item.devCpu) configArr.push(`CPU: ${item.devCpu}`);
-            if (item.devRam) {
-                const ramInfo = item.devRamSlots ? `${item.devRam} (${item.devRamSlots})` : item.devRam;
-                configArr.push(`RAM: ${ramInfo}`);
-            }
-            if (item.devSsd || item.devSsd2) {
-                const ssdParts = [item.devSsd, item.devSsd2].filter(Boolean);
-                configArr.push(`SSD: ${ssdParts.join(' + ')}`);
-            }
-            if (item.devHdd || item.devHdd2) {
-                const hddParts = [item.devHdd, item.devHdd2].filter(Boolean);
-                configArr.push(`HDD: ${hddParts.join(' + ')}`);
-            }
-            if (item.devVga) configArr.push(`VGA: ${item.devVga}`);
-            if (item.devUps) configArr.push(`UPS: ${item.devUps}`);
-            if (item.devExtraDevices) configArr.push(`Thiết bị rời: ${item.devExtraDevices}`);
-            if (item.devMonitor || item.devMonitor2) {
-                const monParts = [item.devMonitor, item.devMonitor2].filter(Boolean);
-                configArr.push(`Màn hình: ${monParts.join(' | ')}`);
-            }
-            if (item.devMonitorSn || item.devMonitorSn2) {
-                const monSnParts = [item.devMonitorSn, item.devMonitorSn2].filter(Boolean);
-                configArr.push(`S/N Màn hình: ${monSnParts.join(' | ')}`);
-            }
-            if (item.devSn) configArr.push(`S/N Thiết bị: ${item.devSn}`);
-            if (item.devKeyboard) {
-                const kbText = (item.devKeyboard === true || item.devKeyboard === 'true') ? 'Bàn phím có dây' : item.devKeyboard;
-                configArr.push(`Bàn phím: ${kbText}`);
-            }
-            if (item.devMouse) configArr.push(`Chuột: ${item.devMouse}`);
-            if (item.devCables) configArr.push(`Dây kết nối: ${item.devCables}`);
-            const configText = configArr.length > 0 ? configArr.join('<br>') : 'Chưa nhập cấu hình';
+            const formatAssignedDeviceConfig = (device, deviceIndex) => {
+                const details = [];
+                if (device.devId) details.push(`<div><strong>ID:</strong> ${device.devId}</div>`);
+                if (device.devType) details.push(`<div><strong>Loại:</strong> ${device.devType}</div>`);
+                if (device.devMain) details.push(`<div><strong>Main:</strong> ${device.devMain}</div>`);
+                if (device.devCpu) details.push(`<div><strong>CPU:</strong> ${device.devCpu}</div>`);
+                if (device.devRam) {
+                    const ramInfo = device.devRamSlots ? `${device.devRam} (${device.devRamSlots})` : device.devRam;
+                    details.push(`<div><strong>RAM:</strong> ${ramInfo}</div>`);
+                }
+                if (device.devSsd || device.devSsd2) details.push(`<div><strong>SSD:</strong> ${[device.devSsd, device.devSsd2].filter(Boolean).join(' + ')}</div>`);
+                if (device.devHdd || device.devHdd2) details.push(`<div><strong>HDD:</strong> ${[device.devHdd, device.devHdd2].filter(Boolean).join(' + ')}</div>`);
+                if (device.devVga) details.push(`<div><strong>VGA:</strong> ${device.devVga}</div>`);
+                if (device.devSn) details.push(`<div><strong>S/N thiết bị:</strong> ${device.devSn}</div>`);
+                if (device.devMonitor || device.devMonitor2) details.push(`<div><strong>Màn hình:</strong> ${[device.devMonitor, device.devMonitor2].filter(Boolean).join(' | ')}</div>`);
+                if (device.devMonitorSn || device.devMonitorSn2) details.push(`<div><strong>S/N màn hình:</strong> ${[device.devMonitorSn, device.devMonitorSn2].filter(Boolean).join(' | ')}</div>`);
+                if (device.devKeyboard) {
+                    const keyboard = (device.devKeyboard === true || device.devKeyboard === 'true') ? 'Bàn phím có dây' : device.devKeyboard;
+                    details.push(`<div><strong>Bàn phím:</strong> ${keyboard}</div>`);
+                }
+                if (device.devMouse) details.push(`<div><strong>Chuột:</strong> ${device.devMouse}</div>`);
+                if (device.devUps) details.push(`<div><strong>UPS:</strong> ${device.devUps}</div>`);
+                if (device.devExtraDevices) details.push(`<div><strong>Thiết bị rời:</strong> ${device.devExtraDevices}</div>`);
+                if (device.devCables) details.push(`<div><strong>Dây kết nối:</strong> ${device.devCables}</div>`);
+                return `<div class="assigned-device-config" style="padding: 7px 9px; margin-bottom: 7px; border: 1px solid rgba(148,163,184,.22); border-radius: 6px; background: rgba(15,23,42,.28);">
+                    <div style="color: var(--primary-color); font-weight: 700; margin-bottom: 4px;">Thiết bị ${deviceIndex + 1}</div>
+                    ${details.length ? details.join('') : '<div>Chưa nhập cấu hình</div>'}
+                </div>`;
+            };
+            const configText = allAssignedDevices.length
+                ? allAssignedDevices.map(formatAssignedDeviceConfig).join('')
+                : 'Chưa nhập cấu hình';
 
             const troubleshootPairs = formatTroubleshootForDisplay(item.devIssueDesc, item.devIssueFix);
 
@@ -2552,7 +2541,7 @@ async function startApp() {
                             ${item.devType ? `<span class="details" style="display: block;">Loại: ${item.devType}</span>` : ''}
                             ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
                             ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
-                             ${getAssignedDevices(item).length > 1 ? `<span class="details" style="display:block;color:#7bca0f;font-weight:700;"><i class="fa-solid fa-computer"></i> ${getAssignedDevices(item).length} thiết bị: ${getAssignedDevices(item).slice(1).map(d => d.devId || d.devType || 'Thiết bị 2').join(', ')}</span>` : ''}
+                            ${allAssignedDevices.length > 1 ? allAssignedDevices.slice(1).map((d, i) => `<span class="details" style="display:block;margin-top:4px;"><span class="badge badge-green"><i class="fa-solid fa-computer"></i> Thiết bị ${i + 2}: ${d.devId || d.devType || `Thiết bị ${i + 2}`}</span></span>`).join('') : ''}
                         ` : ''}
                         ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân') && !item.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>

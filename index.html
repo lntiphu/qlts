@@ -701,173 +701,73 @@
                                 </div>
                                 
                                 <div id="device-fields-wrapper" style="transition: all 0.3s ease;">
-                                    <div class="grid grid-col-6">
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-id">ID Thiết bị hệ thống (*)</label>
-                                            <input type="text" id="dev-id" placeholder="VD: PC-01, LT-01..." class="form-input">
-                                            <span class="error-msg" id="err-dev-id" style="display: none; font-size: 11px; margin-top: 2px;"></span>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="dev-ups">UPS</label>
-                                            <select id="dev-ups">
-                                                <option value="">-- Chọn --</option>
-                                                <option value="Có UPS">Có UPS</option>
-                                                <option value="Không có UPS">Không có UPS</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="dev-extra-devices">Thiết bị rời</label>
-                                            <input type="text" id="dev-extra-devices" placeholder="VD: Webcam, tai nghe...">
-                                        </div>
-                                    </div>
-                                    <div class="grid grid-col-6">
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-type">Tên / Phân loại thiết bị</label>
-                                            <input type="text" id="dev-type" placeholder="VD: Laptop Dell Latitude 3420...">
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-sn">Số Serial thiết bị (Không trùng)</label>
-                                            <input type="text" id="dev-sn" placeholder="Nhập Serial Number của máy...">
-                                            <span class="error-msg" id="err-dev-sn" style="display: none; color: var(--danger-color); font-size: 11px; margin-top: 2px;"></span>
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-status">Tình trạng thiết bị</label>
-                                            <select id="dev-status">
-                                                <option value="">-- Chọn tình trạng --</option>
-                                                <option value="Mới">Mới</option>
-                                                <option value="Trung bình">Trung bình</option>
-                                                <option value="Cũ">Cũ</option>
-                                                <option value="Xem xét thay thế">Xem xét thay thế</option>
-                                            </select>
-                                        </div>
-
-                                        <!-- Cấu hình thiết bị -->
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-main">Mainboard</label>
-                                            <input type="text" id="dev-main" placeholder="VD: H610M">
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-cpu">CPU</label>
-                                            <input type="text" id="dev-cpu" placeholder="VD: Core i5 12400F">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="dev-ram">RAM</label>
-                                            <input type="text" id="dev-ram" placeholder="VD: 8GB, 16GB DDR4..." autocomplete="off">
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="dev-ram-slots">Số thanh RAM</label>
-                                            <select id="dev-ram-slots">
-                                                <option value="">-- Chọn --</option>
-                                                <option value="1 thanh">1 thanh</option>
-                                                <option value="2 thanh">2 thanh</option>
-                                                <option value="4 thanh">4 thanh</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label>SSD</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-ssd" placeholder="SSD 1 (VD: 256GB)" style="width: 100%;">
-                                                </div>
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-ssd-2" placeholder="SSD 2 (VD: 512GB)" style="width: 100%;">
-                                                </div>
+                                    <section class="device-field-section">
+                                        <h5 class="device-field-section-title">1. Thông tin của thiết bị (PC / Laptop)</h5>
+                                        <div class="grid grid-col-6">
+                                            <div class="form-group col-span-2-lg">
+                                                <label for="dev-id">ID Thiết bị hệ thống (*)</label>
+                                                <input type="text" id="dev-id" placeholder="VD: PC-01, LT-01..." class="form-input">
+                                                <span class="error-msg" id="err-dev-id" style="display: none; font-size: 11px; margin-top: 2px;"></span>
                                             </div>
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label>HDD</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-hdd" placeholder="HDD 1 (VD: 1TB)" style="width: 100%;">
-                                                </div>
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-hdd-2" placeholder="HDD 2 (VD: 2TB)" style="width: 100%;">
-                                                </div>
+                                            <div class="form-group col-span-2-lg">
+                                                <label for="dev-type">Tên / Phân loại thiết bị</label>
+                                                <input type="text" id="dev-type" placeholder="VD: Laptop Dell Latitude 3420...">
                                             </div>
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-vga">VGA</label>
-                                            <input type="text" id="dev-vga" placeholder="VD: GTX 1650">
-                                        </div>
-
-                                        <div class="form-group col-span-2-lg">
-                                            <label>Màn Hình</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-monitor" placeholder="Màn 1 (VD: Dell 24)" style="width: 100%;">
-                                                </div>
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-monitor-2" placeholder="Màn 2 (VD: LG 27)" style="width: 100%;">
-                                                </div>
+                                            <div class="form-group col-span-2-lg">
+                                                <label for="dev-sn">Số Serial thiết bị (Không trùng)</label>
+                                                <input type="text" id="dev-sn" placeholder="Nhập Serial Number của máy...">
+                                                <span class="error-msg" id="err-dev-sn" style="display: none; color: var(--danger-color); font-size: 11px; margin-top: 2px;"></span>
                                             </div>
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label>S/N màn hình</label>
-                                            <div style="display: flex; gap: 8px;">
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-monitor-sn" placeholder="Serial màn 1" style="width: 100%;">
-                                                </div>
-                                                <div style="flex: 1; position: relative;">
-                                                    <input type="text" id="dev-monitor-sn-2" placeholder="Serial màn 2" style="width: 100%;">
-                                                </div>
+                                            <div class="form-group col-span-2-lg">
+                                                <label for="dev-status">Tình trạng thiết bị</label>
+                                                <select id="dev-status"><option value="">-- Chọn tình trạng --</option><option value="Mới">Mới</option><option value="Trung bình">Trung bình</option><option value="Cũ">Cũ</option><option value="Xem xét thay thế">Xem xét thay thế</option></select>
                                             </div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-main">Mainboard</label><input type="text" id="dev-main" placeholder="VD: H610M"></div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-cpu">CPU</label><input type="text" id="dev-cpu" placeholder="VD: Core i5 12400F"></div>
+                                            <div class="form-group"><label for="dev-ram">RAM</label><input type="text" id="dev-ram" placeholder="VD: 8GB, 16GB DDR4..." autocomplete="off"></div>
+                                            <div class="form-group"><label for="dev-ram-slots">Số thanh RAM</label><select id="dev-ram-slots"><option value="">-- Chọn --</option><option value="1 thanh">1 thanh</option><option value="2 thanh">2 thanh</option><option value="4 thanh">4 thanh</option></select></div>
+                                            <div class="form-group col-span-2-lg"><label>SSD</label><div style="display:flex;gap:8px"><input type="text" id="dev-ssd" placeholder="SSD 1 (VD: 256GB)" style="width:100%"><input type="text" id="dev-ssd-2" placeholder="SSD 2 (VD: 512GB)" style="width:100%"></div></div>
+                                            <div class="form-group col-span-2-lg"><label>HDD</label><div style="display:flex;gap:8px"><input type="text" id="dev-hdd" placeholder="HDD 1 (VD: 1TB)" style="width:100%"><input type="text" id="dev-hdd-2" placeholder="HDD 2 (VD: 2TB)" style="width:100%"></div></div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-vga">VGA</label><input type="text" id="dev-vga" placeholder="VD: GTX 1650"></div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-warranty-exp">Ngày hết bảo hành</label><input type="text" id="dev-warranty-exp" placeholder="dd/mm/yyyy" maxlength="10"></div>
                                         </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-cables">Dây kết nối</label>
-                                            <select id="dev-cables">
-                                                <option value="">-- Chọn dây kết nối --</option>
-                                                <option value="VGA và nguồn nhỏ">VGA và nguồn nhỏ</option>
-                                                <option value="VGA và nguồn lớn">VGA và nguồn lớn</option>
-                                                <option value="HDMI và nguồn nhỏ">HDMI và nguồn nhỏ</option>
-                                                <option value="HDMI và nguồn lớn">HDMI và nguồn lớn</option>
-                                                <option value="DisplayPort và nguồn lớn">DisplayPort và nguồn lớn</option>
-                                                <option value="Type-C đầy đủ">Type-C đầy đủ</option>
-                                            </select>
-                                        </div>
+                                    </section>
 
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-warranty-exp">Ngày hết bảo hành</label>
-                                            <input type="text" id="dev-warranty-exp" placeholder="dd/mm/yyyy" maxlength="10">
+                                    <section class="device-field-section">
+                                        <h5 class="device-field-section-title">2. Thông tin về màn hình</h5>
+                                        <div class="grid grid-col-6">
+                                            <div class="form-group col-span-2-lg"><label>Màn Hình</label><div style="display:flex;gap:8px"><input type="text" id="dev-monitor" placeholder="Màn 1 (VD: Dell 24)" style="width:100%"><input type="text" id="dev-monitor-2" placeholder="Màn 2 (VD: LG 27)" style="width:100%"></div></div>
+                                            <div class="form-group col-span-2-lg"><label>S/N màn hình</label><div style="display:flex;gap:8px"><input type="text" id="dev-monitor-sn" placeholder="Serial màn 1" style="width:100%"><input type="text" id="dev-monitor-sn-2" placeholder="Serial màn 2" style="width:100%"></div></div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-cables">Dây kết nối</label><select id="dev-cables"><option value="">-- Chọn dây kết nối --</option><option value="VGA và nguồn nhỏ">VGA và nguồn nhỏ</option><option value="VGA và nguồn lớn">VGA và nguồn lớn</option><option value="HDMI và nguồn nhỏ">HDMI và nguồn nhỏ</option><option value="HDMI và nguồn lớn">HDMI và nguồn lớn</option><option value="DisplayPort và nguồn lớn">DisplayPort và nguồn lớn</option><option value="Type-C đầy đủ">Type-C đầy đủ</option></select></div>
                                         </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-keyboard">Bàn phím</label>
-                                            <select id="dev-keyboard">
-                                                <option value="">-- Chọn bàn phím --</option>
-                                                <option value="Bàn phím có dây">Bàn phím có dây</option>
-                                                <option value="Bàn phím không dây">Bàn phím không dây</option>
-                                            </select>
-                                        </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="dev-mouse">Chuột</label>
-                                            <select id="dev-mouse">
-                                                <option value="">-- Chọn chuột --</option>
-                                                <option value="Chuột có dây">Chuột có dây</option>
-                                                <option value="Chuột không dây">Chuột không dây</option>
-                                            </select>
-                                        </div>
+                                    </section>
 
-                                        <!-- Bản quyền -->
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="key-win">Key Windows</label>
-                                            <input type="text" id="key-win" placeholder="Nhập Key Windows">
+                                    <section class="device-field-section">
+                                        <h5 class="device-field-section-title">3. Thông tin về thiết bị rời</h5>
+                                        <div class="grid grid-col-6">
+                                            <div class="form-group col-span-2-lg"><label for="dev-keyboard">Bàn phím</label><select id="dev-keyboard"><option value="">-- Chọn bàn phím --</option><option value="Bàn phím có dây">Bàn phím có dây</option><option value="Bàn phím không dây">Bàn phím không dây</option></select></div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-mouse">Chuột</label><select id="dev-mouse"><option value="">-- Chọn chuột --</option><option value="Chuột có dây">Chuột có dây</option><option value="Chuột không dây">Chuột không dây</option></select></div>
+                                            <div class="form-group"><label for="dev-ups">UPS</label><select id="dev-ups"><option value="">-- Chọn --</option><option value="Có UPS">Có UPS</option><option value="Không có UPS">Không có UPS</option></select></div>
+                                            <div class="form-group col-span-2-lg"><label for="dev-extra-devices">Các thiết bị khác</label><input type="text" id="dev-extra-devices" placeholder="VD: Webcam, tai nghe..."></div>
                                         </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="key-office">Key Office</label>
-                                            <input type="text" id="key-office" placeholder="Nhập Key Office">
+                                    </section>
+
+                                    <section class="device-field-section">
+                                        <h5 class="device-field-section-title">4. Thông tin về phần mềm</h5>
+                                        <div class="grid grid-col-6">
+                                            <div class="form-group col-span-2-lg"><label for="key-win">Key Windows</label><input type="text" id="key-win" placeholder="Nhập Key Windows"></div>
+                                            <div class="form-group col-span-2-lg"><label for="key-office">Key Office</label><input type="text" id="key-office" placeholder="Nhập Key Office"></div>
+                                            <div class="form-group col-span-2-lg"><label for="key-pdf">Key PDF</label><input type="text" id="key-pdf" placeholder="Nhập Key PDF"></div>
+                                            <div class="form-group col-span-3-lg"><label for="dev-apps">Các bản quyền khác / ứng dụng đã trang bị</label><input type="text" id="dev-apps" placeholder="VD: Photoshop, AutoCad, SolidWorks..."></div>
                                         </div>
-                                        <div class="form-group col-span-2-lg">
-                                            <label for="key-pdf">Key PDF</label>
-                                            <input type="text" id="key-pdf" placeholder="Nhập Key PDF">
+                                    </section>
+
+                                    <section class="device-field-section">
+                                        <h5 class="device-field-section-title">5. Ghi chú</h5>
+                                        <div class="grid grid-col-6">
+                                            <div class="form-group col-span-6"><label for="dev-notes">Ghi chú thiết bị</label><input type="text" id="dev-notes" placeholder="Nhập các vấn đề, lỗi hoặc lưu ý về thiết bị..."></div>
                                         </div>
-                                        <div class="form-group col-span-3-lg">
-                                            <label for="dev-notes">Ghi chú thiết bị</label>
-                                            <input type="text" id="dev-notes" placeholder="Nhập các vấn đề, lỗi hoặc lưu ý về thiết bị...">
-                                        </div>
-                                        <div class="form-group col-span-3-lg">
-                                            <label for="dev-apps">Các app bản quyền đã trang bị trên máy đó</label>
-                                            <input type="text" id="dev-apps" placeholder="VD: Photoshop, AutoCad, SolidWorks...">
-                                        </div>
-                                    </div>
+                                    </section>
                                 </div>
                                 <div id="device-fields-extra"></div>
                             </div>
