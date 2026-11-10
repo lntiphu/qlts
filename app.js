@@ -1877,6 +1877,10 @@ async function startApp() {
         let totalNoDevice = 0;
 
         thietBiList.forEach(item => {
+            if (item.userDisabled) {
+                totalNoDevice++;
+                return;
+            }
             const alloc = item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' ? 'personal' : (item.devStatus === 'Không cấp' ? 'no' : 'yes');
             if (alloc === 'personal' || item.devStatus === 'Thiết bị cá nhân') {
                 totalPersonal++;
@@ -1922,6 +1926,7 @@ async function startApp() {
         let totalResidual = 0;
         let totalOriginal = 0;
         thietBiList.forEach(item => {
+            if (item.userDisabled) return;
             const dep = calculateDeviceDepreciation(item);
             totalResidual += dep.residualValue;
             totalOriginal += dep.originalPrice;
@@ -2170,6 +2175,11 @@ async function startApp() {
     function clearDeviceAllocationFields(item) {
         item.hasDevice = false;
         item.devAllocation = 'no';
+        // The detailed view reads from `devices` when it is present. Clear the
+        // normalized multi-device payload as well as the legacy top-level
+        // fields, otherwise a returned device can still be shown as assigned.
+        item.devices = [];
+        item.deviceCount = 1;
         item.devId = '';
         item.devType = '';
         item.devMain = '';
@@ -2274,6 +2284,24 @@ async function startApp() {
         saveToLocalStorageFallback('kho_thiet_bi', khoList);
         renderKho();
         return true;
+    }
+
+    // Return every assigned device, including entries stored in the newer
+    // multi-device payload. Older records without `devices` naturally return
+    // their single legacy device.
+    async function returnAssignedDevicesToInventory(device, reason, options = {}) {
+        const assignedDevices = getAssignedDevices(device).filter(assigned => assigned && (
+            assigned.hasDevice === true || [
+                assigned.devId, assigned.devType, assigned.devMain, assigned.devCpu,
+                assigned.devRam, assigned.devSsd, assigned.devSsd2, assigned.devHdd,
+                assigned.devHdd2, assigned.devVga, assigned.devMonitor
+            ].some(value => String(value || '').trim() !== '')
+        ));
+        const devicesToReturn = assignedDevices.length ? assignedDevices : [device];
+        for (const assigned of devicesToReturn) {
+            await returnDeviceToInventory({ ...device, ...assigned }, reason, options);
+        }
+        return devicesToReturn.length > 0;
     }
 
     function resetTroubleshootForm() {
@@ -2444,11 +2472,27 @@ async function startApp() {
             const originalIndex = thietBiList.indexOf(item);
             const tr = document.createElement('tr');
 
+            // A disabled user is no longer an assignee. Keep the table and
+            // detail view consistent even when an older record still contains
+            // stale device columns or a legacy `devices_json` payload.
+            const displayItem = item.userDisabled ? {
+                ...item,
+                hasDevice: false,
+                devAllocation: 'no',
+                devId: '', devType: '', devMain: '', devCpu: '', devRam: '',
+                devSsd: '', devSsd2: '', devHdd: '', devHdd2: '', devVga: '',
+                devMonitor: '', devMonitor2: '', devMonitorSn: '', devMonitorSn2: '',
+                devSn: '', devKeyboard: '', devMouse: '', devCables: '',
+                devStatus: 'Không cấp', devUps: '', devExtraDevices: '',
+                devNotes: '', devApps: '', devIssueDesc: '', devIssueFix: '',
+                keyWin: '', keyOffice: '', keyPdf: '', devices: [], deviceCount: 1
+            } : item;
+
             const keysArr = [];
-            if (item.keyWin) keysArr.push(`<span class="key-badge" title="Key Windows">Win: ${item.keyWin}</span>`);
-            if (item.keyOffice) keysArr.push(`<span class="key-badge" title="Key Office">Office: ${item.keyOffice}</span>`);
-            if (item.keyPdf) keysArr.push(`<span class="key-badge" title="Key PDF">PDF: ${item.keyPdf}</span>`);
-            if (item.devApps) keysArr.push(`<span class="key-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);" title="Phần mềm bản quyền khác">${item.devApps}</span>`);
+            if (displayItem.keyWin) keysArr.push(`<span class="key-badge" title="Key Windows">Win: ${displayItem.keyWin}</span>`);
+            if (displayItem.keyOffice) keysArr.push(`<span class="key-badge" title="Key Office">Office: ${displayItem.keyOffice}</span>`);
+            if (displayItem.keyPdf) keysArr.push(`<span class="key-badge" title="Key PDF">PDF: ${displayItem.keyPdf}</span>`);
+            if (displayItem.devApps) keysArr.push(`<span class="key-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);" title="Phần mềm bản quyền khác">${displayItem.devApps}</span>`);
             const keysText = keysArr.length > 0 ? keysArr.join(' ') : '—';
 
             const createdTs = getItemCreatedTimestamp(item);
@@ -2474,7 +2518,7 @@ async function startApp() {
                 }
             };
 
-            const allAssignedDevices = getAssignedDevices(item);
+            const allAssignedDevices = getAssignedDevices(displayItem);
             const formatAssignedDeviceConfig = (device, deviceIndex) => {
                 const details = [];
                 if (device.devId) details.push(`<div><strong>ID:</strong> ${device.devId}</div>`);
@@ -2515,7 +2559,7 @@ async function startApp() {
                 ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
                 : '—';
 
-            const troubleshootPairs = formatTroubleshootForDisplay(item.devIssueDesc, item.devIssueFix);
+            const troubleshootPairs = formatTroubleshootForDisplay(displayItem.devIssueDesc, displayItem.devIssueFix);
 
             tr.innerHTML = `
                 <td>
@@ -2548,26 +2592,26 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${item.devId ? `
+                        ${displayItem.devId ? `
                             <span class="name" style="display: block; margin-bottom: 4px;">
-                                <span class="badge badge-green" title="ID Thiết bị">${item.devId}</span>
+                                <span class="badge badge-green" title="ID Thiết bị">${displayItem.devId}</span>
                             </span>
-                            ${item.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
-                            ${item.devType ? `<span class="details" style="display: block;">Loại: ${item.devType}</span>` : ''}
-                            ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
-                            ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
+                            ${displayItem.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(displayItem.devStatus)}">${displayItem.devStatus}</span></span>` : ''}
+                            ${displayItem.devType ? `<span class="details" style="display: block;">Loại: ${displayItem.devType}</span>` : ''}
+                            ${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}
+                            ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
                             ${allAssignedDevices.length > 1 ? allAssignedDevices.slice(1).map((d, i) => `<span class="details" style="display:block;margin-top:4px;"><span class="badge badge-green"><i class="fa-solid fa-computer"></i> Thiết bị ${i + 2}: ${d.devId || d.devType || `Thiết bị ${i + 2}`}</span></span>`).join('') : ''}
                         ` : ''}
-                        ${(item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân') && !item.devId ? `
+                        ${(displayItem.devAllocation === 'personal' || displayItem.devStatus === 'Thiết bị cá nhân' || displayItem.devStatus === 'Cá nhân') && !displayItem.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
-                        ` : ((item.devAllocation === 'no' || item.devStatus === 'Không cấp') && !item.devId ? `
+                        ` : ((displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !displayItem.devId ? `
                             <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>
-                        ` : ((!item.devId && (item.devType || item.devMain || item.devCpu || item.devRam || item.devSsd || item.devHdd || item.devStatus || item.devUps || item.devExtraDevices)) ? `
-                            ${!item.devId && item.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(item.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(item.devStatus)}">${item.devStatus}</span></span>` : ''}
-                            <span class="details" style="display: block;">Loại: ${item.devType || 'Chưa phân loại'}</span>
-                            ${item.devUps ? `<span class="details" style="display: block;">UPS: ${item.devUps}</span>` : ''}
-                            ${item.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${item.devExtraDevices}</span>` : ''}
-                        ` : (!item.devId ? `
+                        ` : ((!displayItem.devId && (displayItem.devType || displayItem.devMain || displayItem.devCpu || displayItem.devRam || displayItem.devSsd || displayItem.devHdd || displayItem.devStatus || displayItem.devUps || displayItem.devExtraDevices)) ? `
+                            ${!displayItem.devId && displayItem.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(displayItem.devStatus)}">${displayItem.devStatus}</span></span>` : ''}
+                            <span class="details" style="display: block;">Loại: ${displayItem.devType || 'Chưa phân loại'}</span>
+                            ${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}
+                            ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
+                        ` : (!displayItem.devId ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
                         ` : '')))}
                     </div>
@@ -2581,7 +2625,7 @@ async function startApp() {
                     </div>
                 </td>
                 <td>
-                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word;">${item.devNotes || '—'}</span>
+                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word;">${displayItem.devNotes || '—'}</span>
                 </td>
                 <td>
                     <div class="actions-cell actions-cell-grid">
@@ -2589,17 +2633,17 @@ async function startApp() {
                             <button class="btn-icon-only btn-export-row-thietbi" data-index="${originalIndex}" title="Xuất thông tin nhân viên" style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);">
                                 <i class="fa-solid fa-file-invoice"></i>
                             </button>
-                            ${item.hasDevice || item.devId || item.devCpu || item.devRam ? `
+                            ${displayItem.hasDevice || displayItem.devId || displayItem.devCpu || displayItem.devRam ? `
                                 <button class="btn-icon-only btn-transfer-row-thietbi" data-index="${originalIndex}" title="Chuyển thiết bị cho nhân viên khác hoặc về Kho" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);">
                                     <i class="fa-solid fa-right-left"></i>
                                 </button>
                             ` : ''}
-                            ${item.devId ? `
+                            ${displayItem.devId ? `
                                 <button class="btn-icon-only btn-qrcode-tag-thietbi" data-index="${originalIndex}" title="Tạo mã QR Code & Tem dán tài sản" style="background: rgba(123, 202, 15, 0.15); color: #7bca0f; border: 1px solid rgba(123, 202, 15, 0.3);">
                                     <i class="fa-solid fa-qrcode"></i>
                                 </button>
                             ` : ''}
-                            ${item.devId || item.hasDevice || item.devCpu ? `
+                            ${displayItem.devId || displayItem.hasDevice || displayItem.devCpu ? `
                                 <button class="btn-icon-only btn-maintenance-log-thietbi" data-index="${originalIndex}" title="Sổ nhật ký bảo trì & Nâng cấp thiết bị" style="background: rgba(14, 165, 233, 0.15); color: #0ea5e9; border: 1px solid rgba(14, 165, 233, 0.3);">
                                     <i class="fa-solid fa-screwdriver-wrench"></i>
                                 </button>
@@ -2706,7 +2750,7 @@ async function startApp() {
                 
                 // Set details
                 histUser.innerText = `${item.userName} (${item.userId})`;
-                histDevice.innerText = item.devId ? `ID Thiết bị: ${item.devId}` : 'Không cấp phát thiết bị';
+                histDevice.innerText = !item.userDisabled && item.devId ? `ID Thiết bị: ${item.devId}` : 'Không cấp phát thiết bị';
                 
                 // Render timeline
                 histTimeline.innerHTML = '';
@@ -2750,17 +2794,20 @@ async function startApp() {
     function openTroubleshootModal(index) {
         const item = thietBiList[index];
         if (!item) return;
+        const displayItem = item.userDisabled
+            ? { ...item, devices: [], devId: '', devType: '', devIssueDesc: '', devIssueFix: '' }
+            : item;
 
         const userEl = document.getElementById('tbview-user');
         const devEl = document.getElementById('tbview-device');
         const deptEl = document.getElementById('tbview-dept');
         const listEl = document.getElementById('tbview-content-list');
 
-        if (userEl) userEl.innerText = `${item.userName} (${item.userId})`;
-        if (devEl) devEl.innerText = deviceSummary(item) || 'Chưa cấp ID thiết bị';
-        if (deptEl) deptEl.innerText = item.userDept || '—';
+        if (userEl) userEl.innerText = `${displayItem.userName} (${displayItem.userId})`;
+        if (devEl) devEl.innerText = deviceSummary(displayItem) || 'Chưa cấp ID thiết bị';
+        if (deptEl) deptEl.innerText = displayItem.userDept || '—';
 
-        const pairs = formatTroubleshootForDisplay(item.devIssueDesc, item.devIssueFix);
+        const pairs = formatTroubleshootForDisplay(displayItem.devIssueDesc, displayItem.devIssueFix);
 
         if (pairs.length === 0) {
             listEl.innerHTML = `
@@ -2955,7 +3002,7 @@ async function startApp() {
 
         let deviceReturnedToInventory = false;
         if (data.userDisabled && data.hasDevice) {
-            await returnDeviceToInventory(data, `Thu hồi khi vô hiệu hóa tài khoản ${data.userName} (${data.userId})`);
+            await returnAssignedDevicesToInventory(data, `Thu hồi khi vô hiệu hóa tài khoản ${data.userName} (${data.userId})`);
             clearDeviceAllocationFields(data);
             deviceReturnedToInventory = true;
         }
@@ -5206,7 +5253,9 @@ async function startApp() {
         const btnConfirmIcon = document.getElementById('btn-confirm-offboard-icon');
         const btnReEnable = document.getElementById('btn-re-enable-offboard');
 
-        const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu;
+        const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu || getAssignedDevices(item).some(device => device && (
+            device.hasDevice === true || [device.devId, device.devType, device.devMain, device.devCpu, device.devRam, device.devSsd, device.devHdd].some(value => String(value || '').trim() !== '')
+        ));
 
         if (userLabel) userLabel.innerText = `${item.userName} (Mã NV: ${item.userId})`;
         if (deptLabel) deptLabel.innerText = `Phòng ban: ${item.userDept || '—'} | Chức danh: ${item.userTitle || '—'} | Trạng thái: ${item.userDisabled ? '🔴 Đã vô hiệu hóa (Offline)' : '🟢 Đang hoạt động (Online)'}`;
@@ -5356,7 +5405,9 @@ async function startApp() {
         const condition = document.getElementById('offboard-device-condition')?.value || 'Sẵn sàng cấp phát';
         const notes = document.getElementById('offboard-notes')?.value.trim() || '';
 
-        const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu;
+        const hadDevice = item.hasDevice || !!item.devId || !!item.devCpu || getAssignedDevices(item).some(device => device && (
+            device.hasDevice === true || [device.devId, device.devType, device.devMain, device.devCpu, device.devRam, device.devSsd, device.devHdd].some(value => String(value || '').trim() !== '')
+        ));
         const oldDevId = item.devId || '';
         const oldDevType = item.devType || 'Máy tính';
         item.userDisabled = true;
@@ -5369,7 +5420,7 @@ async function startApp() {
             item.purchaseDate = item.purchaseDate || getDeviceExtras(oldDevId).purchaseDate || '';
             item.depreciationYears = item.depreciationYears || getDeviceExtras(oldDevId).depreciationYears || '3';
             item.maintenanceLogs = Array.isArray(item.maintenanceLogs) ? item.maintenanceLogs : (getDeviceExtras(oldDevId).maintenanceLogs || []);
-            await returnDeviceToInventory(
+            await returnAssignedDevicesToInventory(
                 item,
                 `Thu hồi từ nhân sự ${item.userName} (${item.userId})`,
                 { condition, notes }
@@ -10468,6 +10519,17 @@ async function startApp() {
     // Function hiển thị Biên Bản Bàn Giao Thiết Bị
     function showHandoverModal(item = null) {
         currentExportItem = item;
+        if (item?.userDisabled) {
+            item = {
+                ...item,
+                devId: '', devType: '', devMain: '', devCpu: '', devRam: '',
+                devRamSlots: '', devSsd: '', devSsd2: '', devHdd: '', devHdd2: '',
+                devMonitor: '', devMonitor2: '', devMonitorSn: '', devMonitorSn2: '',
+                devSn: '', devKeyboard: '', devMouse: '', devVga: '', devStatus: 'Không cấp',
+                devCables: '', devUps: '', devExtraDevices: '', keyWin: '', keyOffice: '',
+                keyPdf: '', devApps: '', devNotes: '', devices: [], deviceCount: 1
+            };
+        }
         let userId = '';
         let userName = '';
         let userTitle = '';
