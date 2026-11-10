@@ -1138,6 +1138,15 @@ async function startApp() {
         const isDisabled = userStatusSelect?.value === 'disabled';
         const allocation = document.querySelector('input[name="dev-allocation"]:checked')?.value || 'yes';
         const showDeviceSections = !isDisabled && allocation !== 'personal';
+        document.querySelectorAll('input[name="dev-allocation"]').forEach(radio => {
+            radio.disabled = isDisabled;
+            const option = radio.closest('.allocation-option');
+            if (option) {
+                option.style.cursor = isDisabled ? 'not-allowed' : 'pointer';
+                option.style.opacity = isDisabled ? '.45' : (radio.checked ? '1' : '.72');
+                option.title = isDisabled ? 'Không thể thay đổi khi tài khoản Offline' : '';
+            }
+        });
         if (resignationDateGroup) resignationDateGroup.style.display = isDisabled ? '' : 'none';
         if (deviceInfoSubsection) deviceInfoSubsection.style.display = showDeviceSections ? '' : 'none';
         if (troubleshootingSubsection) troubleshootingSubsection.style.display = showDeviceSections ? '' : 'none';
@@ -2493,7 +2502,7 @@ async function startApp() {
             if (displayItem.keyOffice) keysArr.push(`<span class="key-badge" title="Key Office">Office: ${displayItem.keyOffice}</span>`);
             if (displayItem.keyPdf) keysArr.push(`<span class="key-badge" title="Key PDF">PDF: ${displayItem.keyPdf}</span>`);
             if (displayItem.devApps) keysArr.push(`<span class="key-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);" title="Phần mềm bản quyền khác">${displayItem.devApps}</span>`);
-            const keysText = keysArr.length > 0 ? keysArr.join(' ') : '—';
+            const keysText = item.userDisabled ? '—' : (keysArr.length > 0 ? keysArr.join(' ') : '—');
 
             const createdTs = getItemCreatedTimestamp(item);
             const updatedTs = getItemUpdatedTimestamp(item);
@@ -2555,7 +2564,7 @@ async function startApp() {
                     device.devVga
                 ].some(value => String(value || '').trim() !== '')
             ));
-            const configText = populatedAssignedDevices.length
+            const configText = item.userDisabled ? '—' : populatedAssignedDevices.length
                 ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
                 : '—';
 

@@ -580,6 +580,14 @@
                                     </span>
                                 </div>
 
+                                <div class="form-group" style="margin: 0; min-width: 220px;">
+                                    <label for="user-status-select" style="margin-bottom: 4px;">Trạng Thái Tài Khoản</label>
+                                    <select id="user-status-select" class="form-input" style="width: 100%; box-sizing: border-box;">
+                                        <option value="active">🟢 Đang hoạt động (Online)</option>
+                                        <option value="disabled">🔴 Đã vô hiệu hóa (Offline)</option>
+                                    </select>
+                                </div>
+
                                 <div class="device-allocation-toggle" style="display:flex; align-items:stretch; gap:8px; background:rgba(15,23,42,.55); padding:4px; border-radius:10px; border:1px solid rgba(148,163,184,.22); user-select:none; flex-wrap:wrap; margin-left:auto;">
                                     <label class="allocation-option allocation-option-primary" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#bbf7d0; padding:8px 13px; border-radius:7px; background:rgba(34,197,94,.14); border:1px solid rgba(34,197,94,.35);">
                                         <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked style="width:16px; height:16px; accent-color:#22c55e; cursor:pointer;">
@@ -660,13 +668,6 @@
                                     <div class="form-group col-span-2-lg">
                                         <label for="user-key-element">Key Element</label>
                                         <input type="text" id="user-key-element" placeholder="VD: Key Element 1...">
-                                    </div>
-                                    <div class="form-group col-span-2-lg">
-                                        <label for="user-status-select">Trạng Thái Tài Khoản</label>
-                                        <select id="user-status-select" class="form-input" style="width: 100%; box-sizing: border-box;">
-                                            <option value="active">🟢 Đang hoạt động (Online)</option>
-                                            <option value="disabled">🔴 Đã vô hiệu hóa (Offline)</option>
-                                        </select>
                                     </div>
                                     <div class="form-group col-span-2-lg">
                                         <label for="user-hire-date">Ngày nhận việc</label>
@@ -2331,8 +2332,8 @@
 
                     <section style="margin-bottom: 10px;">
                         <h4 style="font-size: 14px; font-weight: 700; color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 6px; margin: 0 0 9px 0; text-transform: uppercase; letter-spacing: 0.5px;">II. Thông Tin Thiết Bị</h4>
-                        <div id="receipt-devices-grid" style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:start;">
-                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 14px; border-radius: 8px; font-size: 11px;">
+                        <div id="receipt-devices-grid" style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; align-items:stretch;">
+                        <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 12px 14px; border-radius: 8px; font-size: 11px; height:100%; box-sizing:border-box;">
                             <div style="font-weight: 800; color: var(--primary-color); margin-bottom: 9px;">Thiết bị 1</div>
                             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 20px;">
                                 <div><span style="color:#94a3b8;">ID / Tên thiết bị:</span> <strong id="receipt-dev-name">—</strong></div>
