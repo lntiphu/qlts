@@ -2484,7 +2484,7 @@ async function startApp() {
                 devMonitor: '', devMonitor2: '', devMonitorSn: '', devMonitorSn2: '',
                 devSn: '', devKeyboard: '', devMouse: '', devCables: '',
                 devStatus: 'Không cấp', devUps: '', devExtraDevices: '',
-                devNotes: '', devApps: '', devIssueDesc: '', devIssueFix: '',
+                devApps: '', devIssueDesc: '', devIssueFix: '',
                 keyWin: '', keyOffice: '', keyPdf: '', devices: [], deviceCount: 1
             } : item;
 
@@ -2592,7 +2592,9 @@ async function startApp() {
                 </td>
                 <td>
                     <div class="user-info-cell">
-                        ${displayItem.devId ? `
+                        ${item.userDisabled ? `
+                            <span class="text-muted" style="font-style: italic;">—</span>
+                        ` : (displayItem.devId ? `
                             <span class="name" style="display: block; margin-bottom: 4px;">
                                 <span class="badge badge-green" title="ID Thiết bị">${displayItem.devId}</span>
                             </span>
@@ -2602,7 +2604,7 @@ async function startApp() {
                             ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
                             ${allAssignedDevices.length > 1 ? allAssignedDevices.slice(1).map((d, i) => `<span class="details" style="display:block;margin-top:4px;"><span class="badge badge-green"><i class="fa-solid fa-computer"></i> Thiết bị ${i + 2}: ${d.devId || d.devType || `Thiết bị ${i + 2}`}</span></span>`).join('') : ''}
                         ` : ''}
-                        ${(displayItem.devAllocation === 'personal' || displayItem.devStatus === 'Thiết bị cá nhân' || displayItem.devStatus === 'Cá nhân') && !displayItem.devId ? `
+                        ${!item.userDisabled && ((displayItem.devAllocation === 'personal' || displayItem.devStatus === 'Thiết bị cá nhân' || displayItem.devStatus === 'Cá nhân') && !displayItem.devId ? `
                             <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
                         ` : ((displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !displayItem.devId ? `
                             <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>
@@ -2613,7 +2615,7 @@ async function startApp() {
                             ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
                         ` : (!displayItem.devId ? `
                             <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
-                        ` : '')))}
+                        ` : '')))))}
                     </div>
                 </td>
                 <td style="max-width: 250px; font-size: 13px;">
