@@ -2567,6 +2567,15 @@ async function startApp() {
             const configText = item.userDisabled ? '—' : populatedAssignedDevices.length
                 ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
                 : '—';
+            const allocationDisplayHtml = item.userDisabled ? '' : (
+                (displayItem.devAllocation === 'personal' || ['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus)) && !displayItem.devId
+                    ? '<span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>'
+                    : (displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !displayItem.devId
+                        ? '<span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>'
+                        : !displayItem.devId && (displayItem.devType || displayItem.devMain || displayItem.devCpu || displayItem.devRam || displayItem.devSsd || displayItem.devHdd || displayItem.devStatus || displayItem.devUps || displayItem.devExtraDevices)
+                            ? `${!displayItem.devId && displayItem.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(displayItem.devStatus)}">${displayItem.devStatus}</span></span>` : ''}<span class="details" style="display: block;">Loại: ${displayItem.devType || 'Chưa phân loại'}</span>${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}`
+                            : !displayItem.devId ? '<span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>' : ''
+            );
 
             const troubleshootPairs = formatTroubleshootForDisplay(displayItem.devIssueDesc, displayItem.devIssueFix);
 
@@ -2612,19 +2621,8 @@ async function startApp() {
                             ${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}
                             ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
                             ${allAssignedDevices.length > 1 ? allAssignedDevices.slice(1).map((d, i) => `<span class="details" style="display:block;margin-top:4px;"><span class="badge badge-green"><i class="fa-solid fa-computer"></i> Thiết bị ${i + 2}: ${d.devId || d.devType || `Thiết bị ${i + 2}`}</span></span>`).join('') : ''}
-                        ` : ''}
-                        ${!item.userDisabled && ((displayItem.devAllocation === 'personal' || displayItem.devStatus === 'Thiết bị cá nhân' || displayItem.devStatus === 'Cá nhân') && !displayItem.devId ? `
-                            <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>
-                        ` : ((displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !displayItem.devId ? `
-                            <span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>
-                        ` : ((!displayItem.devId && (displayItem.devType || displayItem.devMain || displayItem.devCpu || displayItem.devRam || displayItem.devSsd || displayItem.devHdd || displayItem.devStatus || displayItem.devUps || displayItem.devExtraDevices)) ? `
-                            ${!displayItem.devId && displayItem.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(displayItem.devStatus)}">${displayItem.devStatus}</span></span>` : ''}
-                            <span class="details" style="display: block;">Loại: ${displayItem.devType || 'Chưa phân loại'}</span>
-                            ${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}
-                            ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
-                        ` : (!displayItem.devId ? `
-                            <span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>
-                        ` : '')))))}
+                        ` : '')}
+                        ${allocationDisplayHtml}
                     </div>
                 </td>
                 <td style="max-width: 250px; font-size: 13px;">
