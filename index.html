@@ -570,8 +570,8 @@
                             <input type="hidden" id="edit-index-thiet-bi" value="">
 
                             <!-- Thanh Tiêu Đề & Cụm Nút Cập Nhật / Hủy (Dời lên trên đầu form, cố định tiện lợi khi cuộn trang) -->
-                            <div class="form-header-action-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--border-color); position: sticky; top: -16px; z-index: 15; background: var(--bg-card); padding-top: 4px;">
-                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <div class="form-header-action-bar">
+                                <div class="form-header-title">
                                     <h3 class="section-title text-primary" style="margin: 0; display: flex; align-items: center; gap: 8px; font-size: 17px;">
                                         <i class="fa-solid fa-file-invoice"></i> Thông Tin Quản Lý Cấp Phát
                                     </h3>
@@ -580,47 +580,49 @@
                                     </span>
                                 </div>
 
-                                <div class="form-group" style="margin: 0; min-width: 220px;">
-                                    <label for="user-status-select" style="margin-bottom: 4px;">Trạng Thái Tài Khoản</label>
-                                    <select id="user-status-select" class="form-input" style="width: 100%; box-sizing: border-box;">
+                                <div class="form-header-controls">
+                                <div class="form-header-status">
+                                    <label for="user-status-select">Trạng Thái Tài Khoản</label>
+                                    <select id="user-status-select" class="form-input">
                                         <option value="active">🟢 Đang hoạt động (Online)</option>
                                         <option value="disabled">🔴 Đã vô hiệu hóa (Offline)</option>
                                     </select>
                                 </div>
 
-                                <div class="device-allocation-toggle" style="display:flex; align-items:stretch; gap:8px; background:rgba(15,23,42,.55); padding:4px; border-radius:10px; border:1px solid rgba(148,163,184,.22); user-select:none; flex-wrap:wrap; margin-left:auto;">
-                                    <label class="allocation-option allocation-option-primary" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#bbf7d0; padding:8px 13px; border-radius:7px; background:rgba(34,197,94,.14); border:1px solid rgba(34,197,94,.35);">
-                                        <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked style="width:16px; height:16px; accent-color:#22c55e; cursor:pointer;">
+                                <div class="device-allocation-toggle">
+                                    <label class="allocation-option allocation-option-primary">
+                                        <input type="radio" name="dev-allocation" id="dev-alloc-yes" value="yes" checked>
                                         <span><i class="fa-solid fa-box-open"></i> Cấp phát thiết bị</span>
                                     </label>
-                                    <label class="allocation-option allocation-option-personal" style="display:inline-flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#e9d5ff; padding:8px 13px; border-radius:7px; background:rgba(168,85,247,.12); border:1px solid rgba(168,85,247,.32);">
-                                        <input type="radio" name="dev-allocation" id="dev-alloc-personal" value="personal" style="width:16px; height:16px; accent-color:#a855f7; cursor:pointer;">
+                                    <label class="allocation-option allocation-option-personal">
+                                        <input type="radio" name="dev-allocation" id="dev-alloc-personal" value="personal">
                                         <span><i class="fa-solid fa-laptop-code"></i> Thiết bị cá nhân</span>
                                     </label>
                                 </div>
 
-                                <div id="device-count-row" style="display:inline-flex; align-items:center; gap:10px; min-height:42px; padding:5px 7px 5px 11px; border:1px solid rgba(96,165,250,.34); border-radius:11px; background:linear-gradient(135deg,rgba(37,51,141,.28),rgba(15,23,42,.88)); box-shadow:0 5px 16px rgba(15,23,42,.22), inset 0 1px 0 rgba(255,255,255,.06);">
-                                    <label for="device-count" style="display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; color:#dbeafe; white-space:nowrap; letter-spacing:.1px;"><span style="display:inline-flex; align-items:center; justify-content:center; width:25px; height:25px; border-radius:7px; color:#93c5fd; background:rgba(59,130,246,.18); border:1px solid rgba(96,165,250,.22);"><i class="fa-solid fa-computer"></i></span>Số thiết bị</label>
+                                <div id="device-count-row" class="device-count-row">
+                                    <label for="device-count"><span class="device-count-icon"><i class="fa-solid fa-computer"></i></span>Số thiết bị</label>
                                     <span style="position:relative; display:inline-flex; align-items:center;">
-                                        <select id="device-count" class="form-input" style="appearance:none; -webkit-appearance:none; width:122px; min-width:122px; height:32px; padding:0 30px 0 11px; font-size:12px; font-weight:700; color:#f8fafc; background:rgba(15,23,42,.92); border:1px solid rgba(147,197,253,.42); border-radius:8px; outline:none; cursor:pointer; box-shadow:inset 0 1px 2px rgba(0,0,0,.18);">
+                                        <select id="device-count" class="form-input">
                                         <option value="1">1 thiết bị</option>
                                         <option value="2">2 thiết bị</option>
                                         <option value="3">3 thiết bị</option>
                                         <option value="4">4 thiết bị</option>
                                         <option value="5">5 thiết bị</option>
                                         </select>
-                                        <i class="fa-solid fa-chevron-down" style="position:absolute; right:10px; pointer-events:none; color:#93c5fd; font-size:10px;"></i>
+                                        <i class="fa-solid fa-chevron-down"></i>
                                     </span>
                                 </div>
 
-                                <div class="form-actions" style="margin: 0; display: flex; gap: 10px; align-items: center;">
-                                    <button type="submit" class="btn btn-primary" id="btn-save-thiet-bi" style="padding: 9px 20px; font-size: 13px; font-weight: 700; display: inline-flex; align-items: center; gap: 7px; box-shadow: 0 4px 14px rgba(123, 202, 15, 0.25); cursor: pointer;">
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary" id="btn-save-thiet-bi">
                                         <i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Mới
                                     </button>
-                                    <button type="button" class="btn" id="btn-cancel-thiet-bi" style="background-color: var(--danger-color); color: #fff; border: none; padding: 9px 16px; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 6px;">
+                                    <button type="button" class="btn" id="btn-cancel-thiet-bi">
                                         <i class="fa-solid fa-xmark"></i> Hủy
                                     </button>
                                 </div>
+                            </div>
                             </div>
                             
                             <!-- Subsection 1: Thông tin người sử dụng -->
