@@ -518,6 +518,7 @@ async function startApp() {
                     userEmail: db.user_email || db.userEmail || '',
                     userPhone: db.user_phone || db.userPhone || '',
                     userBirthDate: db.user_birth_date || db.userBirthDate || '',
+                    userNotes: db.user_notes || db.userNotes || '',
                     userElement: db.user_element || db.userElement || '',
                     userKeyElement: db.user_key_element || db.userKeyElement || '',
                     userErgChat: db.user_erg_chat || db.userErgChat || 'not_installed',
@@ -590,6 +591,7 @@ async function startApp() {
                     user_email: js.userEmail,
                     user_phone: js.userPhone,
                     user_birth_date: js.userBirthDate || null,
+                    user_notes: js.userNotes || '',
                     user_element: js.userElement,
                     user_key_element: js.userKeyElement,
                     user_erg_chat: js.userErgChat || 'not_installed',
@@ -2936,6 +2938,7 @@ async function startApp() {
             userEmail: document.getElementById('user-email').value.trim(),
             userPhone: document.getElementById('user-phone').value.trim(),
             userBirthDate: birthDate,
+            userNotes: document.getElementById('user-notes')?.value.trim() || '',
             userElement: document.getElementById('user-element') ? document.getElementById('user-element').value.trim() : '',
             userKeyElement: document.getElementById('user-key-element') ? document.getElementById('user-key-element').value.trim() : '',
             userErgChat: document.getElementById('user-erg-chat')?.value || 'not_installed',
@@ -3250,6 +3253,7 @@ async function startApp() {
         document.getElementById('user-email').value = item.userEmail || '';
         document.getElementById('user-phone').value = item.userPhone || '';
         document.getElementById('user-birth-date').value = item.userBirthDate || '';
+        if (document.getElementById('user-notes')) document.getElementById('user-notes').value = item.userNotes || '';
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
         if (document.getElementById('user-erg-chat')) document.getElementById('user-erg-chat').value = item.userErgChat || 'not_installed';
