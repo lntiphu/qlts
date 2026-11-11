@@ -2436,6 +2436,7 @@ async function startApp() {
                 ${item.devHdd || ''} ${item.devHdd2 || ''}
                 ${item.devMonitor || ''} ${item.devMonitor2 || ''}
                 ${item.devMonitorSn || ''} ${item.devMonitorSn2 || ''}
+                ${item.userNotes || ''} 
                 ${item.devNotes || ''} 
                 ${troubleshootSearch} 
                 ${disabledTag} 
@@ -2631,8 +2632,36 @@ async function startApp() {
                         ${keysText}
                     </div>
                 </td>
-                <td>
-                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word;">${displayItem.devNotes || '—'}</span>
+                <td style="min-width: 190px; max-width: 280px;">
+                    ${(() => {
+                        const uNotes = (item.userNotes || '').trim();
+                        const dNotes = (displayItem.devNotes || '').trim();
+                        if (!uNotes && !dNotes) {
+                            return '<span class="text-muted" style="font-size: 13px; font-style: italic;">—</span>';
+                        }
+                        const blocks = [];
+                        if (uNotes) {
+                            blocks.push(`
+                                <div style="padding: 6px 9px; border-radius: 6px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-left: 3px solid #38bdf8;">
+                                    <div style="font-size: 10.5px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fa-solid fa-user" style="font-size: 9.5px;"></i> Ghi chú nhân sự
+                                    </div>
+                                    <div style="font-size: 12.5px; color: var(--text-primary); white-space: pre-line; word-break: break-word; line-height: 1.4;">${uNotes}</div>
+                                </div>
+                            `);
+                        }
+                        if (dNotes) {
+                            blocks.push(`
+                                <div style="padding: 6px 9px; border-radius: 6px; background: rgba(123, 202, 15, 0.08); border: 1px solid rgba(123, 202, 15, 0.2); border-left: 3px solid var(--primary-color);">
+                                    <div style="font-size: 10.5px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; display: flex; align-items: center; gap: 5px;">
+                                        <i class="fa-solid fa-computer" style="font-size: 9.5px;"></i> Ghi chú thiết bị
+                                    </div>
+                                    <div style="font-size: 12.5px; color: var(--text-primary); white-space: pre-line; word-break: break-word; line-height: 1.4;">${dNotes}</div>
+                                </div>
+                            `);
+                        }
+                        return `<div style="display: flex; flex-direction: column; gap: 6px;">${blocks.join('')}</div>`;
+                    })()}
                 </td>
                 <td>
                     <div class="actions-cell actions-cell-grid">
@@ -3095,6 +3124,7 @@ async function startApp() {
                 userElement: "Element",
                 userKeyElement: "Key Element",
                 userErgChat: "ERG chat",
+                userNotes: "Ghi chú nhân sự",
                 devIssueDesc: "Thông tin lỗi hay gặp",
                 devIssueFix: "Cách fix lỗi"
             };
@@ -10559,6 +10589,7 @@ async function startApp() {
         let keyOffice = '—';
         let keyPdf = '—';
         let devApps = '—';
+        let userNotes = '—';
         let devNotes = '—';
         let extraDevices = [];
 
@@ -10610,7 +10641,8 @@ async function startApp() {
             keyPdf = item.keyPdf || '—';
 
             devApps = item.devApps || '—';
-            devNotes = item.devNotes || '—';
+            userNotes = (item.userNotes || '').trim() || '—';
+            devNotes = (item.devNotes || '').trim() || '—';
             extraDevices = getAssignedDevices(item).slice(1);
         } else {
             userId = (document.getElementById('user-id') ? document.getElementById('user-id').value.trim() : '');
@@ -10668,6 +10700,7 @@ async function startApp() {
             keyPdf = (document.getElementById('key-pdf') ? document.getElementById('key-pdf').value.trim() : '') || '—';
 
             devApps = (document.getElementById('dev-apps') ? document.getElementById('dev-apps').value.trim() : '') || '—';
+            userNotes = (document.getElementById('user-notes') ? document.getElementById('user-notes').value.trim() : '') || '—';
             devNotes = (document.getElementById('dev-notes') ? document.getElementById('dev-notes').value.trim() : '') || '—';
             const count = Number(document.getElementById('device-count')?.value || 1);
             if (count > 1) extraDevices = Array.from({ length: count - 1 }, (_, i) => getFormDevice(`-device${i + 2}`));
@@ -10701,6 +10734,7 @@ async function startApp() {
         if (document.getElementById('receipt-key-pdf')) document.getElementById('receipt-key-pdf').innerText = keyPdf;
 
         if (document.getElementById('receipt-dev-apps')) document.getElementById('receipt-dev-apps').innerText = devApps;
+        if (document.getElementById('receipt-user-notes')) document.getElementById('receipt-user-notes').innerText = userNotes;
         if (document.getElementById('receipt-dev-notes')) document.getElementById('receipt-dev-notes').innerText = devNotes;
 
         const totalDevicesCount = 1 + extraDevices.length;
