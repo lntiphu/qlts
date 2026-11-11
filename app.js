@@ -2470,7 +2470,7 @@ async function startApp() {
         if (filtered.length === 0) {
             tbodyThietBi.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="6" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát phù hợp!</td>
+                    <td colspan="5" class="text-center text-muted">Không tìm thấy dữ liệu cấp phát phù hợp!</td>
                 </tr>
             `;
             return;
@@ -2532,7 +2532,6 @@ async function startApp() {
             const allAssignedDevices = getAssignedDevices(displayItem);
             const formatAssignedDeviceConfig = (device, deviceIndex) => {
                 const details = [];
-                if (device.devId) details.push(`<div><strong>ID:</strong> ${device.devId}</div>`);
                 if (device.devType) details.push(`<div><strong>Loại:</strong> ${device.devType}</div>`);
                 if (device.devMain) details.push(`<div><strong>Main:</strong> ${device.devMain}</div>`);
                 if (device.devCpu) details.push(`<div><strong>CPU:</strong> ${device.devCpu}</div>`);
@@ -2554,8 +2553,21 @@ async function startApp() {
                 if (device.devUps) details.push(`<div><strong>UPS:</strong> ${device.devUps}</div>`);
                 if (device.devExtraDevices) details.push(`<div><strong>Thiết bị rời:</strong> ${device.devExtraDevices}</div>`);
                 if (device.devCables) details.push(`<div><strong>Dây kết nối:</strong> ${device.devCables}</div>`);
-                return `<div class="assigned-device-config" style="padding: 7px 9px; margin-bottom: 7px; border: 1px solid rgba(148,163,184,.22); border-radius: 6px; background: rgba(15,23,42,.28);">
-                    <div style="color: var(--primary-color); font-weight: 700; margin-bottom: 4px;">Thiết bị ${deviceIndex + 1}</div>
+                const statusVal = device.devStatus || (deviceIndex === 0 ? displayItem.devStatus : '');
+                const statusBadge = statusVal && !['Thiết bị cá nhân', 'Cá nhân', 'Không cấp'].includes(statusVal)
+                    ? `<span class="badge ${getStatusBadgeClass(statusVal)}" style="font-size: 10.5px; padding: 2px 7px;">${statusVal}</span>`
+                    : '';
+                const idBadge = device.devId
+                    ? `<span class="badge badge-green" style="font-size: 11px; padding: 2px 7px;" title="ID Thiết bị">${device.devId}</span>`
+                    : '';
+                return `<div class="assigned-device-config" style="padding: 8px 10px; margin-bottom: 7px; border: 1px solid rgba(148,163,184,.22); border-radius: 8px; background: rgba(15,23,42,.28);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 1px dashed rgba(148,163,184,.14);">
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <span style="color: var(--primary-color); font-weight: 700;">Thiết bị ${deviceIndex + 1}</span>
+                            ${idBadge}
+                        </div>
+                        ${statusBadge}
+                    </div>
                     ${details.length ? details.join('') : '<div>Chưa nhập cấu hình</div>'}
                 </div>`;
             };
@@ -2563,21 +2575,22 @@ async function startApp() {
                 device.hasDevice === true || [
                     device.devId, device.devType, device.devSn, device.devMain, device.devCpu,
                     device.devRam, device.devSsd, device.devSsd2, device.devHdd, device.devHdd2,
-                    device.devVga
+                    device.devVga, device.devMonitor, device.devMonitor2, device.devKeyboard,
+                    device.devMouse, device.devUps, device.devExtraDevices, device.devCables
                 ].some(value => String(value || '').trim() !== '')
             ));
-            const configText = item.userDisabled ? '—' : populatedAssignedDevices.length
-                ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
-                : '—';
-            const allocationDisplayHtml = item.userDisabled ? '' : (
-                (displayItem.devAllocation === 'personal' || ['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus)) && !displayItem.devId
+            const allocationDisplayHtml = item.userDisabled ? '<span class="text-muted" style="font-style: italic;">—</span>' : (
+                (displayItem.devAllocation === 'personal' || ['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus)) && !populatedAssignedDevices.length
                     ? '<span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>'
-                    : (displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !displayItem.devId
+                    : (displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !populatedAssignedDevices.length
                         ? '<span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>'
-                        : !displayItem.devId && (displayItem.devType || displayItem.devMain || displayItem.devCpu || displayItem.devRam || displayItem.devSsd || displayItem.devHdd || displayItem.devStatus || displayItem.devUps || displayItem.devExtraDevices)
-                            ? `${!displayItem.devId && displayItem.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(displayItem.devStatus)}">${displayItem.devStatus}</span></span>` : ''}<span class="details" style="display: block;">Loại: ${displayItem.devType || 'Chưa phân loại'}</span>${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}`
-                            : !displayItem.devId ? '<span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>' : ''
+                        : '<span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>'
             );
+            const mergedDeviceAndConfigHtml = item.userDisabled
+                ? '<span class="text-muted" style="font-style: italic;">—</span>'
+                : populatedAssignedDevices.length
+                    ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
+                    : allocationDisplayHtml;
 
             const troubleshootPairs = formatTroubleshootForDisplay(displayItem.devIssueDesc, displayItem.devIssueFix);
 
@@ -2610,25 +2623,8 @@ async function startApp() {
                         <span class="contact" style="display: block; margin-top: 2px;">ERG chat: ${item.userErgChat === 'installed' ? 'Đã cài' : 'Chưa cài'}</span>
                     </div>
                 </td>
-                <td>
-                    <div class="user-info-cell">
-                        ${item.userDisabled ? `
-                            <span class="text-muted" style="font-style: italic;">—</span>
-                        ` : (displayItem.devId ? `
-                            <span class="name" style="display: block; margin-bottom: 4px;">
-                                <span class="badge badge-green" title="ID Thiết bị">${displayItem.devId}</span>
-                            </span>
-                            ${displayItem.devStatus && !['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus) ? `<span class="name" style="display: block; margin-bottom: 4px;"><span class="badge ${getStatusBadgeClass(displayItem.devStatus)}">${displayItem.devStatus}</span></span>` : ''}
-                            ${displayItem.devType ? `<span class="details" style="display: block;">Loại: ${displayItem.devType}</span>` : ''}
-                            ${displayItem.devUps ? `<span class="details" style="display: block;">UPS: ${displayItem.devUps}</span>` : ''}
-                            ${displayItem.devExtraDevices ? `<span class="details" style="display: block;">Thiết bị rời: ${displayItem.devExtraDevices}</span>` : ''}
-                            ${allAssignedDevices.length > 1 ? allAssignedDevices.slice(1).map((d, i) => `<span class="details" style="display:block;margin-top:4px;"><span class="badge badge-green"><i class="fa-solid fa-computer"></i> Thiết bị ${i + 2}: ${d.devId || d.devType || `Thiết bị ${i + 2}`}</span></span>`).join('') : ''}
-                        ` : '')}
-                        ${allocationDisplayHtml}
-                    </div>
-                </td>
-                <td style="max-width: 250px; font-size: 13px;">
-                    ${configText}
+                <td style="min-width: 240px; max-width: 320px; font-size: 13px;">
+                    ${mergedDeviceAndConfigHtml}
                 </td>
                 <td>
                     <div class="keys-container">
