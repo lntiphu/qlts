@@ -10724,33 +10724,32 @@ async function startApp() {
                 <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(123, 202, 15, 0.22); border-radius: 10px; overflow: hidden; font-size: 11.5px; box-sizing: border-box;">
                     <div style="background: linear-gradient(90deg, rgba(123, 202, 15, 0.14) 0%, rgba(30, 41, 59, 0.4) 100%); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 7px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="background: #7bca0f; color: #0f172a; font-weight: 800; font-size: 10.5px; padding: 2px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.4px;">Thiết bị ${i + 2}</span>
-                            <span><span style="color: #94a3b8; font-size: 11px;">ID / Tên thiết bị:</span> <strong style="color: #ffffff; font-size: 12px;">${[d.devId, d.devType].filter(Boolean).join(' — ') || '—'}</strong></span>
+                            <span style="background: #7bca0f; color: #0f172a; font-weight: 800; font-size: 10.5px; padding: 2px 10px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.4px;">Thiết bị ${i + 2}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 14px; font-size: 11px;">
                             <span><span style="color: #94a3b8;">Serial thiết bị:</span> <strong style="color: #e2e8f0; font-family: monospace;">${d.devSn || '—'}</strong></span>
                             <span><span style="color: #94a3b8;">Tình trạng:</span> <strong style="color: #88dc14; background: rgba(123, 202, 15, 0.14); border: 1px solid rgba(123, 202, 15, 0.3); padding: 1px 8px; border-radius: 999px; font-size: 10.5px;">${d.devStatus || '—'}</strong></span>
                         </div>
                     </div>
-                    <div style="padding: 9px 14px; display: grid; grid-template-columns: 1.25fr 1fr 1.1fr 1.35fr 0.85fr; gap: 10px; align-items: start;">
-                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
-                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Mainboard</div>
+                    <div style="padding: 10px 14px; display: grid; grid-template-columns: 1.75fr 0.95fr 1.15fr 1.05fr 0.85fr; gap: 12px; align-items: start;">
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 10px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 3px;">Mainboard</div>
                             <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devMain || '—'}</strong>
                         </div>
-                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
-                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">CPU</div>
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 10px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 3px;">CPU</div>
                             <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devCpu || '—'}</strong>
                         </div>
-                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
-                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">RAM</div>
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 10px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 3px;">RAM</div>
                             <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devRam ? `${d.devRam}${d.devRamSlots ? ` (${d.devRamSlots})` : ''}` : '—'}</strong>
                         </div>
-                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
-                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Ổ cứng</div>
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 10px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 3px;">Ổ cứng</div>
                             <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${formatExtraDeviceDisk(d)}</strong>
                         </div>
                         <div>
-                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">VGA</div>
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 3px;">VGA</div>
                             <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devVga || '—'}</strong>
                         </div>
                     </div>
