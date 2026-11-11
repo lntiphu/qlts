@@ -10703,28 +10703,59 @@ async function startApp() {
         if (document.getElementById('receipt-dev-apps')) document.getElementById('receipt-dev-apps').innerText = devApps;
         if (document.getElementById('receipt-dev-notes')) document.getElementById('receipt-dev-notes').innerText = devNotes;
 
-        const receiptGrid = document.getElementById('receipt-devices-grid');
-        if (receiptGrid) {
-            receiptGrid.style.gridTemplateColumns = extraDevices.length ? 'repeat(2, minmax(0, 1fr))' : '1fr';
-            receiptGrid.style.alignItems = 'stretch';
+        const totalDevicesCount = 1 + extraDevices.length;
+        const countBadge = document.getElementById('receipt-device-count-badge');
+        if (countBadge) {
+            countBadge.innerText = `Tổng: ${String(totalDevicesCount).padStart(2, '0')} thiết bị`;
         }
+
+        const formatExtraDeviceDisk = (d) => {
+            const parts = [];
+            const ssd = [d.devSsd, d.devSsd2].filter(Boolean).join(' + ');
+            if (ssd) parts.push(`SSD: ${ssd}`);
+            const hdd = [d.devHdd, d.devHdd2].filter(Boolean).join(' + ');
+            if (hdd) parts.push(`HDD: ${hdd}`);
+            return parts.join(' / ') || '—';
+        };
+
         const extraEl = document.getElementById('receipt-devices-extra');
         if (extraEl) {
             extraEl.innerHTML = extraDevices.length ? extraDevices.map((d, i) => `
-                <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);padding:12px 14px;border-radius:8px;font-size:11px;height:100%;box-sizing:border-box;">
-                    <div style="font-weight:800;color:var(--primary-color);margin-bottom:8px;">Thiết bị ${i + 2}</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px 16px;">
-                        <div><span style="color:#94a3b8;">ID / Tên:</span> <strong>${[d.devId, d.devType].filter(Boolean).join(' — ') || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">Mainboard:</span> <strong>${d.devMain || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">CPU:</span> <strong>${d.devCpu || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">RAM:</span> <strong>${d.devRam ? `${d.devRam}${d.devRamSlots ? ` (${d.devRamSlots})` : ''}` : '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">Ổ cứng:</span> <strong>${[d.devSsd, d.devSsd2, d.devHdd, d.devHdd2].filter(Boolean).join(' / ') || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">Serial:</span> <strong>${d.devSn || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">VGA:</span> <strong>${d.devVga || '—'}</strong></div>
-                        <div><span style="color:#94a3b8;">Tình trạng:</span> <strong>${d.devStatus || '—'}</strong></div>
+                <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(123, 202, 15, 0.22); border-radius: 10px; overflow: hidden; font-size: 11.5px; box-sizing: border-box;">
+                    <div style="background: linear-gradient(90deg, rgba(123, 202, 15, 0.14) 0%, rgba(30, 41, 59, 0.4) 100%); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 7px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="background: #7bca0f; color: #0f172a; font-weight: 800; font-size: 10.5px; padding: 2px 8px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.4px;">Thiết bị ${i + 2}</span>
+                            <span><span style="color: #94a3b8; font-size: 11px;">ID / Tên thiết bị:</span> <strong style="color: #ffffff; font-size: 12px;">${[d.devId, d.devType].filter(Boolean).join(' — ') || '—'}</strong></span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 14px; font-size: 11px;">
+                            <span><span style="color: #94a3b8;">Serial thiết bị:</span> <strong style="color: #e2e8f0; font-family: monospace;">${d.devSn || '—'}</strong></span>
+                            <span><span style="color: #94a3b8;">Tình trạng:</span> <strong style="color: #88dc14; background: rgba(123, 202, 15, 0.14); border: 1px solid rgba(123, 202, 15, 0.3); padding: 1px 8px; border-radius: 999px; font-size: 10.5px;">${d.devStatus || '—'}</strong></span>
+                        </div>
+                    </div>
+                    <div style="padding: 9px 14px; display: grid; grid-template-columns: 1.25fr 1fr 1.1fr 1.35fr 0.85fr; gap: 10px; align-items: start;">
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Mainboard</div>
+                            <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devMain || '—'}</strong>
+                        </div>
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">CPU</div>
+                            <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devCpu || '—'}</strong>
+                        </div>
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">RAM</div>
+                            <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devRam ? `${d.devRam}${d.devRamSlots ? ` (${d.devRamSlots})` : ''}` : '—'}</strong>
+                        </div>
+                        <div style="border-right: 1px solid rgba(148, 163, 184, 0.08); padding-right: 8px;">
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">Ổ cứng</div>
+                            <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${formatExtraDeviceDisk(d)}</strong>
+                        </div>
+                        <div>
+                            <div style="color: #64748b; font-size: 10px; text-transform: uppercase; font-weight: 600; margin-bottom: 2px;">VGA</div>
+                            <strong style="color: #f8fafc; font-size: 11.5px; display: block; line-height: 1.35;">${d.devVga || '—'}</strong>
+                        </div>
                     </div>
                 </div>`).join('') : '';
-            extraEl.style.display = extraDevices.length ? 'contents' : 'none';
+            extraEl.style.display = extraDevices.length ? 'flex' : 'none';
         }
 
         if (document.getElementById('receipt-user-sign-name')) document.getElementById('receipt-user-sign-name').innerText = userName || '—';
