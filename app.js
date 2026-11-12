@@ -2093,7 +2093,6 @@ async function startApp() {
                     </div>
                 `;
             } else {
-                const maxDeptUser = Math.max(...sortedDepts.map(d => deptStats[d].total)) || 1;
                 sortedDepts.forEach((dept, idx) => {
                     const stats = deptStats[dept];
                     const count = stats.total;
@@ -2102,8 +2101,6 @@ async function startApp() {
                     const activePct = count > 0 ? Math.round((activeCount / count) * 100) : 0;
                     const disabledPct = count > 0 ? (100 - activePct) : 0;
 
-                    const activeBarWidth = ((activeCount / maxDeptUser) * 100).toFixed(1);
-                    const disabledBarWidth = ((disabledCount / maxDeptUser) * 100).toFixed(1);
                     const rankClass = idx < 3 ? ` rank-${idx + 1}` : '';
                     const rankLabel = String(idx + 1).padStart(2, '0');
                     const safeDept = escapeHtml(dept);
@@ -2128,10 +2125,10 @@ async function startApp() {
                     };
 
                     const activeSegHtml = activeCount > 0
-                        ? `<div class="dept-bar-seg is-active" style="width: ${activeBarWidth}%;" title="Đang hoạt động: ${activeCount} (${activePct}%)"></div>`
+                        ? `<div class="dept-bar-seg is-active" style="flex: ${activeCount} 1 0%;" title="Đang hoạt động: ${activeCount} (${activePct}%)"></div>`
                         : '';
                     const disabledSegHtml = disabledCount > 0
-                        ? `<div class="dept-bar-seg is-disabled" style="width: ${disabledBarWidth}%;" title="Đã nghỉ việc: ${disabledCount} (${disabledPct}%)"></div>`
+                        ? `<div class="dept-bar-seg is-disabled" style="flex: ${disabledCount} 1 0%;" title="Đã nghỉ việc: ${disabledCount} (${disabledPct}%)"></div>`
                         : '';
 
                     div.innerHTML = `
