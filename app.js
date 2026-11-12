@@ -5850,8 +5850,18 @@ async function startApp() {
             `;
         } else {
             listEl.innerHTML = '';
-            [...logs].reverse().forEach((log, revIdx) => {
-                const originalLogIdx = logs.length - 1 - revIdx;
+            const sortedEntries = logs
+                .map((log, originalLogIdx) => ({
+                    log,
+                    originalLogIdx,
+                    dateTs: parseDateDMY(log?.date)?.getTime() || 0
+                }))
+                .sort((a, b) => {
+                    if (b.dateTs !== a.dateTs) return b.dateTs - a.dateTs;
+                    const idDiff = (Number(b.log?.id) || 0) - (Number(a.log?.id) || 0);
+                    return idDiff !== 0 ? idDiff : (b.originalLogIdx - a.originalLogIdx);
+                });
+            sortedEntries.forEach(({ log, originalLogIdx }) => {
                 const costNum = parseFloat((log.cost || '').toString().replace(/[^0-9]/g, '')) || 0;
                 totalCost += costNum;
                 const typeLabel = (log.type || 'Bảo trì').trim();
