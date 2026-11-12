@@ -3286,44 +3286,82 @@ async function startApp() {
             });
         });
 
+        const HISTORY_ACTION_RULES = [
+            { match: /tạo mới|khởi tạo/i, cls: 'is-create', icon: 'fa-solid fa-plus' },
+            { match: /bảo trì|nâng cấp/i, cls: 'is-maint', icon: 'fa-solid fa-screwdriver-wrench' },
+            { match: /thu hồi|offboard|vô hiệu hóa|nghỉ việc|disable/i, cls: 'is-offboard', icon: 'fa-solid fa-user-xmark' },
+            { match: /kích hoạt|mở khóa/i, cls: 'is-activate', icon: 'fa-solid fa-user-check' },
+            { match: /chuyển|cấp phát/i, cls: 'is-transfer', icon: 'fa-solid fa-right-left' }
+        ];
+        const resolveHistoryActionMeta = (actionText) => {
+            const text = (actionText || '').toString();
+            return HISTORY_ACTION_RULES.find(rule => rule.match.test(text)) || { cls: 'is-update', icon: 'fa-solid fa-pen-to-square' };
+        };
+
         document.querySelectorAll('.btn-history-thietbi').forEach(btn => {
             btn.addEventListener('click', function() {
                 const idx = parseInt(this.getAttribute('data-index'));
                 const item = thietBiList[idx];
-                
-                // Set details
+                if (!item) return;
+
                 histUser.innerText = `${item.userName} (${item.userId})`;
-                histDevice.innerText = !item.userDisabled && item.devId ? `ID Thiết bị: ${item.devId}` : 'Không cấp phát thiết bị';
-                
-                // Render timeline
+                if (item.userDisabled) {
+                    histDevice.innerText = 'Đã vô hiệu hóa / Thu hồi thiết bị';
+                } else if (item.devAllocation === 'personal' || item.devStatus === 'Thiết bị cá nhân' || item.devStatus === 'Cá nhân') {
+                    histDevice.innerText = 'Sử dụng thiết bị cá nhân';
+                } else {
+                    const activeDevs = getAssignedDevices(item).filter(d => d && (d.devId || d.devType || d.hasDevice));
+                    histDevice.innerText = activeDevs.length > 0
+                        ? activeDevs.map((d, i) => d.devId || d.devType || `Thiết bị ${i + 1}`).join(' • ')
+                        : 'Không cấp phát thiết bị';
+                }
+
+                const historyLogs = Array.isArray(item.history) ? item.history : [];
+                const histTotalEl = document.getElementById('hist-total-count');
+                if (histTotalEl) {
+                    histTotalEl.innerText = `${historyLogs.length || 1} lượt`;
+                }
+
                 histTimeline.innerHTML = '';
-                const historyLogs = item.history || [];
-                
+
                 if (historyLogs.length === 0) {
-                    const fallbackTime = item.updatedAt || 'Chưa rõ thời gian';
+                    const fallbackTime = escapeHtml(item.updatedAt || 'Chưa rõ thời gian');
                     histTimeline.innerHTML = `
-                        <div class="timeline-item">
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-time">${fallbackTime}</div>
-                            <div class="timeline-action">Thông tin cấp phát</div>
-                            <div class="timeline-details">Đã lưu trữ trước đó. Chưa có nhật ký chi tiết thay đổi.</div>
+                        <div class="hist-timeline-item is-update">
+                            <div class="hist-timeline-rail" aria-hidden="true">
+                                <span class="hist-timeline-dot"><i class="fa-solid fa-circle-info"></i></span>
+                            </div>
+                            <div class="hist-timeline-card">
+                                <div class="hist-timeline-top">
+                                    <span class="hist-action-pill is-update"><i class="fa-solid fa-circle-info"></i> Thông tin cấp phát</span>
+                                    <span class="hist-time-chip"><i class="fa-regular fa-clock"></i> ${fallbackTime}</span>
+                                </div>
+                                <div class="hist-timeline-details">Đã lưu trữ trước đó. Chưa có nhật ký chi tiết thay đổi.</div>
+                            </div>
                         </div>
                     `;
                 } else {
                     [...historyLogs].reverse().forEach(log => {
+                        const actionLabel = (log.action || 'Cập nhật').trim();
+                        const meta = resolveHistoryActionMeta(actionLabel);
                         const div = document.createElement('div');
-                        div.className = 'timeline-item';
+                        div.className = `hist-timeline-item ${meta.cls}`;
                         div.innerHTML = `
-                            <div class="timeline-dot"></div>
-                            <div class="timeline-time">${log.time || '—'}</div>
-                            <div class="timeline-action">${log.action || 'Cập nhật'}</div>
-                            <div class="timeline-details">${log.details || '—'}</div>
+                            <div class="hist-timeline-rail" aria-hidden="true">
+                                <span class="hist-timeline-dot"><i class="${meta.icon}"></i></span>
+                            </div>
+                            <div class="hist-timeline-card">
+                                <div class="hist-timeline-top">
+                                    <span class="hist-action-pill ${meta.cls}"><i class="${meta.icon}"></i> ${escapeHtml(actionLabel)}</span>
+                                    <span class="hist-time-chip"><i class="fa-regular fa-clock"></i> ${escapeHtml(log.time || '—')}</span>
+                                </div>
+                                <div class="hist-timeline-details">${log.details || '—'}</div>
+                            </div>
                         `;
                         histTimeline.appendChild(div);
                     });
                 }
-                
-                // Show modal
+
                 historyModal.classList.add('show');
             });
         });
@@ -5641,6 +5679,125 @@ async function startApp() {
 
     // 4. MAINTENANCE & UPGRADE LOG
     let currentMaintDeviceIndex = null;
+    let editingMaintLogIndex = null;
+
+    const MAINT_TYPE_META = {
+        'Nâng cấp RAM / SSD': { cls: 'is-upgrade', icon: 'fa-solid fa-microchip' },
+        'Sửa chữa phần cứng': { cls: 'is-repair', icon: 'fa-solid fa-screwdriver-wrench' },
+        'Thay thế phần cứng': { cls: 'is-swap', icon: 'fa-solid fa-right-left' },
+        'Thay thế Pin / Sạc / Phím': { cls: 'is-replace', icon: 'fa-solid fa-battery-three-quarters' },
+        'Cài lại Win / Vệ sinh máy': { cls: 'is-clean', icon: 'fa-solid fa-broom' },
+        'Bảo hành chính hãng': { cls: 'is-warranty', icon: 'fa-solid fa-shield-halved' }
+    };
+
+    function getTodayDMY() {
+        const now = new Date();
+        return `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+    }
+
+    function setMaintEditMode(logIdx = null, resetInputs = true) {
+        editingMaintLogIndex = (typeof logIdx === 'number' && logIdx >= 0) ? logIdx : null;
+        const isEditing = editingMaintLogIndex !== null;
+
+        const formBox = document.getElementById('maint-form-add-box');
+        const formIcon = document.getElementById('maint-form-icon');
+        const formTitleText = document.getElementById('maint-form-title-text');
+        const formHintPill = document.getElementById('maint-form-hint-pill');
+        const saveBtn = document.getElementById('btn-add-maint-record');
+        const cancelEditBtn = document.getElementById('btn-cancel-maint-edit');
+
+        if (formBox) formBox.classList.toggle('is-editing', isEditing);
+        if (formIcon) {
+            formIcon.className = `maint-section-icon ${isEditing ? 'is-edit' : 'is-add'}`;
+            formIcon.innerHTML = isEditing ? '<i class="fa-solid fa-pen"></i>' : '<i class="fa-solid fa-plus"></i>';
+        }
+        if (formTitleText) {
+            formTitleText.innerText = isEditing ? 'Chỉnh sửa lượt bảo trì đã ghi nhận' : 'Ghi nhận lượt bảo trì / nâng cấp mới';
+        }
+        if (formHintPill) {
+            formHintPill.innerText = isEditing ? 'Đang chỉnh sửa' : '(*) Bắt buộc nhập';
+        }
+        if (saveBtn) {
+            saveBtn.innerHTML = isEditing
+                ? '<i class="fa-solid fa-check"></i> Cập Nhật Lượt Bảo Trì'
+                : '<i class="fa-solid fa-floppy-disk"></i> Lưu Lượt Bảo Trì';
+        }
+        if (cancelEditBtn) {
+            cancelEditBtn.classList.toggle('hidden', !isEditing);
+        }
+
+        if (!isEditing && resetInputs) {
+            const typeInput = document.getElementById('maint-input-type');
+            const dateInput = document.getElementById('maint-input-date');
+            const costInput = document.getElementById('maint-input-cost');
+            const providerInput = document.getElementById('maint-input-provider');
+            const descInput = document.getElementById('maint-input-desc');
+            if (typeInput && typeInput.options.length > 0) typeInput.selectedIndex = 0;
+            if (dateInput) dateInput.value = getTodayDMY();
+            if (costInput) costInput.value = '';
+            if (providerInput) providerInput.value = 'IT Nội bộ ERAS';
+            if (descInput) descInput.value = '';
+        }
+    }
+
+    function startEditMaintenanceRecord(logIdx) {
+        if (!requirePermission('canEdit', 'chỉnh sửa lịch sử bảo trì / nâng cấp')) return;
+        if (currentMaintDeviceIndex === null) return;
+        const item = thietBiList[currentMaintDeviceIndex];
+        const log = item && Array.isArray(item.maintenanceLogs) ? item.maintenanceLogs[logIdx] : null;
+        if (!log) return;
+
+        setMaintEditMode(logIdx, false);
+
+        const typeInput = document.getElementById('maint-input-type');
+        const dateInput = document.getElementById('maint-input-date');
+        const costInput = document.getElementById('maint-input-cost');
+        const providerInput = document.getElementById('maint-input-provider');
+        const descInput = document.getElementById('maint-input-desc');
+
+        if (typeInput) {
+            const targetType = (log.type || 'Sửa chữa phần cứng').trim();
+            const hasOption = Array.from(typeInput.options).some(opt => opt.value === targetType);
+            if (!hasOption && targetType) {
+                const extraOpt = document.createElement('option');
+                extraOpt.value = targetType;
+                extraOpt.textContent = targetType;
+                typeInput.appendChild(extraOpt);
+            }
+            typeInput.value = targetType;
+        }
+        if (dateInput) dateInput.value = log.date || getTodayDMY();
+        if (costInput) {
+            const costNum = parseFloat((log.cost || '').toString().replace(/[^0-9]/g, '')) || 0;
+            costInput.value = costNum > 0 ? new Intl.NumberFormat('vi-VN').format(costNum) : '';
+        }
+        if (providerInput) providerInput.value = log.provider || '';
+        if (descInput) {
+            descInput.value = log.desc || '';
+            descInput.focus();
+        }
+
+        renderMaintenanceLogsList(item);
+        const modalBody = document.querySelector('#modal-maintenance-log .maint-modal-body');
+        if (modalBody) modalBody.scrollTop = 0;
+    }
+
+    async function syncMaintenanceItemPersistence(item) {
+        const extraKey = item.devId || item.userId || item.id;
+        saveDeviceExtras(extraKey, {
+            maintenanceLogs: item.maintenanceLogs
+        });
+        saveToLocalStorageFallback('thiet_bi', thietBiList);
+
+        try {
+            if (supabaseClient && item.id && !item.id.toString().startsWith('local-')) {
+                const dbData = mappers.thietBi.toDB(item);
+                await supabaseClient.from('thiet_bi').update(dbData).eq('id', item.id);
+            }
+        } catch (e) {
+            console.warn('Sync maintenance to DB error:', e);
+        }
+    }
 
     function openMaintenanceModal(index) {
         const item = thietBiList[index];
@@ -5654,21 +5811,22 @@ async function startApp() {
         const configEl = document.getElementById('maint-device-config');
         if (titleEl) titleEl.innerText = `${item.userName} (${item.userId}) - ${item.devId || item.devType || 'Thiết bị IT'}`;
         if (configEl) {
-            configEl.innerText = `CPU: ${item.devCpu || '—'} | RAM: ${item.devRam || '—'} | SSD: ${item.devSsd || '—'} | Tình trạng: ${item.devStatus || 'Tốt'}`;
+            const specs = [
+                { icon: 'fa-solid fa-microchip', label: 'CPU', val: item.devCpu },
+                { icon: 'fa-solid fa-memory', label: 'RAM', val: item.devRam },
+                { icon: 'fa-solid fa-hard-drive', label: 'SSD', val: item.devSsd },
+                { icon: 'fa-solid fa-heart-pulse', label: 'Tình trạng', val: item.devStatus || 'Tốt' }
+            ];
+            configEl.innerHTML = specs.map(spec => `
+                <span class="maint-spec-chip ${spec.val ? '' : 'is-empty'}">
+                    <i class="${spec.icon}"></i>
+                    <span>${spec.label}:</span>
+                    <strong>${escapeHtml(spec.val || '—')}</strong>
+                </span>
+            `).join('');
         }
 
-        const now = new Date();
-        const todayStr = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-        const dateInput = document.getElementById('maint-input-date');
-        if (dateInput) dateInput.value = todayStr;
-
-        const costInput = document.getElementById('maint-input-cost');
-        const providerInput = document.getElementById('maint-input-provider');
-        const descInput = document.getElementById('maint-input-desc');
-        if (costInput) costInput.value = '';
-        if (providerInput) providerInput.value = 'IT Nội bộ ERAS';
-        if (descInput) descInput.value = '';
-
+        setMaintEditMode(null, true);
         renderMaintenanceLogsList(item);
         modal.classList.remove('hidden');
     }
@@ -5676,6 +5834,7 @@ async function startApp() {
     function renderMaintenanceLogsList(item) {
         const listEl = document.getElementById('maint-records-list');
         const totalEl = document.getElementById('maint-total-cost');
+        const countEl = document.getElementById('maint-record-count');
         if (!listEl) return;
 
         const logs = Array.isArray(item.maintenanceLogs) ? item.maintenanceLogs : [];
@@ -5683,9 +5842,10 @@ async function startApp() {
 
         if (logs.length === 0) {
             listEl.innerHTML = `
-                <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px; font-style: italic; background: rgba(255,255,255,0.02); border-radius: 6px; border: 1px dashed var(--border-color);">
-                    <i class="fa-solid fa-clipboard-check" style="font-size: 24px; margin-bottom: 8px; display: block; color: var(--brand-green);"></i>
-                    Chưa có nhật ký bảo trì hoặc nâng cấp nào cho thiết bị này.
+                <div class="maint-empty-state">
+                    <div class="maint-empty-icon"><i class="fa-solid fa-clipboard-check"></i></div>
+                    <div class="maint-empty-title">Chưa có nhật ký bảo trì hoặc nâng cấp</div>
+                    <div class="maint-empty-sub">Ghi nhận các lần sửa chữa, nâng cấp linh kiện hoặc bảo hành để theo dõi chi phí thiết bị.</div>
                 </div>
             `;
         } else {
@@ -5694,36 +5854,55 @@ async function startApp() {
                 const originalLogIdx = logs.length - 1 - revIdx;
                 const costNum = parseFloat((log.cost || '').toString().replace(/[^0-9]/g, '')) || 0;
                 totalCost += costNum;
+                const typeLabel = (log.type || 'Bảo trì').trim();
+                const typeMeta = MAINT_TYPE_META[typeLabel] || { cls: 'is-default', icon: 'fa-solid fa-wrench' };
+                const costText = costNum > 0 ? `${new Intl.NumberFormat('vi-VN').format(costNum)} đ` : 'Miễn phí';
+                const editingCls = originalLogIdx === editingMaintLogIndex ? ' is-editing' : '';
 
                 const div = document.createElement('div');
-                div.className = 'maint-timeline-item';
+                div.className = `maint-timeline-item ${typeMeta.cls}${editingCls}`;
                 div.innerHTML = `
-                    <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
-                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                            <span class="badge badge-green" style="font-weight: 700;">${log.type || 'Bảo trì'}</span>
-                            <span style="font-size: 12px; color: var(--text-secondary);"><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i>${log.date || '—'}</span>
-                            ${log.provider ? `<span style="font-size: 12px; color: var(--text-muted);"><i class="fa-solid fa-store" style="margin-right: 4px;"></i>${log.provider}</span>` : ''}
-                        </div>
-                        <div style="font-size: 13px; color: var(--text-primary); margin-top: 2px;">
-                            ${log.desc || 'Không có mô tả chi tiết'}
-                        </div>
+                    <div class="maint-timeline-rail" aria-hidden="true">
+                        <span class="maint-timeline-dot"><i class="${typeMeta.icon}"></i></span>
                     </div>
-                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px;">
-                        <span style="font-weight: 700; color: var(--brand-green); font-size: 14px;">
-                            ${costNum > 0 ? (new Intl.NumberFormat('vi-VN').format(costNum) + ' đ') : 'Miễn phí'}
-                        </span>
-                        <button type="button" class="btn-icon-only delete btn-delete-maint-record" data-log-index="${originalLogIdx}" title="Xóa lượt ghi này" style="width: 24px; height: 24px; font-size: 11px;">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                    <div class="maint-timeline-card">
+                        <div class="maint-timeline-top">
+                            <div class="maint-timeline-meta">
+                                <span class="maint-type-pill ${typeMeta.cls}"><i class="${typeMeta.icon}"></i> ${escapeHtml(typeLabel)}</span>
+                                <span class="maint-meta-chip"><i class="fa-regular fa-calendar"></i> ${escapeHtml(log.date || '—')}</span>
+                                ${log.provider ? `<span class="maint-meta-chip"><i class="fa-solid fa-store"></i> ${escapeHtml(log.provider)}</span>` : ''}
+                            </div>
+                            <div class="maint-timeline-right">
+                                <span class="maint-cost-pill ${costNum > 0 ? 'is-paid' : 'is-free'}">${costText}</span>
+                                <button type="button" class="btn-icon-only edit btn-edit-maint-record maint-edit-btn" data-log-index="${originalLogIdx}" title="Chỉnh sửa lượt ghi này">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button type="button" class="btn-icon-only delete btn-delete-maint-record maint-delete-btn" data-log-index="${originalLogIdx}" title="Xóa lượt ghi này">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="maint-timeline-desc">${escapeHtml(log.desc || 'Không có mô tả chi tiết')}</div>
                     </div>
                 `;
                 listEl.appendChild(div);
             });
         }
 
+        if (countEl) {
+            countEl.innerText = `${logs.length} lượt`;
+        }
         if (totalEl) {
             totalEl.innerText = new Intl.NumberFormat('vi-VN').format(totalCost) + ' VNĐ';
         }
+
+        listEl.querySelectorAll('.btn-edit-maint-record').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const logIdx = parseInt(this.getAttribute('data-log-index'));
+                startEditMaintenanceRecord(logIdx);
+            });
+        });
 
         listEl.querySelectorAll('.btn-delete-maint-record').forEach(btn => {
             btn.addEventListener('click', function(e) {
@@ -5735,14 +5914,17 @@ async function startApp() {
     }
 
     async function addMaintenanceRecord() {
-        if (!requirePermission('canEdit', 'thêm lịch sử bảo trì / nâng cấp')) return;
+        const isEditing = editingMaintLogIndex !== null;
+        if (!requirePermission('canEdit', isEditing ? 'chỉnh sửa lịch sử bảo trì / nâng cấp' : 'thêm lịch sử bảo trì / nâng cấp')) return;
         if (currentMaintDeviceIndex === null) return;
         const item = thietBiList[currentMaintDeviceIndex];
         if (!item) return;
 
         const type = document.getElementById('maint-input-type')?.value || 'Bảo trì';
         const date = document.getElementById('maint-input-date')?.value.trim();
-        const cost = document.getElementById('maint-input-cost')?.value.trim() || '0';
+        const costRaw = document.getElementById('maint-input-cost')?.value.trim() || '0';
+        const costNum = parseFloat(costRaw.replace(/[^0-9]/g, '')) || 0;
+        const cost = String(costNum);
         const provider = document.getElementById('maint-input-provider')?.value.trim() || 'IT Nội bộ';
         const desc = document.getElementById('maint-input-desc')?.value.trim();
 
@@ -5759,52 +5941,57 @@ async function startApp() {
             item.maintenanceLogs = [];
         }
 
-        const newRecord = {
-            id: Date.now(),
-            type: type,
-            date: date,
-            cost: cost,
-            provider: provider,
-            desc: desc
-        };
-
-        item.maintenanceLogs.push(newRecord);
-
-        const extraKey = item.devId || item.userId || item.id;
-        saveDeviceExtras(extraKey, {
-            maintenanceLogs: item.maintenanceLogs
-        });
-
         const now = new Date();
         const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         if (!Array.isArray(item.history)) item.history = [];
-        item.history.push({
-            time: formattedDate,
-            action: 'Bảo trì / Nâng cấp',
-            details: `${type} ngày ${date}: ${desc} - Chi phí: ${cost} đ (Đơn vị: ${provider})`
-        });
+        const costHistoryText = costNum > 0 ? `${new Intl.NumberFormat('vi-VN').format(costNum)} đ` : 'Miễn phí';
 
-        saveToLocalStorageFallback('thiet_bi', thietBiList);
-
-        try {
-            if (supabaseClient && item.id && !item.id.toString().startsWith('local-')) {
-                const dbData = mappers.thietBi.toDB(item);
-                await supabaseClient.from('thiet_bi').update(dbData).eq('id', item.id);
-            }
-        } catch (e) {
-            console.warn('Sync maintenance to DB error:', e);
+        if (isEditing && item.maintenanceLogs[editingMaintLogIndex]) {
+            const existing = item.maintenanceLogs[editingMaintLogIndex];
+            item.maintenanceLogs[editingMaintLogIndex] = {
+                ...existing,
+                type,
+                date,
+                cost,
+                provider,
+                desc
+            };
+            item.history.push({
+                time: formattedDate,
+                action: 'Cập nhật bảo trì / nâng cấp',
+                details: `${type} ngày ${date}: ${desc} - Chi phí: ${costHistoryText} (Đơn vị: ${provider})`
+            });
+            setMaintEditMode(null, true);
+        } else {
+            item.maintenanceLogs.push({
+                id: Date.now(),
+                type,
+                date,
+                cost,
+                provider,
+                desc
+            });
+            item.history.push({
+                time: formattedDate,
+                action: 'Bảo trì / Nâng cấp',
+                details: `${type} ngày ${date}: ${desc} - Chi phí: ${costHistoryText} (Đơn vị: ${provider})`
+            });
+            const descInput = document.getElementById('maint-input-desc');
+            const costInput = document.getElementById('maint-input-cost');
+            if (descInput) descInput.value = '';
+            if (costInput) costInput.value = '';
         }
 
-        const descInput = document.getElementById('maint-input-desc');
-        const costInput = document.getElementById('maint-input-cost');
-        if (descInput) descInput.value = '';
-        if (costInput) costInput.value = '';
-
+        await syncMaintenanceItemPersistence(item);
         renderMaintenanceLogsList(item);
-        showToast('Thành công', 'Đã thêm lượt bảo trì mới vào hồ sơ thiết bị!', 'success');
+        showToast(
+            'Thành công',
+            isEditing ? 'Đã cập nhật lượt bảo trì thành công!' : 'Đã thêm lượt bảo trì mới vào hồ sơ thiết bị!',
+            'success'
+        );
     }
 
-    function deleteMaintenanceRecord(logIdx) {
+    async function deleteMaintenanceRecord(logIdx) {
         if (!requirePermission('canDelete', 'xóa lịch sử bảo trì')) return;
         if (currentMaintDeviceIndex === null) return;
         const item = thietBiList[currentMaintDeviceIndex];
@@ -5812,11 +5999,12 @@ async function startApp() {
 
         if (confirm('Bạn có chắc chắn muốn xóa lượt ghi bảo trì này?')) {
             item.maintenanceLogs.splice(logIdx, 1);
-            const extraKey = item.devId || item.userId || item.id;
-            saveDeviceExtras(extraKey, {
-                maintenanceLogs: item.maintenanceLogs
-            });
-            saveToLocalStorageFallback('thiet_bi', thietBiList);
+            if (editingMaintLogIndex === logIdx) {
+                setMaintEditMode(null, true);
+            } else if (editingMaintLogIndex !== null && editingMaintLogIndex > logIdx) {
+                editingMaintLogIndex -= 1;
+            }
+            await syncMaintenanceItemPersistence(item);
             renderMaintenanceLogsList(item);
             showToast('Đã xóa', 'Đã xóa lượt ghi bảo trì!', 'info');
         }
@@ -5826,13 +6014,42 @@ async function startApp() {
     const btnCloseMaintModal = document.getElementById('btn-close-maint-modal');
     const btnCloseMaintBottom = document.getElementById('btn-close-maint-modal-bottom');
     const btnAddMaintRecord = document.getElementById('btn-add-maint-record');
+    const btnCancelMaintEdit = document.getElementById('btn-cancel-maint-edit');
+    const maintInputCost = document.getElementById('maint-input-cost');
+    const maintInputDesc = document.getElementById('maint-input-desc');
 
-    if (btnCloseMaintModal) btnCloseMaintModal.addEventListener('click', () => modalMaintLog?.classList.add('hidden'));
-    if (btnCloseMaintBottom) btnCloseMaintBottom.addEventListener('click', () => modalMaintLog?.classList.add('hidden'));
+    const closeMaintenanceModal = () => {
+        setMaintEditMode(null, true);
+        modalMaintLog?.classList.add('hidden');
+    };
+    if (btnCloseMaintModal) btnCloseMaintModal.addEventListener('click', closeMaintenanceModal);
+    if (btnCloseMaintBottom) btnCloseMaintBottom.addEventListener('click', closeMaintenanceModal);
     if (btnAddMaintRecord) btnAddMaintRecord.addEventListener('click', addMaintenanceRecord);
+    if (btnCancelMaintEdit) {
+        btnCancelMaintEdit.addEventListener('click', () => {
+            setMaintEditMode(null, true);
+            if (currentMaintDeviceIndex !== null && thietBiList[currentMaintDeviceIndex]) {
+                renderMaintenanceLogsList(thietBiList[currentMaintDeviceIndex]);
+            }
+        });
+    }
+    if (maintInputCost) {
+        maintInputCost.addEventListener('blur', () => {
+            const digits = maintInputCost.value.replace(/[^0-9]/g, '');
+            maintInputCost.value = digits ? new Intl.NumberFormat('vi-VN').format(Number(digits)) : '';
+        });
+    }
+    if (maintInputDesc) {
+        maintInputDesc.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addMaintenanceRecord();
+            }
+        });
+    }
     if (modalMaintLog) {
         modalMaintLog.addEventListener('click', (e) => {
-            if (e.target === modalMaintLog) modalMaintLog.classList.add('hidden');
+            if (e.target === modalMaintLog) closeMaintenanceModal();
         });
     }
 
@@ -8277,13 +8494,25 @@ async function startApp() {
     function parseEmployeeBirthDate(dateValue) {
         if (!dateValue) return '';
         const yearOnly = dateValue.match(/^(\d{4})$/);
+        const dayMonthOnly = dateValue.match(/^(\d{1,2})\/(\d{1,2})$/);
         const dateParts = dateValue.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        const year = Number(yearOnly?.[1] || dateParts?.[3]);
-        const currentYear = new Date().getFullYear();
-        if (!yearOnly && !dateParts) {
-            showToast('Ngày sinh chưa đúng định dạng', 'Vui lòng nhập dd/mm/yyyy hoặc chỉ năm sinh yyyy.', 'error');
+        if (!yearOnly && !dayMonthOnly && !dateParts) {
+            showToast('Ngày sinh chưa đúng định dạng', 'Vui lòng nhập dd/mm/yyyy, dd/mm hoặc chỉ năm sinh yyyy.', 'error');
             return null;
         }
+        const currentYear = new Date().getFullYear();
+        if (dayMonthOnly) {
+            const day = Number(dayMonthOnly[1]);
+            const month = Number(dayMonthOnly[2]);
+            // Validate against leap year 2000 so 29/02 is permitted while invalid dates (e.g. 30/02, 31/04) are rejected
+            const checkDate = new Date(2000, month - 1, day);
+            if (month < 1 || month > 12 || day < 1 || checkDate.getMonth() !== month - 1 || checkDate.getDate() !== day) {
+                showToast('Ngày sinh không hợp lệ', 'Vui lòng kiểm tra lại ngày và tháng sinh.', 'error');
+                return null;
+            }
+            return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}`;
+        }
+        const year = Number(yearOnly?.[1] || dateParts?.[3]);
         if (year < 1900 || year > currentYear) {
             showToast('Năm sinh không hợp lệ', `Vui lòng nhập năm từ 1900 đến ${currentYear}.`, 'error');
             return null;

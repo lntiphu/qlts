@@ -19,7 +19,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=30.0">
+    <link rel="stylesheet" href="style.css?v=33.0">
     <style>
         .troubleshoot-wrapper {
             background: linear-gradient(145deg, #15181c 0%, #101215 100%);
@@ -643,7 +643,7 @@
                                     </div>
                                     <div class="form-group col-span-2-lg">
                                         <label for="user-birth-date">Ngày sinh</label>
-                                        <input type="text" id="user-birth-date" placeholder="dd/mm/yyyy hoặc yyyy" maxlength="10" inputmode="numeric" style="width: 100%; box-sizing: border-box;">
+                                        <input type="text" id="user-birth-date" placeholder="dd/mm/yyyy, dd/mm hoặc yyyy" maxlength="10" inputmode="numeric" style="width: 100%; box-sizing: border-box;">
                                     </div>
                                     <div class="form-group col-span-2-lg">
                                         <label for="user-element">Element</label>
@@ -2122,22 +2122,43 @@
 
     <!-- Modal Lịch Sử Cập Nhật Chi Tiết -->
     <div id="history-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class="fa-solid fa-clock-rotate-left"></i> Lịch Sử Cập Nhật Chi Tiết</h3>
-                <button class="modal-close" id="btn-close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="device-summary">
-                    <p><strong>Nhân sự:</strong> <span id="hist-user">—</span></p>
-                    <p><strong>Thiết bị:</strong> <span id="hist-device">—</span></p>
+        <div class="modal-content hist-modal-content">
+            <div class="modal-header hist-modal-header">
+                <div class="hist-modal-title-group">
+                    <div class="hist-modal-icon-chip">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div class="hist-modal-title-text">
+                        <h3>Lịch Sử Cập Nhật Chi Tiết</h3>
+                        <p class="hist-modal-subtitle">Nhật ký thay đổi thông tin nhân sự, cấp phát thiết bị và bảo trì</p>
+                    </div>
                 </div>
-                <div class="timeline" id="hist-timeline">
+                <button type="button" class="modal-close hist-modal-close" id="btn-close-modal" aria-label="Đóng">&times;</button>
+            </div>
+            <div class="modal-body hist-modal-body dash-scroll-thin">
+                <div class="hist-hero-card">
+                    <div class="hist-hero-meta">
+                        <div class="hist-hero-row">
+                            <span class="hist-hero-pill is-user"><i class="fa-solid fa-user"></i> Nhân sự</span>
+                            <span class="hist-hero-val" id="hist-user">—</span>
+                        </div>
+                        <div class="hist-hero-row">
+                            <span class="hist-hero-pill is-device"><i class="fa-solid fa-computer"></i> Thiết bị</span>
+                            <span class="hist-hero-val" id="hist-device">—</span>
+                        </div>
+                    </div>
+                    <div class="hist-stat-box">
+                        <span class="hist-stat-label">Số sự kiện</span>
+                        <span class="hist-stat-value" id="hist-total-count">0 lượt</span>
+                    </div>
+                </div>
+                <div class="timeline hist-timeline-list" id="hist-timeline">
                     <!-- Dynamic timeline entries -->
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="btn-footer-close-modal">Đóng</button>
+            <div class="modal-footer hist-modal-footer">
+                <span class="hist-footer-note"><i class="fa-solid fa-arrow-down-wide-short"></i> Sự kiện mới nhất hiển thị trên cùng</span>
+                <button type="button" class="btn btn-secondary hist-btn-close" id="btn-footer-close-modal">Đóng</button>
             </div>
         </div>
     </div>
@@ -2924,79 +2945,111 @@
 
     <!-- Modal Sổ Nhật Ký Bảo Trì & Nâng Cấp Thiết Bị -->
     <div id="modal-maintenance-log" class="backup-modal hidden">
-        <div class="backup-modal-content" style="max-width: 680px; width: 94%;">
-            <div class="backup-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 12px; margin-bottom: 14px;">
-                <h3 class="backup-modal-title" style="margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; color: var(--primary-color);">
-                    <i class="fa-solid fa-screwdriver-wrench"></i> Nhật Ký Bảo Trì & Nâng Cấp Thiết Bị
-                </h3>
-                <button type="button" class="backup-modal-close" id="btn-close-maint-modal" style="background: none; border: none; color: var(--text-secondary); font-size: 22px; cursor: pointer; line-height: 1; margin: 0; padding: 0;">&times;</button>
+        <div class="backup-modal-content maint-modal-content">
+            <div class="backup-modal-header maint-modal-header">
+                <div class="maint-modal-title-group">
+                    <div class="maint-modal-icon-chip">
+                        <i class="fa-solid fa-screwdriver-wrench"></i>
+                    </div>
+                    <div class="maint-modal-title-text">
+                        <h3 class="backup-modal-title maint-modal-title">Nhật Ký Bảo Trì &amp; Nâng Cấp Thiết Bị</h3>
+                        <p class="maint-modal-subtitle">Theo dõi sửa chữa, thay thế linh kiện và tổng chi phí vận hành</p>
+                    </div>
+                </div>
+                <button type="button" class="backup-modal-close maint-modal-close" id="btn-close-maint-modal" aria-label="Đóng">&times;</button>
             </div>
 
-            <div class="backup-modal-body" style="display: flex; flex-direction: column; gap: 16px; padding: 0; max-height: 70vh; overflow-y: auto;">
-                <div style="background: rgba(37, 51, 141, 0.15); border: 1px solid rgba(43, 57, 144, 0.4); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <div>
-                        <div style="font-weight: 700; color: #f8fafc; font-size: 14px;" id="maint-device-title">Asus Core i5 - NV001</div>
-                        <div style="font-size: 12px; color: var(--text-secondary);" id="maint-device-config">RAM: 16GB | SSD: 256GB</div>
+            <div class="backup-modal-body maint-modal-body dash-scroll-thin">
+                <!-- Device Hero Summary -->
+                <div class="maint-hero-card">
+                    <div class="maint-hero-info">
+                        <div class="maint-hero-device-row">
+                            <span class="maint-hero-badge"><i class="fa-solid fa-computer"></i> Thiết bị</span>
+                            <div class="maint-hero-title" id="maint-device-title">Asus Core i5 - NV001</div>
+                        </div>
+                        <div class="maint-spec-pills" id="maint-device-config"></div>
                     </div>
-                    <div style="text-align: right;">
-                        <span style="font-size: 11px; color: var(--text-secondary); display: block;">Tổng chi phí bảo trì:</span>
-                        <span id="maint-total-cost" style="font-size: 15px; font-weight: 800; color: var(--brand-green);">0 VNĐ</span>
+                    <div class="maint-hero-stats">
+                        <div class="maint-stat-box is-count">
+                            <span class="maint-stat-label">Lượt ghi nhận</span>
+                            <span class="maint-stat-value" id="maint-record-count">0 lượt</span>
+                        </div>
+                        <div class="maint-stat-box is-cost">
+                            <span class="maint-stat-label">Tổng chi phí</span>
+                            <span class="maint-stat-value" id="maint-total-cost">0 VNĐ</span>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Form Thêm Lượt Bảo Trì Mới -->
-                <div id="maint-form-add-box" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px;">
-                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-plus-circle" style="color: var(--brand-green);"></i> Ghi nhận lượt bảo trì / nâng cấp mới
-                    </h4>
-                    <div class="grid grid-col-6" style="gap: 10px;">
-                        <div class="form-group col-span-2-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Loại công việc (*)</label>
-                            <select id="maint-input-type" class="form-input" style="padding: 6px 10px; font-size: 12px;">
+                <div id="maint-form-add-box" class="maint-form-card">
+                    <div class="maint-section-head">
+                        <div class="maint-section-title">
+                            <span class="maint-section-icon is-add" id="maint-form-icon"><i class="fa-solid fa-plus"></i></span>
+                            <span id="maint-form-title-text">Ghi nhận lượt bảo trì / nâng cấp mới</span>
+                        </div>
+                        <span class="maint-section-hint" id="maint-form-hint-pill">(*) Bắt buộc nhập</span>
+                    </div>
+                    <div class="maint-form-grid">
+                        <div class="form-group maint-col-2">
+                            <label for="maint-input-type">Loại công việc (*)</label>
+                            <select id="maint-input-type" class="form-input">
                                 <option value="Nâng cấp RAM / SSD">Nâng cấp RAM / SSD</option>
                                 <option value="Sửa chữa phần cứng">Sửa chữa phần cứng</option>
+                                <option value="Thay thế phần cứng">Thay thế phần cứng</option>
                                 <option value="Thay thế Pin / Sạc / Phím">Thay thế Pin / Sạc / Phím</option>
                                 <option value="Cài lại Win / Vệ sinh máy">Cài lại Win / Vệ sinh máy</option>
                                 <option value="Bảo hành chính hãng">Bảo hành chính hãng</option>
                             </select>
                         </div>
-                        <div class="form-group col-span-2-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Ngày thực hiện (*)</label>
-                            <input type="text" id="maint-input-date" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" style="padding: 6px 10px; font-size: 12px;">
+                        <div class="form-group maint-col-2">
+                            <label for="maint-input-date">Ngày thực hiện (*)</label>
+                            <input type="text" id="maint-input-date" class="form-input" placeholder="dd/mm/yyyy" maxlength="10" inputmode="numeric">
                         </div>
-                        <div class="form-group col-span-2-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Chi phí (VNĐ)</label>
-                            <input type="text" id="maint-input-cost" class="form-input" placeholder="VD: 850,000" style="padding: 6px 10px; font-size: 12px;">
+                        <div class="form-group maint-col-2">
+                            <label for="maint-input-cost">Chi phí (VNĐ)</label>
+                            <div class="maint-cost-input-wrap">
+                                <input type="text" id="maint-input-cost" class="form-input" placeholder="VD: 850,000" inputmode="numeric">
+                                <span class="maint-cost-unit">đ</span>
+                            </div>
                         </div>
-                        <div class="form-group col-span-3-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Đơn vị thực hiện</label>
-                            <input type="text" id="maint-input-provider" class="form-input" placeholder="VD: IT Nội bộ / Phong Vũ..." style="padding: 6px 10px; font-size: 12px;">
+                        <div class="form-group maint-col-2">
+                            <label for="maint-input-provider">Đơn vị thực hiện</label>
+                            <input type="text" id="maint-input-provider" class="form-input" placeholder="VD: IT Nội bộ / Phong Vũ...">
                         </div>
-                        <div class="form-group col-span-3-lg">
-                            <label style="font-size: 11px; margin-bottom: 2px;">Chi tiết nội dung sửa chữa</label>
-                            <input type="text" id="maint-input-desc" class="form-input" placeholder="VD: Nâng thêm thanh RAM 8GB Kingston..." style="padding: 6px 10px; font-size: 12px;">
+                        <div class="form-group maint-col-4">
+                            <label for="maint-input-desc">Chi tiết nội dung sửa chữa (*)</label>
+                            <input type="text" id="maint-input-desc" class="form-input" placeholder="VD: Nâng thêm thanh RAM 8GB Kingston hoặc thay màn hình...">
                         </div>
                     </div>
-                    <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
-                        <button type="button" id="btn-add-maint-record" class="btn btn-primary" style="padding: 6px 16px; font-size: 12px;">
-                            <i class="fa-solid fa-plus"></i> Lưu Lượt Bảo Trì
+                    <div class="maint-form-actions">
+                        <button type="button" id="btn-cancel-maint-edit" class="btn btn-secondary maint-btn-cancel-edit hidden">
+                            <i class="fa-solid fa-xmark"></i> Hủy sửa
+                        </button>
+                        <button type="button" id="btn-add-maint-record" class="btn btn-primary maint-btn-save">
+                            <i class="fa-solid fa-floppy-disk"></i> Lưu Lượt Bảo Trì
                         </button>
                     </div>
                 </div>
 
                 <!-- Danh Sách Lịch Sử Bảo Trì -->
-                <div>
-                    <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0 0 10px 0; display: flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử các lần bảo trì đã ghi nhận:
-                    </h4>
-                    <div id="maint-records-list" style="display: flex; flex-direction: column; gap: 8px;">
+                <div class="maint-history-section">
+                    <div class="maint-section-head">
+                        <div class="maint-section-title">
+                            <span class="maint-section-icon is-history"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                            <span>Lịch sử các lần bảo trì đã ghi nhận</span>
+                        </div>
+                        <span class="maint-order-pill">Mới nhất lên đầu</span>
+                    </div>
+                    <div id="maint-records-list" class="maint-timeline-list">
                         <!-- JS nạp timeline bảo trì -->
                     </div>
                 </div>
             </div>
 
-            <div class="backup-modal-footer" style="display: flex; justify-content: flex-end; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 12px; margin-top: 14px;">
-                <button type="button" class="btn btn-secondary" id="btn-close-maint-modal-bottom">Đóng</button>
+            <div class="backup-modal-footer maint-modal-footer">
+                <span class="maint-footer-note"><i class="fa-solid fa-circle-check"></i> Dữ liệu tự động lưu vào hồ sơ thiết bị</span>
+                <button type="button" class="btn btn-secondary maint-btn-close" id="btn-close-maint-modal-bottom">Đóng</button>
             </div>
         </div>
     </div>
@@ -3067,6 +3120,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="qrcode-gen.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=56"></script>
+    <script src="app.js?v=60"></script>
 </body>
 </html>
