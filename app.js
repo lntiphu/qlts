@@ -2660,58 +2660,17 @@ async function startApp() {
                 statusBadgeHtml = `<span class="user-recent-pill is-updated" title="Mới cập nhật thông tin trong 7 ngày gần đây"><i class="fa-solid fa-rotate"></i> Mới cập nhật</span>`;
             }
 
-            const getStatusBadgeClass = (status) => {
+            const getDeviceStatusVariant = (status) => {
                 switch (status) {
-                    case 'Mới': return 'badge-green';
-                    case 'Trung bình': return 'badge-blue';
-                    case 'Cũ': return 'badge-yellow';
-                    case 'Xem xét thay thế': return 'badge-danger';
-                    default: return '';
+                    case 'Mới': return 'is-new';
+                    case 'Trung bình': return 'is-avg';
+                    case 'Cũ': return 'is-old';
+                    case 'Xem xét thay thế': return 'is-replace';
+                    default: return 'is-neutral';
                 }
             };
 
             const allAssignedDevices = getAssignedDevices(displayItem);
-            const formatAssignedDeviceConfig = (device, deviceIndex) => {
-                const details = [];
-                if (device.devType) details.push(`<div><strong>Loại:</strong> ${device.devType}</div>`);
-                if (device.devMain) details.push(`<div><strong>Main:</strong> ${device.devMain}</div>`);
-                if (device.devCpu) details.push(`<div><strong>CPU:</strong> ${device.devCpu}</div>`);
-                if (device.devRam) {
-                    const ramInfo = device.devRamSlots ? `${device.devRam} (${device.devRamSlots})` : device.devRam;
-                    details.push(`<div><strong>RAM:</strong> ${ramInfo}</div>`);
-                }
-                if (device.devSsd || device.devSsd2) details.push(`<div><strong>SSD:</strong> ${[device.devSsd, device.devSsd2].filter(Boolean).join(' + ')}</div>`);
-                if (device.devHdd || device.devHdd2) details.push(`<div><strong>HDD:</strong> ${[device.devHdd, device.devHdd2].filter(Boolean).join(' + ')}</div>`);
-                if (device.devVga) details.push(`<div><strong>VGA:</strong> ${device.devVga}</div>`);
-                if (device.devSn) details.push(`<div><strong>S/N thiết bị:</strong> ${device.devSn}</div>`);
-                if (device.devMonitor || device.devMonitor2) details.push(`<div><strong>Màn hình:</strong> ${[device.devMonitor, device.devMonitor2].filter(Boolean).join(' | ')}</div>`);
-                if (device.devMonitorSn || device.devMonitorSn2) details.push(`<div><strong>S/N màn hình:</strong> ${[device.devMonitorSn, device.devMonitorSn2].filter(Boolean).join(' | ')}</div>`);
-                if (device.devKeyboard) {
-                    const keyboard = (device.devKeyboard === true || device.devKeyboard === 'true') ? 'Bàn phím có dây' : device.devKeyboard;
-                    details.push(`<div><strong>Bàn phím:</strong> ${keyboard}</div>`);
-                }
-                if (device.devMouse) details.push(`<div><strong>Chuột:</strong> ${device.devMouse}</div>`);
-                if (device.devUps) details.push(`<div><strong>UPS:</strong> ${device.devUps}</div>`);
-                if (device.devExtraDevices) details.push(`<div><strong>Thiết bị rời:</strong> ${device.devExtraDevices}</div>`);
-                if (device.devCables) details.push(`<div><strong>Dây kết nối:</strong> ${device.devCables}</div>`);
-                const statusVal = device.devStatus || (deviceIndex === 0 ? displayItem.devStatus : '');
-                const statusBadge = statusVal && !['Thiết bị cá nhân', 'Cá nhân', 'Không cấp'].includes(statusVal)
-                    ? `<span class="badge ${getStatusBadgeClass(statusVal)}" style="font-size: 10.5px; padding: 2px 7px;">${statusVal}</span>`
-                    : '';
-                const idBadge = device.devId
-                    ? `<span class="badge badge-green" style="font-size: 11px; padding: 2px 7px;" title="ID Thiết bị">${device.devId}</span>`
-                    : '';
-                return `<div class="assigned-device-config" style="padding: 8px 10px; margin-bottom: 7px; border: 1px solid rgba(148,163,184,.22); border-radius: 8px; background: rgba(15,23,42,.28);">
-                    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; margin-bottom: 5px; padding-bottom: 4px; border-bottom: 1px dashed rgba(148,163,184,.14);">
-                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                            <span style="color: var(--primary-color); font-weight: 700;">Thiết bị ${deviceIndex + 1}</span>
-                            ${idBadge}
-                        </div>
-                        ${statusBadge}
-                    </div>
-                    ${details.length ? details.join('') : '<div>Chưa nhập cấu hình</div>'}
-                </div>`;
-            };
             const populatedAssignedDevices = allAssignedDevices.filter(device => device && (
                 device.hasDevice === true || [
                     device.devId, device.devType, device.devSn, device.devMain, device.devCpu,
@@ -2720,17 +2679,133 @@ async function startApp() {
                     device.devMouse, device.devUps, device.devExtraDevices, device.devCables
                 ].some(value => String(value || '').trim() !== '')
             ));
-            const allocationDisplayHtml = item.userDisabled ? '<span class="text-muted" style="font-style: italic;">—</span>' : (
-                (displayItem.devAllocation === 'personal' || ['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus)) && !populatedAssignedDevices.length
-                    ? '<span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); font-weight: 600; display: inline-flex; align-items: center; gap: 4px;"><i class="fa-solid fa-laptop-code"></i> Cá nhân</span>'
+
+            const totalAssignedCount = populatedAssignedDevices.length;
+            const isCompactDeviceLayout = totalAssignedCount >= 2;
+
+            const formatAssignedDeviceConfig = (device, deviceIndex) => {
+                const rawType = String(device.devType || '').trim();
+                const typeLower = rawType.toLowerCase();
+                const isLaptopType = typeLower.includes('laptop') || typeLower.includes('macbook') || typeLower.includes('notebook');
+                const deviceIconClass = isLaptopType ? 'fa-laptop' : 'fa-desktop';
+
+                const coreSpecs = [];
+                const pushCoreSpec = (label, rawVal) => {
+                    const text = String(rawVal || '').trim();
+                    if (!text) return;
+                    const isWide = text.length > 24;
+                    coreSpecs.push(`
+                        <div class="device-spec-item${isWide ? ' is-wide' : ''}">
+                            <span class="device-spec-label">${label}</span>
+                            <span class="device-spec-val">${escapeHtml(text)}</span>
+                        </div>
+                    `);
+                };
+
+                pushCoreSpec('Loại', rawType);
+                pushCoreSpec('CPU', device.devCpu);
+                pushCoreSpec('Main', device.devMain);
+                if (device.devRam) {
+                    const ramInfo = device.devRamSlots ? `${device.devRam} (${device.devRamSlots})` : device.devRam;
+                    pushCoreSpec('RAM', ramInfo);
+                }
+                if (device.devSsd || device.devSsd2) {
+                    pushCoreSpec('SSD', [device.devSsd, device.devSsd2].filter(Boolean).join(' + '));
+                }
+                if (device.devHdd || device.devHdd2) {
+                    pushCoreSpec('HDD', [device.devHdd, device.devHdd2].filter(Boolean).join(' + '));
+                }
+                pushCoreSpec('VGA', device.devVga);
+                pushCoreSpec('S/N', device.devSn);
+
+                const periphChips = [];
+                const pushPeriphChip = (iconClass, label, rawVal) => {
+                    const text = String(rawVal || '').trim();
+                    if (!text) return;
+                    periphChips.push(`
+                        <span class="device-periph-chip" title="${label}: ${escapeHtml(text)}">
+                            <i class="${iconClass}" aria-hidden="true"></i>
+                            <span class="device-periph-label">${label}:</span>
+                            <span class="device-periph-val">${escapeHtml(text)}</span>
+                        </span>
+                    `);
+                };
+
+                if (device.devMonitor || device.devMonitor2) {
+                    pushPeriphChip('fa-solid fa-display', 'Màn hình', [device.devMonitor, device.devMonitor2].filter(Boolean).join(' | '));
+                }
+                if (device.devMonitorSn || device.devMonitorSn2) {
+                    pushPeriphChip('fa-solid fa-barcode', 'S/N màn', [device.devMonitorSn, device.devMonitorSn2].filter(Boolean).join(' | '));
+                }
+                if (device.devKeyboard) {
+                    const keyboard = (device.devKeyboard === true || device.devKeyboard === 'true') ? 'Bàn phím có dây' : device.devKeyboard;
+                    pushPeriphChip('fa-regular fa-keyboard', 'Phím', keyboard);
+                }
+                pushPeriphChip('fa-solid fa-computer-mouse', 'Chuột', device.devMouse);
+                pushPeriphChip('fa-solid fa-car-battery', 'UPS', device.devUps);
+                pushPeriphChip('fa-solid fa-plug', 'Dây', device.devCables);
+                pushPeriphChip('fa-solid fa-cubes', 'Thiết bị rời', device.devExtraDevices);
+
+                const statusVal = device.devStatus || (deviceIndex === 0 ? displayItem.devStatus : '');
+                const statusBadge = statusVal && !['Thiết bị cá nhân', 'Cá nhân', 'Không cấp'].includes(statusVal)
+                    ? `<span class="device-status-pill ${getDeviceStatusVariant(statusVal)}"><span class="device-status-dot"></span>${escapeHtml(statusVal)}</span>`
+                    : '';
+                const idBadge = device.devId
+                    ? `<span class="device-id-pill" title="ID Thiết bị">${escapeHtml(device.devId)}</span>`
+                    : '';
+
+                const bodyHtml = coreSpecs.length || periphChips.length
+                    ? `
+                        ${coreSpecs.length ? `<div class="device-spec-panel">${coreSpecs.join('')}</div>` : ''}
+                        ${periphChips.length ? `<div class="device-periph-row">${periphChips.join('')}</div>` : ''}
+                    `
+                    : `<div class="device-spec-empty">Chưa nhập cấu hình chi tiết</div>`;
+
+                return `
+                    <div class="device-card ${isCompactDeviceLayout ? 'is-compact' : 'is-single'}">
+                        <div class="device-card-head">
+                            <div class="device-head-left">
+                                <span class="device-type-icon ${isLaptopType ? 'is-laptop' : 'is-pc'}" aria-hidden="true">
+                                    <i class="fa-solid ${deviceIconClass}"></i>
+                                </span>
+                                <span class="device-title">Thiết bị ${deviceIndex + 1}</span>
+                                ${idBadge}
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        ${bodyHtml}
+                    </div>
+                `;
+            };
+
+            const buildEmptyDeviceCard = (variantClass, iconClass, badgeText, subtitleText) => `
+                <div class="device-cards-wrap count-empty">
+                    <div class="device-empty-card ${variantClass}">
+                        <div class="device-empty-icon" aria-hidden="true"><i class="${iconClass}"></i></div>
+                        <span class="device-empty-pill">${badgeText}</span>
+                        <div class="device-empty-sub">${subtitleText}</div>
+                    </div>
+                </div>
+            `;
+
+            const allocationDisplayHtml = item.userDisabled
+                ? buildEmptyDeviceCard('is-offboarded', 'fa-solid fa-user-lock', 'Đã ngưng cấp phát', 'Tài khoản nhân sự đang ở trạng thái Offline')
+                : (displayItem.devAllocation === 'personal' || ['Thiết bị cá nhân', 'Cá nhân'].includes(displayItem.devStatus)) && !populatedAssignedDevices.length
+                    ? buildEmptyDeviceCard('is-personal', 'fa-solid fa-laptop-code', 'Thiết bị cá nhân', 'Nhân sự tự trang bị thiết bị làm việc')
                     : (displayItem.devAllocation === 'no' || displayItem.devStatus === 'Không cấp') && !populatedAssignedDevices.length
-                        ? '<span class="badge badge-secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-ban"></i> Không cấp</span>'
-                        : '<span class="text-muted" style="font-style: italic;">Chưa cấp phát</span>'
-            );
+                        ? buildEmptyDeviceCard('is-no-device', 'fa-solid fa-ban', 'Không cấp thiết bị', 'Vị trí không thuộc diện cấp phát thiết bị')
+                        : buildEmptyDeviceCard('is-unassigned', 'fa-solid fa-box-open', 'Chưa cấp phát', 'Chưa có thiết bị hệ thống được gán');
+
+            const countLayoutClass = totalAssignedCount === 1
+                ? 'count-1'
+                : totalAssignedCount === 2
+                    ? 'count-2'
+                    : 'count-multi';
+
             const mergedDeviceAndConfigHtml = item.userDisabled
-                ? '<span class="text-muted" style="font-style: italic;">—</span>'
-                : populatedAssignedDevices.length
-                    ? populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')
+                ? allocationDisplayHtml
+                : totalAssignedCount > 0
+                    ? `<div class="device-cards-wrap ${countLayoutClass}">${populatedAssignedDevices.map((device, index) => formatAssignedDeviceConfig(device, index)).join('')}</div>`
                     : allocationDisplayHtml;
 
             const troubleshootPairs = formatTroubleshootForDisplay(displayItem.devIssueDesc, displayItem.devIssueFix);
@@ -2851,10 +2926,12 @@ async function startApp() {
                 userTagPills.push(`<span class="user-tag-pill is-dob" title="Ngày sinh"><i class="fa-solid fa-cake-candles"></i> ${escapeHtml(dobDisplay)}</span>`);
             }
             if (item.userHireDate) {
-                userTagPills.push(`<span class="user-tag-pill is-info" title="Ngày nhận việc"><i class="fa-regular fa-calendar-check"></i> Nhận việc: ${escapeHtml(formatDateDMY(item.userHireDate))}</span>`);
+                const hireFormatted = formatDateDMY(item.userHireDate);
+                userTagPills.push(`<span class="user-tag-pill is-hire" title="Ngày nhận việc: ${escapeHtml(hireFormatted)}"><i class="fa-regular fa-calendar-check"></i> ${escapeHtml(hireFormatted)}</span>`);
             }
             if (item.userDisabled && item.userResignationDate) {
-                userTagPills.push(`<span class="user-tag-pill is-danger" title="Ngày nghỉ việc"><i class="fa-regular fa-calendar-xmark"></i> Nghỉ việc: ${escapeHtml(formatDateDMY(item.userResignationDate))}</span>`);
+                const resignFormatted = formatDateDMY(item.userResignationDate);
+                userTagPills.push(`<span class="user-tag-pill is-danger" title="Ngày nghỉ việc: ${escapeHtml(resignFormatted)}"><i class="fa-regular fa-calendar-xmark"></i> ${escapeHtml(resignFormatted)}</span>`);
             }
 
             const onlineStatusHtml = item.userDisabled
@@ -2899,7 +2976,7 @@ async function startApp() {
                         <div class="user-tags-row">${userTagPills.join('')}</div>
                     </div>
                 </td>
-                <td style="min-width: 240px; max-width: 320px; font-size: 13px;">
+                <td class="device-col-cell">
                     ${mergedDeviceAndConfigHtml}
                 </td>
                 <td>
