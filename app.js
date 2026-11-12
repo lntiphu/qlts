@@ -1985,7 +1985,6 @@ async function startApp() {
         // 2. Department User Distribution Breakdown
         const elDeptList = document.getElementById('dash-dept-list');
         const elDeptCount = document.getElementById('dash-dept-count');
-        const elDeptRatioSummary = document.getElementById('dash-dept-ratio-summary');
 
         if (elDeptList) {
             elDeptList.innerHTML = '';
@@ -2006,62 +2005,16 @@ async function startApp() {
             const sortedDepts = Object.keys(deptStats).sort((a, b) => deptStats[b].total - deptStats[a].total);
             if (elDeptCount) elDeptCount.innerText = `${sortedDepts.length} phòng ban`;
 
-            if (elDeptRatioSummary) {
-                if (totalUsers > 0) {
-                    const overallActivePct = Math.round((onlineUsers / totalUsers) * 100);
-                    const overallDisabledPct = 100 - overallActivePct;
-                    elDeptRatioSummary.style.display = 'block';
-                    elDeptRatioSummary.innerHTML = `
-                        <div style="padding: 8px 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 8px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 6px; gap: 8px; flex-wrap: wrap;">
-                                <span id="dash-dept-summary-active" style="color: #7bca0f; font-weight: 600; cursor: pointer;" title="Click để lọc toàn bộ nhân sự đang hoạt động">
-                                    🟢 Đang hoạt động: ${onlineUsers} (${overallActivePct}%)
-                                </span>
-                                <span id="dash-dept-summary-disabled" style="color: #ef4444; font-weight: 600; cursor: pointer;" title="Click để lọc toàn bộ nhân sự đã nghỉ việc">
-                                    🔴 Đã nghỉ việc: ${offlineUsers} (${overallDisabledPct}%)
-                                </span>
-                            </div>
-                            <div style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; display: flex;">
-                                <div style="width: ${overallActivePct}%; height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--primary-color)); transition: width 0.5s ease;" title="Đang hoạt động: ${onlineUsers} (${overallActivePct}%)"></div>
-                                <div style="width: ${overallDisabledPct}%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.5s ease;" title="Đã nghỉ việc: ${offlineUsers} (${overallDisabledPct}%)"></div>
-                            </div>
-                        </div>
-                    `;
-
-                    const btnSumActive = document.getElementById('dash-dept-summary-active');
-                    if (btnSumActive) {
-                        btnSumActive.onclick = () => {
-                            switchToTab('tab-cap-phat-list');
-                            const filterDept = document.getElementById('filter-dept-thietbi');
-                            const filterStatus = document.getElementById('filter-status-thietbi');
-                            if (filterDept) filterDept.value = '';
-                            if (filterStatus) filterStatus.value = 'active';
-                            currentPageThietBi = 1;
-                            renderThietBi();
-                        };
-                    }
-                    const btnSumDisabled = document.getElementById('dash-dept-summary-disabled');
-                    if (btnSumDisabled) {
-                        btnSumDisabled.onclick = () => {
-                            switchToTab('tab-cap-phat-list');
-                            const filterDept = document.getElementById('filter-dept-thietbi');
-                            const filterStatus = document.getElementById('filter-status-thietbi');
-                            if (filterDept) filterDept.value = '';
-                            if (filterStatus) filterStatus.value = 'disabled';
-                            currentPageThietBi = 1;
-                            renderThietBi();
-                        };
-                    }
-                } else {
-                    elDeptRatioSummary.style.display = 'none';
-                }
-            }
-
             if (sortedDepts.length === 0) {
-                elDeptList.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Chưa có dữ liệu phòng ban</div>';
+                elDeptList.innerHTML = `
+                    <div class="dept-dist-empty">
+                        <i class="fa-regular fa-folder-open"></i>
+                        <span>Chưa có dữ liệu phòng ban</span>
+                    </div>
+                `;
             } else {
                 const maxDeptUser = Math.max(...sortedDepts.map(d => deptStats[d].total)) || 1;
-                sortedDepts.forEach(dept => {
+                sortedDepts.forEach((dept, idx) => {
                     const stats = deptStats[dept];
                     const count = stats.total;
                     const activeCount = stats.active;
@@ -2071,12 +2024,13 @@ async function startApp() {
 
                     const activeBarWidth = ((activeCount / maxDeptUser) * 100).toFixed(1);
                     const disabledBarWidth = ((disabledCount / maxDeptUser) * 100).toFixed(1);
+                    const rankClass = idx < 3 ? ` rank-${idx + 1}` : '';
+                    const rankLabel = String(idx + 1).padStart(2, '0');
+                    const safeDept = escapeHtml(dept);
 
                     const div = document.createElement('div');
-                    div.style.cssText = 'display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 5px 6px; border-radius: 6px; transition: background 0.2s ease;';
+                    div.className = 'dept-dist-item';
                     div.title = `${dept}: ${count} nhân sự — Đang hoạt động: ${activeCount} (${activePct}%) | Đã nghỉ việc: ${disabledCount} (${disabledPct}%)`;
-                    div.onmouseenter = () => { div.style.background = 'rgba(255, 255, 255, 0.05)'; };
-                    div.onmouseleave = () => { div.style.background = 'transparent'; };
 
                     div.onclick = (e) => {
                         const statusTarget = e.target.closest('[data-status-filter]');
@@ -2093,22 +2047,37 @@ async function startApp() {
                         renderThietBi();
                     };
 
+                    const activeSegHtml = activeCount > 0
+                        ? `<div class="dept-bar-seg is-active" style="width: ${activeBarWidth}%;" title="Đang hoạt động: ${activeCount} (${activePct}%)"></div>`
+                        : '';
+                    const disabledSegHtml = disabledCount > 0
+                        ? `<div class="dept-bar-seg is-disabled" style="width: ${disabledBarWidth}%;" title="Đã nghỉ việc: ${disabledCount} (${disabledPct}%)"></div>`
+                        : '';
+
                     div.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; gap: 8px; flex-wrap: wrap;">
-                            <span style="color: var(--text-primary);"><i class="fa-solid fa-folder" style="color: var(--primary-color); margin-right: 6px;"></i>${dept}</span>
-                            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px;">
-                                <span data-status-filter="active" style="color: #7bca0f; font-weight: 600; background: rgba(123, 202, 15, 0.1); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(123, 202, 15, 0.25);" title="Đang hoạt động: ${activeCount} nhân sự (${activePct}%) - Click để lọc">
-                                    🟢 ${activeCount} (${activePct}%)
+                        <div class="dept-dist-row-top">
+                            <div class="dept-dist-name-wrap">
+                                <span class="dept-rank-badge${rankClass}">${rankLabel}</span>
+                                <span class="dept-dist-name">${safeDept}</span>
+                            </div>
+                            <div class="dept-dist-metrics">
+                                <span data-status-filter="active" class="dept-stat-pill ${activeCount > 0 ? 'is-active' : 'is-empty'}" title="Đang hoạt động: ${activeCount} nhân sự (${activePct}%) - Click để lọc">
+                                    <span class="dept-dot ${activeCount > 0 ? 'is-active' : 'is-muted'}"></span>
+                                    <span>${activeCount}</span>
+                                    <span class="dept-stat-pct">(${activePct}%)</span>
                                 </span>
-                                <span data-status-filter="disabled" style="color: ${disabledCount > 0 ? '#ef4444' : 'var(--text-secondary)'}; font-weight: 600; background: ${disabledCount > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.04)'}; padding: 1px 6px; border-radius: 4px; border: 1px solid ${disabledCount > 0 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.08)'}; opacity: ${disabledCount > 0 ? '1' : '0.6'};" title="Đã nghỉ việc: ${disabledCount} nhân sự (${disabledPct}%) - Click để lọc">
-                                    🔴 ${disabledCount} (${disabledPct}%)
+                                <span data-status-filter="disabled" class="dept-stat-pill ${disabledCount > 0 ? 'is-disabled' : 'is-empty'}" title="Đã nghỉ việc: ${disabledCount} nhân sự (${disabledPct}%) - Click để lọc">
+                                    <span class="dept-dot ${disabledCount > 0 ? 'is-disabled' : 'is-muted'}"></span>
+                                    <span>${disabledCount}</span>
+                                    <span class="dept-stat-pct">(${disabledPct}%)</span>
                                 </span>
-                                <span style="font-weight: 700; color: var(--primary-color); font-size: 13px; min-width: 66px; text-align: right;">${count} nhân sự</span>
+                                <span class="dept-total-count">${count} <span>nhân sự</span></span>
+                                <i class="fa-solid fa-chevron-right dept-row-arrow" aria-hidden="true"></i>
                             </div>
                         </div>
-                        <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; display: flex;">
-                            <div style="width: ${activeBarWidth}%; height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--primary-color)); transition: width 0.5s ease;" title="Đang hoạt động: ${activeCount} (${activePct}%)"></div>
-                            <div style="width: ${disabledBarWidth}%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.5s ease;" title="Đã nghỉ việc: ${disabledCount} (${disabledPct}%)"></div>
+                        <div class="dept-bar-track">
+                            ${activeSegHtml}
+                            ${disabledSegHtml}
                         </div>
                     `;
                     elDeptList.appendChild(div);
