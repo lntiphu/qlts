@@ -1233,12 +1233,29 @@ async function startApp() {
                 option.title = isDisabled ? 'Không thể thay đổi khi tài khoản Offline' : '';
             }
         });
+        const deviceCountSelect = document.getElementById('device-count');
+        const deviceCountRow = document.getElementById('device-count-row');
+        if (deviceCountSelect) {
+            deviceCountSelect.disabled = isDisabled;
+        }
+        if (deviceCountRow) {
+            deviceCountRow.classList.toggle('is-disabled', isDisabled);
+            deviceCountRow.title = isDisabled ? 'Không thể thay đổi số lượng thiết bị khi nhân sự đã nghỉ việc (Offline)' : '';
+        }
         if (resignationDateGroup) resignationDateGroup.style.display = isDisabled ? '' : 'none';
         if (deviceInfoSubsection) deviceInfoSubsection.style.display = showDeviceSections ? '' : 'none';
         if (troubleshootingSubsection) troubleshootingSubsection.style.display = showDeviceSections ? '' : 'none';
         if (depreciationSubsection) depreciationSubsection.style.display = showDeviceSections ? '' : 'none';
     };
-    userStatusSelect?.addEventListener('change', syncAccountStatusSections);
+    userStatusSelect?.addEventListener('change', () => {
+        syncAccountStatusSections();
+        if (typeof validateDuplicateDevice === 'function') {
+            validateDuplicateDevice(document.getElementById('edit-index-thiet-bi')?.value || '');
+        }
+        if (typeof validateDeviceSerial === 'function') {
+            validateDeviceSerial(document.getElementById('edit-index-thiet-bi')?.value || '');
+        }
+    });
     syncAccountStatusSections();
     const tbodyThietBi = document.getElementById('tbody-thiet-bi');
     const searchThietBi = document.getElementById('search-thiet-bi');
@@ -1370,8 +1387,9 @@ async function startApp() {
     }
 
     function validateDuplicateDevice(excludeIndex = "") {
+        const isUserDisabled = document.getElementById('user-status-select')?.value === 'disabled';
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
-        if (allocSelected && allocSelected.value === 'personal') {
+        if (isUserDisabled || (allocSelected && allocSelected.value === 'personal')) {
             const errDevId = document.getElementById('err-dev-id');
             if (errDevId) errDevId.style.display = 'none';
             if (devIdInput) devIdInput.style.borderColor = '';
@@ -2640,12 +2658,103 @@ async function startApp() {
                 keyWin: '', keyOffice: '', keyPdf: '', devices: [], deviceCount: 1
             } : item;
 
-            const keysArr = [];
-            if (displayItem.keyWin) keysArr.push(`<span class="key-badge" title="Key Windows">Win: ${displayItem.keyWin}</span>`);
-            if (displayItem.keyOffice) keysArr.push(`<span class="key-badge" title="Key Office">Office: ${displayItem.keyOffice}</span>`);
-            if (displayItem.keyPdf) keysArr.push(`<span class="key-badge" title="Key PDF">PDF: ${displayItem.keyPdf}</span>`);
-            if (displayItem.devApps) keysArr.push(`<span class="key-badge" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);" title="Phần mềm bản quyền khác">${displayItem.devApps}</span>`);
-            const keysText = item.userDisabled ? '—' : (keysArr.length > 0 ? keysArr.join(' ') : '—');
+            const licenseSlots = [
+                {
+                    key: 'win',
+                    label: 'Windows',
+                    icon: 'fa-brands fa-windows',
+                    emptyText: 'Chưa có key Windows',
+                    copyLabel: 'Key Windows',
+                    value: (displayItem.keyWin || '').trim(),
+                    isMono: true
+                },
+                {
+                    key: 'office',
+                    label: 'Office',
+                    icon: 'fa-solid fa-file-word',
+                    emptyText: 'Chưa có key Office',
+                    copyLabel: 'Key Office',
+                    value: (displayItem.keyOffice || '').trim(),
+                    isMono: true
+                },
+                {
+                    key: 'pdf',
+                    label: 'PDF',
+                    icon: 'fa-regular fa-file-pdf',
+                    emptyText: 'Chưa có key PDF',
+                    copyLabel: 'Key PDF',
+                    value: (displayItem.keyPdf || '').trim(),
+                    isMono: true
+                },
+                {
+                    key: 'apps',
+                    label: 'Phần mềm',
+                    icon: 'fa-solid fa-cubes',
+                    emptyText: 'Chưa có phần mềm khác',
+                    copyLabel: 'Phần mềm bản quyền',
+                    value: (displayItem.devApps || '').trim(),
+                    isMono: false
+                }
+            ];
+            const activeLicenseCount = licenseSlots.filter(slot => slot.value).length;
+            let licenseHtml = '';
+            if (item.userDisabled) {
+                licenseHtml = `
+                    <div class="license-cards-wrap">
+                        <div class="license-empty-card is-offboarded">
+                            <div class="license-empty-icon"><i class="fa-solid fa-key"></i></div>
+                            <span class="license-empty-pill">Đã thu hồi bản quyền</span>
+                            <span class="license-empty-sub">Tài khoản nhân sự đang ở trạng thái Offline</span>
+                        </div>
+                    </div>
+                `;
+            } else if (activeLicenseCount === 0) {
+                licenseHtml = `
+                    <div class="license-cards-wrap">
+                        <div class="license-empty-card is-empty">
+                            <div class="license-empty-icon"><i class="fa-solid fa-key"></i></div>
+                            <span class="license-empty-pill">Chưa cấp bản quyền</span>
+                            <span class="license-empty-sub">Chưa gán key Win, Office, PDF hoặc phần mềm</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const licenseRowsHtml = licenseSlots.map(slot => {
+                    const hasVal = Boolean(slot.value);
+                    const safeVal = hasVal ? escapeHtml(slot.value) : slot.emptyText;
+                    const copyBtnHtml = hasVal
+                        ? `<button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeVal}" data-copy-label="${escapeHtml(slot.copyLabel)}" title="Copy ${escapeHtml(slot.copyLabel)}"><i class="fa-regular fa-copy"></i></button>`
+                        : '';
+                    return `
+                        <div class="license-item is-${slot.key} ${hasVal ? 'is-filled' : 'is-empty'}">
+                            <div class="license-item-top">
+                                <span class="license-item-title">
+                                    <span class="license-item-icon"><i class="${slot.icon}"></i></span>
+                                    <span>${slot.label}</span>
+                                </span>
+                                ${copyBtnHtml}
+                            </div>
+                            <div class="license-item-val ${hasVal ? (slot.isMono ? 'is-mono' : 'is-apps-text dash-scroll-thin') : 'is-empty'}" title="${hasVal ? safeVal : ''}">${safeVal}</div>
+                        </div>
+                    `;
+                }).join('');
+                licenseHtml = `
+                    <div class="license-cards-wrap">
+                        <div class="license-card">
+                            <div class="license-card-head">
+                                <div class="license-head-title">
+                                    <span class="license-head-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                                    <span>Bản quyền</span>
+                                </div>
+                                <span class="license-count-pill">${activeLicenseCount}/4 mục</span>
+                            </div>
+                            <div class="license-list">
+                                ${licenseRowsHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
 
             const createdTs = getItemCreatedTimestamp(item);
             const updatedTs = getItemUpdatedTimestamp(item);
@@ -2711,35 +2820,21 @@ async function startApp() {
                 ];
 
                 const coreSpecs = [];
-                if (isCompactDeviceLayout) {
-                    specDefinitions.forEach(spec => {
-                        const text = String(spec.val || '').trim();
-                        if (!text) return;
-                        const isWide = text.length > 24;
-                        coreSpecs.push(`
-                            <div class="device-spec-item${isWide ? ' is-wide' : ''}">
-                                <span class="device-spec-label">${spec.label}</span>
-                                <span class="device-spec-val">${escapeHtml(text)}</span>
+                specDefinitions.forEach(spec => {
+                    const text = String(spec.val || '').trim();
+                    const hasVal = text !== '';
+                    coreSpecs.push(`
+                        <div class="device-spec-tile${hasVal ? '' : ' is-empty-tile'}" title="${spec.label}: ${hasVal ? escapeHtml(text) : spec.emptyLabel}">
+                            <span class="device-tile-icon ${hasVal ? spec.colorClass : 'is-muted'}" aria-hidden="true">
+                                <i class="fa-solid ${spec.icon}"></i>
+                            </span>
+                            <div class="device-tile-text">
+                                <span class="device-tile-label">${spec.label}</span>
+                                <span class="device-tile-val${hasVal ? '' : ' is-empty'}">${hasVal ? escapeHtml(text) : spec.emptyLabel}</span>
                             </div>
-                        `);
-                    });
-                } else {
-                    specDefinitions.forEach(spec => {
-                        const text = String(spec.val || '').trim();
-                        const hasVal = text !== '';
-                        coreSpecs.push(`
-                            <div class="device-spec-tile${hasVal ? '' : ' is-empty-tile'}" title="${spec.label}: ${hasVal ? escapeHtml(text) : spec.emptyLabel}">
-                                <span class="device-tile-icon ${hasVal ? spec.colorClass : 'is-muted'}" aria-hidden="true">
-                                    <i class="fa-solid ${spec.icon}"></i>
-                                </span>
-                                <div class="device-tile-text">
-                                    <span class="device-tile-label">${spec.label}</span>
-                                    <span class="device-tile-val${hasVal ? '' : ' is-empty'}">${hasVal ? escapeHtml(text) : spec.emptyLabel}</span>
-                                </div>
-                            </div>
-                        `);
-                    });
-                }
+                        </div>
+                    `);
+                });
 
                 const periphChips = [];
                 const pushPeriphChip = (iconClass, label, rawVal) => {
@@ -2777,23 +2872,14 @@ async function startApp() {
                     ? `<span class="device-id-pill" title="ID Thiết bị">${escapeHtml(device.devId)}</span>`
                     : '';
 
-                let bodyHtml = '';
-                if (isCompactDeviceLayout) {
-                    bodyHtml = (coreSpecs.length || periphChips.length)
-                        ? `
-                            ${coreSpecs.length ? `<div class="device-spec-panel">${coreSpecs.join('')}</div>` : ''}
-                            ${periphChips.length ? `<div class="device-periph-row">${periphChips.join('')}</div>` : ''}
-                        `
-                        : `<div class="device-spec-empty">Chưa nhập cấu hình chi tiết</div>`;
-                } else {
-                    const periphHtml = periphChips.length
-                        ? `<div class="device-periph-row">${periphChips.join('')}</div>`
-                        : `<div class="device-periph-row"><span class="device-periph-empty"><i class="fa-regular fa-circle-dot" aria-hidden="true"></i> Chưa gắn thiết bị ngoại vi</span></div>`;
-                    bodyHtml = `
-                        <div class="device-spec-tiles">${coreSpecs.join('')}</div>
-                        ${periphHtml}
-                    `;
-                }
+                const periphHtml = periphChips.length
+                    ? `<div class="device-periph-row">${periphChips.join('')}</div>`
+                    : `<div class="device-periph-row"><span class="device-periph-empty"><i class="fa-regular fa-circle-dot" aria-hidden="true"></i> Chưa gắn thiết bị ngoại vi</span></div>`;
+
+                const bodyHtml = `
+                    <div class="device-spec-tiles">${coreSpecs.join('')}</div>
+                    ${periphHtml}
+                `;
 
                 return `
                     <div class="device-card ${isCompactDeviceLayout ? 'is-compact' : 'is-single'}">
@@ -3015,40 +3101,76 @@ async function startApp() {
                 <td class="device-col-cell">
                     ${mergedDeviceAndConfigHtml}
                 </td>
-                <td>
-                    <div class="keys-container">
-                        ${keysText}
-                    </div>
+                <td class="license-col-cell">
+                    ${licenseHtml}
                 </td>
-                <td style="min-width: 190px; max-width: 280px;">
+                <td class="notes-col-cell">
                     ${(() => {
                         const uNotes = (item.userNotes || '').trim();
                         const dNotes = (displayItem.devNotes || '').trim();
-                        if (!uNotes && !dNotes) {
-                            return '<span class="text-muted" style="font-size: 13px; font-style: italic;">—</span>';
-                        }
-                        const blocks = [];
-                        if (uNotes) {
-                            blocks.push(`
-                                <div style="padding: 6px 9px; border-radius: 6px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-left: 3px solid #38bdf8;">
-                                    <div style="font-size: 10.5px; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; display: flex; align-items: center; gap: 5px;">
-                                        <i class="fa-solid fa-user" style="font-size: 9.5px;"></i> Ghi chú nhân sự
+                        const noteEntries = [
+                            {
+                                key: 'user',
+                                label: 'Ghi chú nhân sự',
+                                icon: 'fa-solid fa-user',
+                                emptyText: 'Chưa có ghi chú nhân sự',
+                                value: uNotes
+                            },
+                            {
+                                key: 'device',
+                                label: 'Ghi chú thiết bị',
+                                icon: 'fa-solid fa-computer',
+                                emptyText: 'Chưa có ghi chú thiết bị',
+                                value: dNotes
+                            }
+                        ];
+                        const activeNotesCount = noteEntries.filter(entry => entry.value).length;
+                        if (activeNotesCount === 0) {
+                            return `
+                                <div class="notes-cards-wrap">
+                                    <div class="notes-empty-card">
+                                        <div class="notes-empty-icon"><i class="fa-regular fa-note-sticky"></i></div>
+                                        <span class="notes-empty-pill">Không có ghi chú</span>
+                                        <span class="notes-empty-sub">Chưa có lưu ý nhân sự hoặc thiết bị</span>
                                     </div>
-                                    <div style="font-size: 12.5px; color: var(--text-primary); white-space: pre-line; word-break: break-word; line-height: 1.4;">${uNotes}</div>
                                 </div>
-                            `);
+                            `;
                         }
-                        if (dNotes) {
-                            blocks.push(`
-                                <div style="padding: 6px 9px; border-radius: 6px; background: rgba(123, 202, 15, 0.08); border: 1px solid rgba(123, 202, 15, 0.2); border-left: 3px solid var(--primary-color);">
-                                    <div style="font-size: 10.5px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; display: flex; align-items: center; gap: 5px;">
-                                        <i class="fa-solid fa-computer" style="font-size: 9.5px;"></i> Ghi chú thiết bị
+                        const panelsHtml = noteEntries.map(entry => {
+                            const hasVal = Boolean(entry.value);
+                            const safeVal = hasVal ? escapeHtml(entry.value) : entry.emptyText;
+                            const copyBtnHtml = hasVal
+                                ? `<button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeVal}" data-copy-label="${escapeHtml(entry.label)}" title="Copy ${escapeHtml(entry.label)}"><i class="fa-regular fa-copy"></i></button>`
+                                : '';
+                            return `
+                                <div class="notes-panel is-${entry.key} ${hasVal ? 'is-filled' : 'is-empty'}">
+                                    <div class="notes-panel-head">
+                                        <span class="notes-panel-title">
+                                            <span class="notes-panel-icon"><i class="${entry.icon}"></i></span>
+                                            <span>${entry.label}</span>
+                                        </span>
+                                        ${copyBtnHtml}
                                     </div>
-                                    <div style="font-size: 12.5px; color: var(--text-primary); white-space: pre-line; word-break: break-word; line-height: 1.4;">${dNotes}</div>
+                                    <div class="notes-panel-body dash-scroll-thin ${hasVal ? '' : 'is-empty'}">${safeVal}</div>
                                 </div>
-                            `);
-                        }
-                        return `<div style="display: flex; flex-direction: column; gap: 6px;">${blocks.join('')}</div>`;
+                            `;
+                        }).join('');
+                        return `
+                            <div class="notes-cards-wrap">
+                                <div class="notes-card">
+                                    <div class="notes-card-head">
+                                        <div class="notes-head-title">
+                                            <span class="notes-head-icon"><i class="fa-solid fa-note-sticky"></i></span>
+                                            <span>Ghi chú</span>
+                                        </div>
+                                        <span class="notes-count-pill">${activeNotesCount}/2 mục</span>
+                                    </div>
+                                    <div class="notes-stack">
+                                        ${panelsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     })()}
                 </td>
                 <td>
@@ -3337,16 +3459,25 @@ async function startApp() {
         const now = new Date();
         const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} lúc ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
+        const isUserDisabled = document.getElementById('user-status-select')
+            ? (document.getElementById('user-status-select').value === 'disabled')
+            : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false);
+        const primaryFormDevice = getFormDevice('');
+        const extraFormDevices = Array.from({ length: 4 }, (_, i) => getFormDevice(`-device${i + 2}`));
+        const hasAnyFormHardware = primaryFormDevice.hasDevice || extraFormDevices.some(d => d.hasDevice);
+
         let devAllocVal = 'yes';
         const allocSelected = document.querySelector('input[name="dev-allocation"]:checked');
         if (allocSelected) devAllocVal = allocSelected.value;
         const currentDeviceRecord = indexStr !== '' ? thietBiList[parseInt(indexStr)] : null;
-        const hasDevice = devAllocVal === 'yes' && (
-            !currentDeviceRecord ||
-            (currentDeviceRecord.hasDevice !== false && currentDeviceRecord.devStatus !== 'Không cấp') ||
-            !!devIdInput?.value.trim() ||
-            pendingKhoIndexToDeduct !== null
-        );
+        const hasDevice = isUserDisabled
+            ? (devAllocVal === 'yes' && hasAnyFormHardware && !!currentDeviceRecord && !currentDeviceRecord.userDisabled && currentDeviceRecord.hasDevice !== false && currentDeviceRecord.devStatus !== 'Không cấp')
+            : (devAllocVal === 'yes' && (
+                !currentDeviceRecord ||
+                (currentDeviceRecord.hasDevice !== false && currentDeviceRecord.devStatus !== 'Không cấp') ||
+                !!devIdInput?.value.trim() ||
+                pendingKhoIndexToDeduct !== null
+            ));
         if (!hasDevice && devAllocVal !== 'personal') devAllocVal = 'no';
         const hireDateRaw = hireDateInput?.value.trim() || '';
         const hireDateISO = parseEmployeeDate(hireDateRaw, 'Ngày nhận việc');
@@ -3367,9 +3498,7 @@ async function startApp() {
         const data = {
             devAllocation: devAllocVal,
             hasDevice: hasDevice,
-            userDisabled: document.getElementById('user-status-select') 
-                ? (document.getElementById('user-status-select').value === 'disabled')
-                : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? !!thietBiList[parseInt(indexStr)].userDisabled : false),
+            userDisabled: isUserDisabled,
             userHireDate: hireDateISO,
             userResignationDate: resignationDateISO,
             userId: userIdInput.value.trim(),
@@ -3383,7 +3512,7 @@ async function startApp() {
             userElement: document.getElementById('user-element') ? document.getElementById('user-element').value.trim() : '',
             userKeyElement: document.getElementById('user-key-element') ? document.getElementById('user-key-element').value.trim() : '',
             userErgChat: document.getElementById('user-erg-chat')?.value || 'not_installed',
-            devId: devIdInput ? devIdInput.value.trim() : '',
+            devId: hasDevice && devIdInput ? devIdInput.value.trim() : '',
             devUps: hasDevice ? (document.getElementById('dev-ups')?.value || '') : '',
             devExtraDevices: hasDevice ? (document.getElementById('dev-extra-devices')?.value.trim() || '') : '',
             devType: hasDevice ? document.getElementById('dev-type').value.trim() : '',
@@ -3418,49 +3547,66 @@ async function startApp() {
             maintenanceLogs: pendingKhoSpecsToAssign?.devId === (devIdInput?.value.trim() || '')
                 ? (pendingKhoSpecsToAssign.maintenanceLogs || [])
                 : ((indexStr !== '' && thietBiList[parseInt(indexStr)]) ? (thietBiList[parseInt(indexStr)].maintenanceLogs || []) : []),
-            devId: devIdInput ? devIdInput.value.trim() : '',
-            maTaiSan: assetCode,
-            assetCode,
+            maTaiSan: hasDevice ? assetCode : '',
+            assetCode: hasDevice ? assetCode : '',
             assetCompany,
             assetGroup,
             currentAssetGroup: pendingKhoSpecsToAssign?.currentAssetGroup || existingAsset?.currentAssetGroup || assetGroup,
             assetType,
-            warrantyEndDate: document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : (pendingKhoSpecsToAssign?.warrantyEndDate || '')
+            warrantyEndDate: hasDevice && document.getElementById('dev-warranty-exp') ? document.getElementById('dev-warranty-exp').value.trim() : (hasDevice ? (pendingKhoSpecsToAssign?.warrantyEndDate || '') : '')
         };
 
-        const selectedDeviceCount = devAllocVal === 'yes' ? Math.max(1, Math.min(5, Number(document.getElementById('device-count')?.value || 1))) : 1;
-        const primaryDevice = { ...getFormDevice(''), ...data, hasDevice };
-        if (devAllocVal === 'yes' && !getFormDevice('').hasDevice) {
+        const selectedDeviceCount = (!isUserDisabled && devAllocVal === 'yes')
+            ? Math.max(1, Math.min(5, Number(document.getElementById('device-count')?.value || 1)))
+            : 1;
+        const primaryDevice = { ...primaryFormDevice, ...data, hasDevice };
+        if (!isUserDisabled && devAllocVal === 'yes' && !primaryFormDevice.hasDevice) {
             showToast('Thiếu thông tin', 'Vui lòng nhập ít nhất ID, tên hoặc cấu hình cho thiết bị 1.', 'warning');
             return;
         }
-        const assignedDevices = [primaryDevice];
-        for (let deviceNo = 2; deviceNo <= selectedDeviceCount; deviceNo++) {
-            const currentDevice = getFormDevice(`-device${deviceNo}`);
-            if (!currentDevice.hasDevice) {
-                showToast('Thiếu thông tin', `Vui lòng nhập ít nhất ID, tên hoặc cấu hình cho thiết bị ${deviceNo}.`, 'warning');
-                return;
+        const assignedDevices = [];
+        if (!isUserDisabled) {
+            assignedDevices.push(primaryDevice);
+            for (let deviceNo = 2; deviceNo <= selectedDeviceCount; deviceNo++) {
+                const currentDevice = extraFormDevices[deviceNo - 2] || getFormDevice(`-device${deviceNo}`);
+                if (!currentDevice.hasDevice) {
+                    showToast('Thiếu thông tin', `Vui lòng nhập ít nhất ID, tên hoặc cấu hình cho thiết bị ${deviceNo}.`, 'warning');
+                    return;
+                }
+                assignedDevices.push(currentDevice);
             }
-            assignedDevices.push(currentDevice);
+        } else if (hasDevice) {
+            if (primaryFormDevice.hasDevice) assignedDevices.push(primaryDevice);
+            extraFormDevices.forEach(extraDev => {
+                if (extraDev && extraDev.hasDevice) assignedDevices.push(extraDev);
+            });
         }
-        data.deviceCount = assignedDevices.length;
+        data.deviceCount = Math.max(1, assignedDevices.length);
         data.devices = assignedDevices;
 
-        saveDeviceExtras(data.devId || data.assetCode || data.userId, {
-            purchasePrice: data.purchasePrice,
-            purchaseDate: data.purchaseDate,
-            depreciationYears: data.depreciationYears,
-            maintenanceLogs: data.maintenanceLogs
-        });
-
-        let deviceReturnedToInventory = false;
-        if (data.userDisabled && data.hasDevice) {
-            await returnAssignedDevicesToInventory(data, `Thu hồi khi vô hiệu hóa tài khoản ${data.userName} (${data.userId})`);
-            clearDeviceAllocationFields(data);
-            deviceReturnedToInventory = true;
+        if (!isUserDisabled) {
+            saveDeviceExtras(data.devId || data.assetCode || data.userId, {
+                purchasePrice: data.purchasePrice,
+                purchaseDate: data.purchaseDate,
+                depreciationYears: data.depreciationYears,
+                maintenanceLogs: data.maintenanceLogs
+            });
         }
 
-        if (indexStr === '' && pendingKhoIndexToDeduct === null) {
+        let deviceReturnedToInventory = false;
+        if (data.userDisabled) {
+            pendingKhoIndexToDeduct = null;
+            pendingKhoSpecsToAssign = null;
+            if (data.hasDevice) {
+                deviceReturnedToInventory = await returnAssignedDevicesToInventory(
+                    data,
+                    `Thu hồi khi vô hiệu hóa tài khoản ${data.userName} (${data.userId})`
+                );
+            }
+            clearDeviceAllocationFields(data);
+        }
+
+        if (!isUserDisabled && indexStr === '' && pendingKhoIndexToDeduct === null) {
             // Commit sequence when saving brand new asset
             commitAssetSequence(data.assetCompany, data.assetGroup, data.assetType, assetCode);
         }
@@ -6240,6 +6386,12 @@ async function startApp() {
         const snInput = document.getElementById('dev-sn');
         const errSn = document.getElementById('err-dev-sn');
         if (!snInput || !errSn) return true;
+
+        if (document.getElementById('user-status-select')?.value === 'disabled') {
+            errSn.style.display = 'none';
+            snInput.style.borderColor = '';
+            return true;
+        }
 
         const val = snInput.value.trim().toLowerCase();
 
