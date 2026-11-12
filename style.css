@@ -1194,24 +1194,24 @@ body.light-theme #btn-cancel-thiet-bi:hover {
 .actions-cell.actions-cell-grid {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
     justify-content: center;
-    min-width: 135px;
+    min-width: 112px;
     margin: 0 auto;
 }
 
 .actions-cell-grid .actions-row {
     display: flex;
-    gap: 6px;
+    gap: 4px;
     align-items: center;
     justify-content: center;
 }
 
 .actions-cell-grid .btn-icon-only {
-    width: 29px;
-    height: 29px;
-    font-size: 12px;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
     border-radius: 6px;
     display: inline-flex;
     align-items: center;
@@ -3307,14 +3307,14 @@ body.light-theme .dept-bar-track {
    FEATURE: EMPLOYEE INFO CARD IN ASSET ALLOCATION TABLE
    ========================================================================== */
 .user-info-card {
-    width: 410px;
-    min-width: 410px;
-    max-width: 410px;
+    width: 100%;
+    min-width: 335px;
+    max-width: none;
     min-height: 306px;
     display: flex;
     flex-direction: column;
-    gap: 9px;
-    padding: 11px 12px;
+    gap: 8px;
+    padding: 10px 10px;
     border-radius: 10px;
     background: rgba(15, 23, 42, 0.34);
     border: 1px solid rgba(148, 163, 184, 0.18);
@@ -3342,18 +3342,18 @@ body.light-theme .dept-bar-track {
 .user-card-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    min-height: 46px;
+    gap: 8px;
+    min-height: 44px;
 }
 
 .user-avatar-chip {
-    width: 38px;
-    height: 38px;
-    border-radius: 9px;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
     background: linear-gradient(135deg, rgba(123, 202, 15, 0.22) 0%, rgba(37, 51, 141, 0.42) 100%);
     border: 1px solid rgba(123, 202, 15, 0.4);
     color: #a3e635;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: 0.4px;
     display: inline-flex;
@@ -3962,8 +3962,8 @@ body.light-theme .user-meta-val.is-empty {
 @media (max-width: 640px) {
     .user-info-card {
         width: 100%;
-        min-width: 300px;
-        max-width: 410px;
+        min-width: 280px;
+        max-width: none;
     }
 }
 
@@ -3972,7 +3972,18 @@ body.light-theme .user-meta-val.is-empty {
    ========================================================================== */
 #table-thiet-bi th,
 #table-thiet-bi td {
-    padding: 14px 16px;
+    padding: 10px 4px;
+    vertical-align: top;
+}
+
+#table-thiet-bi th:first-child,
+#table-thiet-bi td:first-child {
+    padding-left: 10px;
+}
+
+#table-thiet-bi th:last-child,
+#table-thiet-bi td:last-child {
+    padding-right: 10px;
 }
 
 .device-col-cell {
@@ -3980,9 +3991,9 @@ body.light-theme .user-meta-val.is-empty {
 }
 
 .device-cards-wrap {
-    width: 390px;
-    min-width: 390px;
-    max-width: 390px;
+    width: 100%;
+    min-width: 325px;
+    max-width: none;
     min-height: 306px;
     display: flex;
     flex-direction: column;
@@ -4011,7 +4022,7 @@ body.light-theme .user-meta-val.is-empty {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 11px 12px;
+    padding: 10px 10px;
     border-radius: 10px;
     background: rgba(15, 23, 42, 0.34);
     border: 1px solid rgba(148, 163, 184, 0.18);
@@ -4677,8 +4688,8 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
     .license-cards-wrap,
     .notes-cards-wrap {
         width: 100%;
-        min-width: 260px;
-        max-width: 390px;
+        min-width: 240px;
+        max-width: none;
     }
 }
 
@@ -4691,9 +4702,9 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
 }
 
 .license-cards-wrap {
-    width: 262px;
-    min-width: 262px;
-    max-width: 262px;
+    width: 100%;
+    min-width: 228px;
+    max-width: none;
     min-height: 306px;
     display: flex;
     flex-direction: column;
@@ -4705,7 +4716,7 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 11px 12px;
+    padding: 10px 10px;
     border-radius: 10px;
     background: rgba(15, 23, 42, 0.34);
     border: 1px solid rgba(148, 163, 184, 0.18);
@@ -4875,8 +4886,8 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
 
 .license-item-val.is-mono {
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    font-size: 11px;
-    letter-spacing: 0.2px;
+    font-size: 10.5px;
+    letter-spacing: 0.1px;
     color: #f1f5f9;
 }
 
@@ -4963,10 +4974,14 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
 /* ==========================================================================
    FEATURE: NOTES CARDS IN ASSET ALLOCATION TABLE
    ========================================================================== */
+.tab-container:has(#tab-cap-phat-list.active) {
+    padding: 20px 20px;
+}
+
 .notes-cards-wrap {
-    width: 245px;
-    min-width: 245px;
-    max-width: 245px;
+    width: 100%;
+    min-width: 195px;
+    max-width: none;
     min-height: 306px;
     display: flex;
     flex-direction: column;
@@ -4978,7 +4993,7 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding: 11px 12px;
+    padding: 10px 10px;
     border-radius: 10px;
     background: rgba(15, 23, 42, 0.34);
     border: 1px solid rgba(148, 163, 184, 0.18);
