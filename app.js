@@ -2689,34 +2689,57 @@ async function startApp() {
                 const isLaptopType = typeLower.includes('laptop') || typeLower.includes('macbook') || typeLower.includes('notebook');
                 const deviceIconClass = isLaptopType ? 'fa-laptop' : 'fa-desktop';
 
-                const coreSpecs = [];
-                const pushCoreSpec = (label, rawVal) => {
-                    const text = String(rawVal || '').trim();
-                    if (!text) return;
-                    const isWide = text.length > 24;
-                    coreSpecs.push(`
-                        <div class="device-spec-item${isWide ? ' is-wide' : ''}">
-                            <span class="device-spec-label">${label}</span>
-                            <span class="device-spec-val">${escapeHtml(text)}</span>
-                        </div>
-                    `);
-                };
+                const ramText = device.devRam
+                    ? (device.devRamSlots ? `${device.devRam} (${device.devRamSlots})` : String(device.devRam).trim())
+                    : '';
+                const ssdText = (device.devSsd || device.devSsd2)
+                    ? [device.devSsd, device.devSsd2].filter(Boolean).join(' + ')
+                    : '';
+                const hddText = (device.devHdd || device.devHdd2)
+                    ? [device.devHdd, device.devHdd2].filter(Boolean).join(' + ')
+                    : '';
 
-                pushCoreSpec('Loại', rawType);
-                pushCoreSpec('CPU', device.devCpu);
-                pushCoreSpec('Main', device.devMain);
-                if (device.devRam) {
-                    const ramInfo = device.devRamSlots ? `${device.devRam} (${device.devRamSlots})` : device.devRam;
-                    pushCoreSpec('RAM', ramInfo);
+                const specDefinitions = [
+                    { label: 'Loại', val: rawType, icon: deviceIconClass, colorClass: 'is-type', emptyLabel: 'Chưa có loại' },
+                    { label: 'CPU', val: device.devCpu, icon: 'fa-microchip', colorClass: 'is-cpu', emptyLabel: 'Chưa có CPU' },
+                    { label: 'Main', val: device.devMain, icon: 'fa-server', colorClass: 'is-main', emptyLabel: 'Chưa có Main' },
+                    { label: 'RAM', val: ramText, icon: 'fa-memory', colorClass: 'is-ram', emptyLabel: 'Chưa có RAM' },
+                    { label: 'SSD', val: ssdText, icon: 'fa-hard-drive', colorClass: 'is-ssd', emptyLabel: 'Chưa có SSD' },
+                    { label: 'HDD', val: hddText, icon: 'fa-database', colorClass: 'is-hdd', emptyLabel: 'Chưa có HDD' },
+                    { label: 'VGA', val: device.devVga, icon: 'fa-film', colorClass: 'is-vga', emptyLabel: 'Chưa có VGA' },
+                    { label: 'S/N', val: device.devSn, icon: 'fa-barcode', colorClass: 'is-sn', emptyLabel: 'Chưa có S/N' }
+                ];
+
+                const coreSpecs = [];
+                if (isCompactDeviceLayout) {
+                    specDefinitions.forEach(spec => {
+                        const text = String(spec.val || '').trim();
+                        if (!text) return;
+                        const isWide = text.length > 24;
+                        coreSpecs.push(`
+                            <div class="device-spec-item${isWide ? ' is-wide' : ''}">
+                                <span class="device-spec-label">${spec.label}</span>
+                                <span class="device-spec-val">${escapeHtml(text)}</span>
+                            </div>
+                        `);
+                    });
+                } else {
+                    specDefinitions.forEach(spec => {
+                        const text = String(spec.val || '').trim();
+                        const hasVal = text !== '';
+                        coreSpecs.push(`
+                            <div class="device-spec-tile${hasVal ? '' : ' is-empty-tile'}" title="${spec.label}: ${hasVal ? escapeHtml(text) : spec.emptyLabel}">
+                                <span class="device-tile-icon ${hasVal ? spec.colorClass : 'is-muted'}" aria-hidden="true">
+                                    <i class="fa-solid ${spec.icon}"></i>
+                                </span>
+                                <div class="device-tile-text">
+                                    <span class="device-tile-label">${spec.label}</span>
+                                    <span class="device-tile-val${hasVal ? '' : ' is-empty'}">${hasVal ? escapeHtml(text) : spec.emptyLabel}</span>
+                                </div>
+                            </div>
+                        `);
+                    });
                 }
-                if (device.devSsd || device.devSsd2) {
-                    pushCoreSpec('SSD', [device.devSsd, device.devSsd2].filter(Boolean).join(' + '));
-                }
-                if (device.devHdd || device.devHdd2) {
-                    pushCoreSpec('HDD', [device.devHdd, device.devHdd2].filter(Boolean).join(' + '));
-                }
-                pushCoreSpec('VGA', device.devVga);
-                pushCoreSpec('S/N', device.devSn);
 
                 const periphChips = [];
                 const pushPeriphChip = (iconClass, label, rawVal) => {
@@ -2754,12 +2777,23 @@ async function startApp() {
                     ? `<span class="device-id-pill" title="ID Thiết bị">${escapeHtml(device.devId)}</span>`
                     : '';
 
-                const bodyHtml = coreSpecs.length || periphChips.length
-                    ? `
-                        ${coreSpecs.length ? `<div class="device-spec-panel">${coreSpecs.join('')}</div>` : ''}
-                        ${periphChips.length ? `<div class="device-periph-row">${periphChips.join('')}</div>` : ''}
-                    `
-                    : `<div class="device-spec-empty">Chưa nhập cấu hình chi tiết</div>`;
+                let bodyHtml = '';
+                if (isCompactDeviceLayout) {
+                    bodyHtml = (coreSpecs.length || periphChips.length)
+                        ? `
+                            ${coreSpecs.length ? `<div class="device-spec-panel">${coreSpecs.join('')}</div>` : ''}
+                            ${periphChips.length ? `<div class="device-periph-row">${periphChips.join('')}</div>` : ''}
+                        `
+                        : `<div class="device-spec-empty">Chưa nhập cấu hình chi tiết</div>`;
+                } else {
+                    const periphHtml = periphChips.length
+                        ? `<div class="device-periph-row">${periphChips.join('')}</div>`
+                        : `<div class="device-periph-row"><span class="device-periph-empty"><i class="fa-regular fa-circle-dot" aria-hidden="true"></i> Chưa gắn thiết bị ngoại vi</span></div>`;
+                    bodyHtml = `
+                        <div class="device-spec-tiles">${coreSpecs.join('')}</div>
+                        ${periphHtml}
+                    `;
+                }
 
                 return `
                     <div class="device-card ${isCompactDeviceLayout ? 'is-compact' : 'is-single'}">
@@ -2915,23 +2949,25 @@ async function startApp() {
                     </div>
                 `;
 
+            let dobChipHtml = '';
+            if (item.userBirthDate) {
+                const dobDisplay = /^\d{4}-\d{2}-\d{2}/.test(item.userBirthDate) ? formatDateDMY(item.userBirthDate) : item.userBirthDate;
+                dobChipHtml = `<span class="user-dob-chip" title="Ngày sinh: ${escapeHtml(dobDisplay)}"><i class="fa-solid fa-cake-candles" aria-hidden="true"></i> ${escapeHtml(dobDisplay)}</span>`;
+            }
+
             const userTagPills = [];
             userTagPills.push(
                 item.userErgChat === 'installed'
                     ? `<span class="user-tag-pill is-success" title="Trạng thái cài đặt ERG Chat"><i class="fa-solid fa-comments"></i> ERG Chat: Đã cài</span>`
                     : `<span class="user-tag-pill is-muted" title="Chưa cài đặt ERG Chat"><i class="fa-regular fa-comment-dots"></i> ERG Chat: Chưa cài</span>`
             );
-            if (item.userBirthDate) {
-                const dobDisplay = /^\d{4}-\d{2}-\d{2}/.test(item.userBirthDate) ? formatDateDMY(item.userBirthDate) : item.userBirthDate;
-                userTagPills.push(`<span class="user-tag-pill is-dob" title="Ngày sinh"><i class="fa-solid fa-cake-candles"></i> ${escapeHtml(dobDisplay)}</span>`);
-            }
             if (item.userHireDate) {
                 const hireFormatted = formatDateDMY(item.userHireDate);
-                userTagPills.push(`<span class="user-tag-pill is-hire" title="Ngày nhận việc: ${escapeHtml(hireFormatted)}"><i class="fa-regular fa-calendar-check"></i> ${escapeHtml(hireFormatted)}</span>`);
+                userTagPills.push(`<span class="user-tag-pill is-hire" title="Ngày nhận việc: ${escapeHtml(hireFormatted)}">${escapeHtml(hireFormatted)}</span>`);
             }
             if (item.userDisabled && item.userResignationDate) {
                 const resignFormatted = formatDateDMY(item.userResignationDate);
-                userTagPills.push(`<span class="user-tag-pill is-danger" title="Ngày nghỉ việc: ${escapeHtml(resignFormatted)}"><i class="fa-regular fa-calendar-xmark"></i> ${escapeHtml(resignFormatted)}</span>`);
+                userTagPills.push(`<span class="user-tag-pill is-danger" title="Ngày nghỉ việc: ${escapeHtml(resignFormatted)}">${escapeHtml(resignFormatted)}</span>`);
             }
 
             const onlineStatusHtml = item.userDisabled
@@ -2948,7 +2984,7 @@ async function startApp() {
                                     <span>${safeUserName}</span>
                                     <i class="fa-regular fa-pen-to-square user-edit-hint" aria-hidden="true"></i>
                                 </span>
-                                ${safeUserId ? `<span class="user-id-chip">${safeUserId}</span>` : ''}
+                                ${(safeUserId || dobChipHtml) ? `<div class="user-head-meta">${safeUserId ? `<span class="user-id-chip">${safeUserId}</span>` : ''}${dobChipHtml}</div>` : ''}
                             </div>
                             <div class="user-head-status">
                                 ${onlineStatusHtml}
