@@ -763,7 +763,7 @@ async function startApp() {
             fromDB: (db) => {
                 let specs = {};
                 if (db.notes && db.notes.includes('[SPECS_JSON:')) {
-                    const match = db.notes.match(/\[SPECS_JSON:(.*?)\]/s);
+                    const match = db.notes.match(/\[SPECS_JSON:(\{[\s\S]*\})\]/) || db.notes.match(/\[SPECS_JSON:(.*?)\]/s);
                     if (match && match[1]) {
                         try { specs = JSON.parse(match[1]); } catch (e) {}
                     }
@@ -799,25 +799,47 @@ async function startApp() {
                     warrantyEndDate: db.warranty_end_date || db.warrantyEndDate || specs.warrantyEndDate || ''
                 };
             },
-            toDB: (js) => ({
-                code: js.code || js.assetCode || js.maTaiSan,
-                asset_code: js.maTaiSan || js.assetCode || js.code,
-                asset_company: js.assetCompany || 'ERG',
-                name: js.name,
-                quantity: parseInt(js.quantity) || 1,
-                reason: js.reason,
-                date_stored: dateToISO(js.dateStored),
-                notes: js.notes,
-                status: js.status || 'Sẵn sàng cấp phát',
-                asset_group: js.assetGroup || 'CCDC',
-                current_asset_group: js.currentAssetGroup || js.assetGroup || 'CCDC',
-                asset_type: js.assetType || 'LT',
-                dev_sn: js.devSn || '',
-                dev_cpu: js.devCpu || '',
-                dev_ram: js.devRam || '',
-                dev_ssd: js.devSsd || '',
-                warranty_end_date: js.warrantyEndDate || ''
-            })
+            toDB: (js) => {
+                let finalNotes = js.notes || '';
+                if (!finalNotes.includes('[SPECS_JSON:')) {
+                    const specsPayload = {
+                        code: js.code || js.assetCode || js.maTaiSan || '',
+                        maTaiSan: js.maTaiSan || js.assetCode || js.code || '',
+                        assetCompany: js.assetCompany || 'ERG',
+                        assetGroup: js.assetGroup || 'CCDC',
+                        currentAssetGroup: js.currentAssetGroup || js.assetGroup || 'CCDC',
+                        assetType: js.assetType || 'LT',
+                        name: js.name || '',
+                        devSn: js.devSn || '',
+                        status: js.status || 'Sẵn sàng cấp phát',
+                        quantity: parseInt(js.quantity) || 1,
+                        devCpu: js.devCpu || '',
+                        devRam: js.devRam || '',
+                        devRamSlots: js.devRamSlots || '',
+                        devSsd: js.devSsd || '',
+                        devHdd: js.devHdd || '',
+                        devVga: js.devVga || '',
+                        devMain: js.devMain || '',
+                        devMonitor: js.devMonitor || '',
+                        devMonitorSn: js.devMonitorSn || '',
+                        devCables: js.devCables || '',
+                        warrantyEndDate: js.warrantyEndDate || '',
+                        reason: js.reason || '',
+                        location: js.location || '',
+                        dateStored: js.dateStored || '',
+                        storedBy: js.storedBy || ''
+                    };
+                    finalNotes = finalNotes ? `${finalNotes}\n[SPECS_JSON:${JSON.stringify(specsPayload)}]` : `[SPECS_JSON:${JSON.stringify(specsPayload)}]`;
+                }
+                return {
+                    code: js.code || js.assetCode || js.maTaiSan,
+                    name: js.name,
+                    quantity: parseInt(js.quantity) || 1,
+                    reason: js.reason,
+                    date_stored: dateToISO(js.dateStored),
+                    notes: finalNotes
+                };
+            }
         }
     };
 
@@ -1963,43 +1985,130 @@ async function startApp() {
         // 2. Department User Distribution Breakdown
         const elDeptList = document.getElementById('dash-dept-list');
         const elDeptCount = document.getElementById('dash-dept-count');
+        const elDeptRatioSummary = document.getElementById('dash-dept-ratio-summary');
 
         if (elDeptList) {
             elDeptList.innerHTML = '';
-            const deptCounts = {};
+            const deptStats = {};
             thietBiList.forEach(item => {
                 const dept = (item.userDept || '').trim() || 'Chưa phân phòng ban';
-                deptCounts[dept] = (deptCounts[dept] || 0) + 1;
+                if (!deptStats[dept]) {
+                    deptStats[dept] = { total: 0, active: 0, disabled: 0 };
+                }
+                deptStats[dept].total++;
+                if (item.userDisabled) {
+                    deptStats[dept].disabled++;
+                } else {
+                    deptStats[dept].active++;
+                }
             });
 
-            const sortedDepts = Object.keys(deptCounts).sort((a, b) => deptCounts[b] - deptCounts[a]);
+            const sortedDepts = Object.keys(deptStats).sort((a, b) => deptStats[b].total - deptStats[a].total);
             if (elDeptCount) elDeptCount.innerText = `${sortedDepts.length} phòng ban`;
+
+            if (elDeptRatioSummary) {
+                if (totalUsers > 0) {
+                    const overallActivePct = Math.round((onlineUsers / totalUsers) * 100);
+                    const overallDisabledPct = 100 - overallActivePct;
+                    elDeptRatioSummary.style.display = 'block';
+                    elDeptRatioSummary.innerHTML = `
+                        <div style="padding: 8px 10px; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.07); border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; margin-bottom: 6px; gap: 8px; flex-wrap: wrap;">
+                                <span id="dash-dept-summary-active" style="color: #7bca0f; font-weight: 600; cursor: pointer;" title="Click để lọc toàn bộ nhân sự đang hoạt động">
+                                    🟢 Đang hoạt động: ${onlineUsers} (${overallActivePct}%)
+                                </span>
+                                <span id="dash-dept-summary-disabled" style="color: #ef4444; font-weight: 600; cursor: pointer;" title="Click để lọc toàn bộ nhân sự đã nghỉ việc">
+                                    🔴 Đã nghỉ việc: ${offlineUsers} (${overallDisabledPct}%)
+                                </span>
+                            </div>
+                            <div style="width: 100%; height: 6px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; display: flex;">
+                                <div style="width: ${overallActivePct}%; height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--primary-color)); transition: width 0.5s ease;" title="Đang hoạt động: ${onlineUsers} (${overallActivePct}%)"></div>
+                                <div style="width: ${overallDisabledPct}%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.5s ease;" title="Đã nghỉ việc: ${offlineUsers} (${overallDisabledPct}%)"></div>
+                            </div>
+                        </div>
+                    `;
+
+                    const btnSumActive = document.getElementById('dash-dept-summary-active');
+                    if (btnSumActive) {
+                        btnSumActive.onclick = () => {
+                            switchToTab('tab-cap-phat-list');
+                            const filterDept = document.getElementById('filter-dept-thietbi');
+                            const filterStatus = document.getElementById('filter-status-thietbi');
+                            if (filterDept) filterDept.value = '';
+                            if (filterStatus) filterStatus.value = 'active';
+                            currentPageThietBi = 1;
+                            renderThietBi();
+                        };
+                    }
+                    const btnSumDisabled = document.getElementById('dash-dept-summary-disabled');
+                    if (btnSumDisabled) {
+                        btnSumDisabled.onclick = () => {
+                            switchToTab('tab-cap-phat-list');
+                            const filterDept = document.getElementById('filter-dept-thietbi');
+                            const filterStatus = document.getElementById('filter-status-thietbi');
+                            if (filterDept) filterDept.value = '';
+                            if (filterStatus) filterStatus.value = 'disabled';
+                            currentPageThietBi = 1;
+                            renderThietBi();
+                        };
+                    }
+                } else {
+                    elDeptRatioSummary.style.display = 'none';
+                }
+            }
 
             if (sortedDepts.length === 0) {
                 elDeptList.innerHTML = '<div class="text-muted" style="font-size: 13px; font-style: italic;">Chưa có dữ liệu phòng ban</div>';
             } else {
-                const maxDeptUser = Math.max(...Object.values(deptCounts)) || 1;
+                const maxDeptUser = Math.max(...sortedDepts.map(d => deptStats[d].total)) || 1;
                 sortedDepts.forEach(dept => {
-                    const count = deptCounts[dept];
-                    const percent = Math.round((count / maxDeptUser) * 100);
+                    const stats = deptStats[dept];
+                    const count = stats.total;
+                    const activeCount = stats.active;
+                    const disabledCount = stats.disabled;
+                    const activePct = count > 0 ? Math.round((activeCount / count) * 100) : 0;
+                    const disabledPct = count > 0 ? (100 - activePct) : 0;
+
+                    const activeBarWidth = ((activeCount / maxDeptUser) * 100).toFixed(1);
+                    const disabledBarWidth = ((disabledCount / maxDeptUser) * 100).toFixed(1);
+
                     const div = document.createElement('div');
-                    div.style.cssText = 'display: flex; flex-direction: column; gap: 4px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background 0.2s ease;';
-                    div.title = `Click để xem danh sách nhân sự ${dept}`;
-                    div.onclick = () => {
+                    div.style.cssText = 'display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 5px 6px; border-radius: 6px; transition: background 0.2s ease;';
+                    div.title = `${dept}: ${count} nhân sự — Đang hoạt động: ${activeCount} (${activePct}%) | Đã nghỉ việc: ${disabledCount} (${disabledPct}%)`;
+                    div.onmouseenter = () => { div.style.background = 'rgba(255, 255, 255, 0.05)'; };
+                    div.onmouseleave = () => { div.style.background = 'transparent'; };
+
+                    div.onclick = (e) => {
+                        const statusTarget = e.target.closest('[data-status-filter]');
                         switchToTab('tab-cap-phat-list');
                         const filterDept = document.getElementById('filter-dept-thietbi');
+                        const filterStatus = document.getElementById('filter-status-thietbi');
                         if (filterDept) {
-                            filterDept.value = dept;
-                            renderThietBi();
+                            filterDept.value = dept === 'Chưa phân phòng ban' ? '' : dept;
                         }
+                        if (filterStatus) {
+                            filterStatus.value = statusTarget ? statusTarget.getAttribute('data-status-filter') : '';
+                        }
+                        currentPageThietBi = 1;
+                        renderThietBi();
                     };
+
                     div.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 500;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 500; gap: 8px; flex-wrap: wrap;">
                             <span style="color: var(--text-primary);"><i class="fa-solid fa-folder" style="color: var(--primary-color); margin-right: 6px;"></i>${dept}</span>
-                            <span style="font-weight: 700; color: var(--primary-color);">${count} nhân sự</span>
+                            <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px;">
+                                <span data-status-filter="active" style="color: #7bca0f; font-weight: 600; background: rgba(123, 202, 15, 0.1); padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(123, 202, 15, 0.25);" title="Đang hoạt động: ${activeCount} nhân sự (${activePct}%) - Click để lọc">
+                                    🟢 ${activeCount} (${activePct}%)
+                                </span>
+                                <span data-status-filter="disabled" style="color: ${disabledCount > 0 ? '#ef4444' : 'var(--text-secondary)'}; font-weight: 600; background: ${disabledCount > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.04)'}; padding: 1px 6px; border-radius: 4px; border: 1px solid ${disabledCount > 0 ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.08)'}; opacity: ${disabledCount > 0 ? '1' : '0.6'};" title="Đã nghỉ việc: ${disabledCount} nhân sự (${disabledPct}%) - Click để lọc">
+                                    🔴 ${disabledCount} (${disabledPct}%)
+                                </span>
+                                <span style="font-weight: 700; color: var(--primary-color); font-size: 13px; min-width: 66px; text-align: right;">${count} nhân sự</span>
+                            </div>
                         </div>
-                        <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden;">
-                            <div style="width: ${percent}%; height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--primary-color)); border-radius: 4px; transition: width 0.5s ease;"></div>
+                        <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.08); border-radius: 4px; overflow: hidden; display: flex;">
+                            <div style="width: ${activeBarWidth}%; height: 100%; background: linear-gradient(90deg, var(--brand-green), var(--primary-color)); transition: width 0.5s ease;" title="Đang hoạt động: ${activeCount} (${activePct}%)"></div>
+                            <div style="width: ${disabledBarWidth}%; height: 100%; background: linear-gradient(90deg, #ef4444, #dc2626); transition: width 0.5s ease;" title="Đã nghỉ việc: ${disabledCount} (${disabledPct}%)"></div>
                         </div>
                     `;
                     elDeptList.appendChild(div);
@@ -2301,14 +2410,14 @@ async function startApp() {
     // multi-device payload. Older records without `devices` naturally return
     // their single legacy device.
     async function returnAssignedDevicesToInventory(device, reason, options = {}) {
-        const assignedDevices = getAssignedDevices(device).filter(assigned => assigned && (
-            assigned.hasDevice === true || [
-                assigned.devId, assigned.devType, assigned.devMain, assigned.devCpu,
-                assigned.devRam, assigned.devSsd, assigned.devSsd2, assigned.devHdd,
-                assigned.devHdd2, assigned.devVga, assigned.devMonitor
-            ].some(value => String(value || '').trim() !== '')
-        ));
-        const devicesToReturn = assignedDevices.length ? assignedDevices : [device];
+        const hasRealHardware = (d) => d && [
+            d.devId, d.devType, d.devMain, d.devCpu,
+            d.devRam, d.devSsd, d.devSsd2, d.devHdd,
+            d.devHdd2, d.devVga, d.devMonitor, d.devSn
+        ].some(value => String(value || '').trim() !== '');
+
+        const assignedDevices = getAssignedDevices(device).filter(hasRealHardware);
+        const devicesToReturn = assignedDevices.length ? assignedDevices : (hasRealHardware(device) ? [device] : []);
         for (const assigned of devicesToReturn) {
             await returnDeviceToInventory({ ...device, ...assigned }, reason, options);
         }
@@ -3394,13 +3503,25 @@ async function startApp() {
     async function deleteThietBi(index) {
         if (!requirePermission('canDelete', 'xóa thông tin cấp phát thiết bị')) return;
         const item = thietBiList[index];
+        if (!item) return;
+
         if (confirm(`Bạn có chắc chắn muốn xóa cấp phát thiết bị của nhân sự ${item.userName} (${item.userId})?`)) {
+            // Các bản ghi local-* chưa tồn tại trên Supabase, nên chỉ cần xóa khỏi bộ nhớ cục bộ.
+            const isLocalId = !item.id || (typeof item.id === 'string' && item.id.startsWith('local-'));
+
             try {
-                const { error } = await supabaseClient
-                    .from('thiet_bi')
-                    .delete()
-                    .eq('id', item.id);
-                if (error) throw error;
+                if (!isLocalId) {
+                    if (!supabaseClient) {
+                        throw new Error('Supabase client chưa được khởi tạo. Vui lòng tải lại trang và thử lại.');
+                    }
+
+                    const { error } = await supabaseClient
+                        .from('thiet_bi')
+                        .delete()
+                        .eq('id', item.id);
+                    if (error) throw error;
+                }
+
                 if (item.devId || item.assetCode) {
                     recordDeletedAssetCode(item.devId || item.assetCode, 'Đã xóa cấp phát');
                 }
@@ -3408,23 +3529,20 @@ async function startApp() {
                 saveToLocalStorageFallback('thiet_bi', thietBiList);
                 updateDeptFilterThietBi();
                 renderThietBi();
-                showToast('Đã xóa', 'Xóa thông tin cấp phát thành công!', 'warning');
-                
+                showToast('Đã xóa', 'Xóa thông tin cấp phát thành công!', 'success');
+
                 if (editIndexThietBi.value === index.toString()) {
                     resetFormThietBi();
                 }
             } catch (err) {
-                console.error(err);
-                // Xóa offline dự phòng
-                thietBiList.splice(index, 1);
-                saveToLocalStorageFallback('thiet_bi', thietBiList);
-                updateDeptFilterThietBi();
-                renderThietBi();
-                showToast('Xóa Offline', 'Không kết nối được Supabase. Đã xóa tạm thời trên trình duyệt!', 'warning');
-                
-                if (editIndexThietBi.value === index.toString()) {
-                    resetFormThietBi();
-                }
+                // Không xóa khỏi danh sách khi Supabase chưa xóa thành công,
+                // tránh tình trạng giao diện báo đã xóa nhưng dữ liệu DB vẫn còn.
+                console.error('[SUPABASE DELETE ERROR] thiet_bi:', err);
+                showToast(
+                    'Lỗi xóa dữ liệu',
+                    `Supabase báo lỗi: ${err?.message || 'Không thể xóa thông tin cấp phát.'}`,
+                    'error'
+                );
             }
         }
     }
@@ -4218,7 +4336,7 @@ async function startApp() {
             let html = `<strong>Tên thiết bị:</strong> ${item.name || 'Thiết bị'} | <strong>Số lượng trong kho:</strong> <span style="color:#eab308; font-weight:bold;">${item.quantity || 1}</span><br>`;
             html += `<strong>Lý do lưu kho:</strong> ${item.reason || 'Không có'}<br>`;
             if (item.notes) {
-                const cleanNotes = item.notes.replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+                const cleanNotes = item.notes.replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
                 if (cleanNotes) {
                     html += `<strong>Ghi chú / Cấu hình:</strong> ${cleanNotes}`;
                 }
@@ -4330,7 +4448,7 @@ async function startApp() {
 
             // Trích xuất cấu hình chi tiết từ ghi chú kho
             const specsObj = extractSpecsFromKhoNotes(khoItem.notes);
-            const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+            const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
 
             // 1. Cập nhật ĐẦY ĐỦ CẤU HÌNH cho targetUser
             targetUser.hasDevice = true;
@@ -4470,7 +4588,7 @@ async function startApp() {
             const card = document.createElement('div');
             card.style.cssText = 'background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: border-color 0.2s ease;';
 
-            const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+            const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
 
             card.innerHTML = `
                 <div style="display: flex; flex-direction: column; gap: 4px; flex-grow: 1;">
@@ -4514,7 +4632,7 @@ async function startApp() {
 
         // Trích xuất cấu hình chi tiết từ notes
         const specsObj = extractSpecsFromKhoNotes(khoItem.notes);
-        const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+        const cleanNotes = (khoItem.notes || '').replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
         pendingKhoSpecsToAssign = specsObj;
 
         // 2. Điền ĐẦY ĐỦ 100% CẤU HÌNH vào form
@@ -8288,7 +8406,7 @@ async function startApp() {
 
             let specsContent = specsPills.join(' ');
             if (!specsContent && item.notes) {
-                const clean = item.notes.replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+                const clean = item.notes.replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
                 if (clean) specsContent = `<span style="font-size: 11.5px; color: var(--text-secondary);">${clean}</span>`;
             }
             if (!specsContent) specsContent = `<span style="font-size: 11px; color: var(--text-muted);">—</span>`;
@@ -8557,7 +8675,7 @@ async function startApp() {
         // Trích xuất specs nếu có
         let specs = {};
         if (item.notes && item.notes.includes('[SPECS_JSON:')) {
-            const match = item.notes.match(/\[SPECS_JSON:(.*?)\]/s);
+            const match = item.notes.match(/\[SPECS_JSON:(\{[\s\S]*\})\]/) || item.notes.match(/\[SPECS_JSON:(.*?)\]/s);
             if (match && match[1]) {
                 try { specs = JSON.parse(match[1]); } catch (e) {}
             }
@@ -8619,7 +8737,7 @@ async function startApp() {
         if (document.getElementById('kho-date-stored')) document.getElementById('kho-date-stored').value = item.dateStored ? formatDateDMY(item.dateStored) : (specs.dateStored ? formatDateDMY(specs.dateStored) : '');
         if (document.getElementById('kho-stored-by')) document.getElementById('kho-stored-by').value = item.storedBy || specs.storedBy || '';
 
-        const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
+        const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
         if (document.getElementById('kho-notes')) document.getElementById('kho-notes').value = cleanNotes;
 
         if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU CẬP NHẬT';
@@ -8632,30 +8750,37 @@ async function startApp() {
         const item = khoList[index];
         if (!item) return;
         if (confirm(`Bạn có chắc chắn muốn xóa thiết bị lưu kho: "${item.name}"?`)) {
+            const isLocalId = !item.id || (typeof item.id === 'string' && (item.id.startsWith('local-') || item.id.startsWith('import-')));
             try {
-                const { error } = await supabaseClient
-                    .from('kho_thiet_bi')
-                    .delete()
-                    .eq('id', item.id);
-                if (error) throw error;
+                if (!isLocalId) {
+                    if (!supabaseClient) {
+                        throw new Error('Supabase client chưa được khởi tạo. Vui lòng tải lại trang và thử lại.');
+                    }
+
+                    const { error } = await supabaseClient
+                        .from('kho_thiet_bi')
+                        .delete()
+                        .eq('id', item.id);
+                    if (error) throw error;
+                }
+
                 khoList.splice(index, 1);
                 saveToLocalStorageFallback('kho_thiet_bi', khoList);
                 renderKho();
-                showToast('Đã xóa', 'Xóa thiết bị lưu kho thành công!', 'warning');
+                renderDashboard();
+                showToast('Đã xóa', 'Xóa thiết bị lưu kho thành công!', 'success');
 
                 if (editIndexKho && editIndexKho.value === index.toString()) {
                     returnToKhoTable();
                 }
             } catch (err) {
-                console.error(err);
-                khoList.splice(index, 1);
-                saveToLocalStorageFallback('kho_thiet_bi', khoList);
-                renderKho();
-                showToast('Xóa Offline', 'Không kết nối được Supabase. Đã xóa tạm thời trên trình duyệt!', 'warning');
-
-                if (editIndexKho && editIndexKho.value === index.toString()) {
-                    returnToKhoTable();
-                }
+                // Không xóa khỏi giao diện khi Supabase chưa xóa thành công.
+                console.error('[SUPABASE DELETE ERROR] kho_thiet_bi:', err);
+                showToast(
+                    'Lỗi xóa dữ liệu',
+                    `Supabase báo lỗi: ${err?.message || 'Không thể xóa thiết bị lưu kho.'}`,
+                    'error'
+                );
             }
         }
     }
