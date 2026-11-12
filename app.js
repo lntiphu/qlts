@@ -2738,73 +2738,107 @@ async function startApp() {
             const safeUserName = escapeHtml((item.userName || '').trim() || 'Chưa rõ tên');
             const safeUserId = escapeHtml((item.userId || '').trim());
             const safeUserTitle = escapeHtml((item.userTitle || '').trim());
-            const safeUserDept = escapeHtml((item.userDept || '').trim() || 'Không có phòng ban');
+            const rawUserDept = (item.userDept || '').trim();
+            const safeUserDept = escapeHtml(rawUserDept || 'Không có phòng ban');
             const initials = escapeHtml(getUserInitials(item.userName));
 
-            const userMetaRows = [];
-            if (item.userEmail) {
-                const safeEmail = escapeHtml(item.userEmail.trim());
-                userMetaRows.push(`
+            const rawEmail = (item.userEmail || '').trim();
+            const rawPhone = String(item.userPhone || '').trim();
+            const rawElement = (item.userElement || '').trim();
+            const rawKey = String(item.userKeyElement || '').trim();
+
+            const emailRowHtml = rawEmail
+                ? `
                     <div class="user-meta-row">
                         <div class="user-meta-left">
                             <span class="user-meta-icon is-email" title="Email"><i class="fa-regular fa-envelope"></i></span>
-                            <span class="user-meta-val">${safeEmail}</span>
+                            <span class="user-meta-val">${escapeHtml(rawEmail)}</span>
                         </div>
-                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeEmail}" data-copy-label="Email" title="Sao chép Email">
+                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${escapeHtml(rawEmail)}" data-copy-label="Email" title="Sao chép Email">
                             <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
-                `);
-            }
-            if (item.userPhone) {
-                const safePhone = escapeHtml(String(item.userPhone).trim());
-                userMetaRows.push(`
+                `
+                : `
+                    <div class="user-meta-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-muted" title="Email"><i class="fa-regular fa-envelope"></i></span>
+                            <span class="user-meta-val is-empty">Chưa có Email</span>
+                        </div>
+                    </div>
+                `;
+
+            const phoneRowHtml = rawPhone
+                ? `
                     <div class="user-meta-row">
                         <div class="user-meta-left">
                             <span class="user-meta-icon is-phone" title="Số điện thoại"><i class="fa-solid fa-phone"></i></span>
-                            <span class="user-meta-val">${safePhone}</span>
+                            <span class="user-meta-val">${escapeHtml(rawPhone)}</span>
                         </div>
-                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safePhone}" data-copy-label="Số điện thoại" title="Sao chép SĐT">
+                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${escapeHtml(rawPhone)}" data-copy-label="Số điện thoại" title="Sao chép SĐT">
                             <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
-                `);
-            }
-            if (item.userElement) {
-                const safeElement = escapeHtml(item.userElement.trim());
-                userMetaRows.push(`
+                `
+                : `
+                    <div class="user-meta-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-muted" title="Số điện thoại"><i class="fa-solid fa-phone"></i></span>
+                            <span class="user-meta-val is-empty">Chưa có SĐT</span>
+                        </div>
+                    </div>
+                `;
+
+            const elementRowHtml = rawElement
+                ? `
                     <div class="user-meta-row">
                         <div class="user-meta-left">
                             <span class="user-meta-icon is-element" title="Element ID">E</span>
-                            <span class="user-meta-val">${safeElement}</span>
+                            <span class="user-meta-val">${escapeHtml(rawElement)}</span>
                         </div>
-                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeElement}" data-copy-label="Element ID" title="Sao chép Element ID">
+                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${escapeHtml(rawElement)}" data-copy-label="Element ID" title="Sao chép Element ID">
                             <i class="fa-regular fa-copy"></i>
                         </button>
                     </div>
-                `);
-            }
-            if (item.userKeyElement) {
-                const rawKey = String(item.userKeyElement).trim();
-                const safeKey = escapeHtml(rawKey);
-                const safeMaskedKey = escapeHtml(maskRecoveryKey(rawKey));
-                userMetaRows.push(`
-                    <div class="user-meta-row is-key-row">
+                `
+                : `
+                    <div class="user-meta-row">
                         <div class="user-meta-left">
-                            <span class="user-meta-icon is-key" title="Recovery Key Element"><i class="fa-solid fa-key"></i></span>
-                            <span class="user-meta-val is-key user-key-text" data-raw-key="${safeKey}" data-masked-key="${safeMaskedKey}" data-masked="false">${safeKey}</span>
-                        </div>
-                        <div class="user-meta-actions">
-                            <button type="button" class="user-micro-btn btn-toggle-key-mask" title="Ẩn / Hiện Key Element">
-                                <i class="fa-regular fa-eye-slash"></i>
-                            </button>
-                            <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeKey}" data-copy-label="Key Element" title="Sao chép Key Element">
-                                <i class="fa-regular fa-copy"></i>
-                            </button>
+                            <span class="user-meta-icon is-muted" title="Element ID">E</span>
+                            <span class="user-meta-val is-empty">Chưa có Element</span>
                         </div>
                     </div>
-                `);
-            }
+                `;
+
+            const keyRowHtml = rawKey
+                ? (() => {
+                    const safeKey = escapeHtml(rawKey);
+                    const safeMaskedKey = escapeHtml(maskRecoveryKey(rawKey));
+                    return `
+                        <div class="user-meta-row is-key-row">
+                            <div class="user-meta-left">
+                                <span class="user-meta-icon is-key" title="Recovery Key Element"><i class="fa-solid fa-key"></i></span>
+                                <span class="user-meta-val is-key user-key-text" data-raw-key="${safeKey}" data-masked-key="${safeMaskedKey}" data-masked="false">${safeKey}</span>
+                            </div>
+                            <div class="user-meta-actions">
+                                <button type="button" class="user-micro-btn btn-toggle-key-mask" title="Ẩn / Hiện Key Element">
+                                    <i class="fa-regular fa-eye-slash"></i>
+                                </button>
+                                <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeKey}" data-copy-label="Key Element" title="Sao chép Key Element">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                })()
+                : `
+                    <div class="user-meta-row is-key-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-muted" title="Recovery Key Element"><i class="fa-solid fa-key"></i></span>
+                            <span class="user-meta-val is-empty">Chưa có Key Element</span>
+                        </div>
+                    </div>
+                `;
 
             const userTagPills = [];
             userTagPills.push(
@@ -2833,27 +2867,35 @@ async function startApp() {
                         <div class="user-card-head">
                             <div class="user-avatar-chip ${item.userDisabled ? 'is-disabled' : ''}" aria-hidden="true">${initials}</div>
                             <div class="user-head-main">
-                                <div class="user-head-top">
-                                    <span class="user-name-link btn-edit-thietbi" data-index="${originalIndex}" title="Click để chỉnh sửa thông tin nhân sự">
-                                        <span>${safeUserName}</span>
-                                        <i class="fa-regular fa-pen-to-square user-edit-hint" aria-hidden="true"></i>
-                                    </span>
-                                    ${statusBadgeHtml}
-                                </div>
-                                <div class="user-head-sub">
-                                    ${safeUserId ? `<button type="button" class="user-id-chip btn-copy-user-field" data-copy-value="${safeUserId}" data-copy-label="ID nhân sự" title="Click để sao chép ID: ${safeUserId}"><span>${safeUserId}</span><i class="fa-regular fa-copy" aria-hidden="true"></i></button>` : ''}
-                                    <span class="user-role-dept">
-                                        ${safeUserTitle ? `<span>${safeUserTitle}</span>` : ''}
-                                        ${safeUserTitle && safeUserDept ? '<span class="user-sub-sep">&bull;</span>' : ''}
-                                        <span class="user-dept-text">${safeUserDept}</span>
-                                    </span>
-                                </div>
+                                <span class="user-name-link btn-edit-thietbi" data-index="${originalIndex}" title="Click để chỉnh sửa thông tin nhân sự">
+                                    <span>${safeUserName}</span>
+                                    <i class="fa-regular fa-pen-to-square user-edit-hint" aria-hidden="true"></i>
+                                </span>
+                                ${safeUserId ? `<span class="user-id-chip">${safeUserId}</span>` : ''}
                             </div>
                             <div class="user-head-status">
                                 ${onlineStatusHtml}
+                                ${statusBadgeHtml}
                             </div>
                         </div>
-                        ${userMetaRows.length > 0 ? `<div class="user-meta-panel">${userMetaRows.join('')}</div>` : ''}
+                        <div class="user-role-bar">
+                            ${safeUserTitle ? `
+                                <span class="user-role-chip is-title" title="Chức vụ: ${safeUserTitle}">
+                                    <i class="fa-solid fa-user-tie" aria-hidden="true"></i>
+                                    <span>${safeUserTitle}</span>
+                                </span>
+                            ` : ''}
+                            <span class="user-role-chip ${rawUserDept ? 'is-dept' : 'is-dept-empty'}" title="Phòng ban: ${safeUserDept}">
+                                <i class="fa-solid fa-building" aria-hidden="true"></i>
+                                <span>${safeUserDept}</span>
+                            </span>
+                        </div>
+                        <div class="user-meta-panel">
+                            ${emailRowHtml}
+                            ${phoneRowHtml}
+                            ${elementRowHtml}
+                            ${keyRowHtml}
+                        </div>
                         <div class="user-tags-row">${userTagPills.join('')}</div>
                     </div>
                 </td>
