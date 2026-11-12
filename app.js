@@ -1077,6 +1077,68 @@ async function startApp() {
         })[char]);
     }
 
+    function getUserInitials(name) {
+        const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return 'NV';
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return parts.slice(-2).map(p => p[0]).join('').toUpperCase();
+    }
+
+    function maskRecoveryKey(key) {
+        const clean = String(key || '').trim();
+        if (clean.length <= 12) return '••••••••';
+        return `${clean.slice(0, 9)} •••• •••• ${clean.slice(-4)}`;
+    }
+
+    async function copyTextWithFeedback(text, label, triggerEl) {
+        const value = String(text || '').trim();
+        if (!value) return;
+        let copied = false;
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(value);
+                copied = true;
+            }
+        } catch (_) {}
+
+        if (!copied) {
+            const ta = document.createElement('textarea');
+            ta.value = value;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            ta.style.pointerEvents = 'none';
+            document.body.appendChild(ta);
+            ta.select();
+            try {
+                copied = document.execCommand('copy');
+            } catch (_) {
+                copied = false;
+            }
+            document.body.removeChild(ta);
+        }
+
+        if (copied) {
+            if (triggerEl) {
+                triggerEl.classList.add('is-copied');
+                const icon = triggerEl.querySelector('i');
+                if (icon) {
+                    const origClass = icon.className;
+                    icon.className = 'fa-solid fa-check';
+                    setTimeout(() => {
+                        icon.className = origClass;
+                        triggerEl.classList.remove('is-copied');
+                    }, 1400);
+                } else {
+                    setTimeout(() => triggerEl.classList.remove('is-copied'), 1400);
+                }
+            }
+            showToast('Đã sao chép', `${label}: ${value}`, 'success');
+        } else {
+            showToast('Không thể sao chép', 'Trình duyệt không cho phép sao chép tự động.', 'warning');
+        }
+    }
+
     function showToast(title, message, type = 'success') {
         const toast = document.createElement('div');
         toast.className = `toast toast-${type}`;
@@ -2593,9 +2655,9 @@ async function startApp() {
 
             let statusBadgeHtml = '';
             if (isCreatedRecentBadge) {
-                statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);" title="Mới tạo trong 7 ngày gần đây"><i class="fa-solid fa-sparkles"></i> Mới thêm</span>`;
+                statusBadgeHtml = `<span class="user-recent-pill is-created" title="Mới tạo trong 7 ngày gần đây"><i class="fa-solid fa-wand-magic-sparkles"></i> Mới thêm</span>`;
             } else if (isUpdatedRecentBadge) {
-                statusBadgeHtml = `<span class="badge" style="margin-left: 4px; font-size: 11px; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);" title="Mới cập nhật thông tin trong 7 ngày gần đây"><i class="fa-solid fa-rotate"></i> Mới cập nhật</span>`;
+                statusBadgeHtml = `<span class="user-recent-pill is-updated" title="Mới cập nhật thông tin trong 7 ngày gần đây"><i class="fa-solid fa-rotate"></i> Mới cập nhật</span>`;
             }
 
             const getStatusBadgeClass = (status) => {
@@ -2673,33 +2735,126 @@ async function startApp() {
 
             const troubleshootPairs = formatTroubleshootForDisplay(displayItem.devIssueDesc, displayItem.devIssueFix);
 
+            const safeUserName = escapeHtml((item.userName || '').trim() || 'Chưa rõ tên');
+            const safeUserId = escapeHtml((item.userId || '').trim());
+            const safeUserTitle = escapeHtml((item.userTitle || '').trim());
+            const safeUserDept = escapeHtml((item.userDept || '').trim() || 'Không có phòng ban');
+            const initials = escapeHtml(getUserInitials(item.userName));
+
+            const userMetaRows = [];
+            if (item.userEmail) {
+                const safeEmail = escapeHtml(item.userEmail.trim());
+                userMetaRows.push(`
+                    <div class="user-meta-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-email" title="Email"><i class="fa-regular fa-envelope"></i></span>
+                            <span class="user-meta-val">${safeEmail}</span>
+                        </div>
+                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeEmail}" data-copy-label="Email" title="Sao chép Email">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                `);
+            }
+            if (item.userPhone) {
+                const safePhone = escapeHtml(String(item.userPhone).trim());
+                userMetaRows.push(`
+                    <div class="user-meta-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-phone" title="Số điện thoại"><i class="fa-solid fa-phone"></i></span>
+                            <span class="user-meta-val">${safePhone}</span>
+                        </div>
+                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safePhone}" data-copy-label="Số điện thoại" title="Sao chép SĐT">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                `);
+            }
+            if (item.userElement) {
+                const safeElement = escapeHtml(item.userElement.trim());
+                userMetaRows.push(`
+                    <div class="user-meta-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-element" title="Element ID">E</span>
+                            <span class="user-meta-val">${safeElement}</span>
+                        </div>
+                        <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeElement}" data-copy-label="Element ID" title="Sao chép Element ID">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                `);
+            }
+            if (item.userKeyElement) {
+                const rawKey = String(item.userKeyElement).trim();
+                const safeKey = escapeHtml(rawKey);
+                const safeMaskedKey = escapeHtml(maskRecoveryKey(rawKey));
+                userMetaRows.push(`
+                    <div class="user-meta-row is-key-row">
+                        <div class="user-meta-left">
+                            <span class="user-meta-icon is-key" title="Recovery Key Element"><i class="fa-solid fa-key"></i></span>
+                            <span class="user-meta-val is-key user-key-text" data-raw-key="${safeKey}" data-masked-key="${safeMaskedKey}" data-masked="false">${safeKey}</span>
+                        </div>
+                        <div class="user-meta-actions">
+                            <button type="button" class="user-micro-btn btn-toggle-key-mask" title="Ẩn / Hiện Key Element">
+                                <i class="fa-regular fa-eye-slash"></i>
+                            </button>
+                            <button type="button" class="user-micro-btn btn-copy-user-field" data-copy-value="${safeKey}" data-copy-label="Key Element" title="Sao chép Key Element">
+                                <i class="fa-regular fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                `);
+            }
+
+            const userTagPills = [];
+            userTagPills.push(
+                item.userErgChat === 'installed'
+                    ? `<span class="user-tag-pill is-success" title="Trạng thái cài đặt ERG Chat"><i class="fa-solid fa-comments"></i> ERG Chat: Đã cài</span>`
+                    : `<span class="user-tag-pill is-muted" title="Chưa cài đặt ERG Chat"><i class="fa-regular fa-comment-dots"></i> ERG Chat: Chưa cài</span>`
+            );
+            if (item.userBirthDate) {
+                const dobDisplay = /^\d{4}-\d{2}-\d{2}/.test(item.userBirthDate) ? formatDateDMY(item.userBirthDate) : item.userBirthDate;
+                userTagPills.push(`<span class="user-tag-pill is-dob" title="Ngày sinh"><i class="fa-solid fa-cake-candles"></i> ${escapeHtml(dobDisplay)}</span>`);
+            }
+            if (item.userHireDate) {
+                userTagPills.push(`<span class="user-tag-pill is-info" title="Ngày nhận việc"><i class="fa-regular fa-calendar-check"></i> Nhận việc: ${escapeHtml(formatDateDMY(item.userHireDate))}</span>`);
+            }
+            if (item.userDisabled && item.userResignationDate) {
+                userTagPills.push(`<span class="user-tag-pill is-danger" title="Ngày nghỉ việc"><i class="fa-regular fa-calendar-xmark"></i> Nghỉ việc: ${escapeHtml(formatDateDMY(item.userResignationDate))}</span>`);
+            }
+
+            const onlineStatusHtml = item.userDisabled
+                ? `<span class="user-status-pill is-offline btn-toggle-user-status" data-index="${originalIndex}" title="Tài khoản đã vô hiệu hóa (Bấm để kích hoạt lại Online)"><span class="user-status-dot"></span> Offline</span>`
+                : `<span class="user-status-pill is-online btn-toggle-user-status" data-index="${originalIndex}" title="Tài khoản đang hoạt động (Bấm để vô hiệu hóa / Offboard)"><span class="user-status-dot"></span> Online</span>`;
+
             tr.innerHTML = `
                 <td>
-                    <div class="user-info-cell">
-                        <span class="name">
-                            <span class="btn-edit-thietbi" data-index="${originalIndex}" style="cursor: pointer; color: var(--primary-color);" title="Click để chỉnh sửa">${item.userName}</span> 
-                            <span class="badge badge-blue">${item.userId}</span>
-                            ${statusBadgeHtml}
-                            ${item.userDisabled 
-                                ? `<span class="badge badge-danger btn-toggle-user-status" data-index="${originalIndex}" style="margin-left: 4px; font-size: 11px; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="Tài khoản đã vô hiệu hóa (Bấm để kích hoạt lại Online)"><i class="fa-solid fa-circle" style="font-size: 7px; color: #ef4444;"></i> Offline</span>` 
-                                : `<span class="badge badge-success btn-toggle-user-status" data-index="${originalIndex}" style="margin-left: 4px; font-size: 11px; background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); display: inline-flex; align-items: center; gap: 4px; cursor: pointer;" title="Tài khoản đang hoạt động (Bấm để vô hiệu hóa / Offboard)"><i class="fa-solid fa-circle" style="font-size: 7px; color: #22c55e;"></i> Online</span>`}
-                        </span>
-                        <span class="details">${item.userTitle ? item.userTitle + ' - ' : ''}${item.userDept || 'Không có phòng ban'}</span>
-                        <span class="contact">${item.userEmail ? '<i class="fa-regular fa-envelope"></i> ' + item.userEmail : ''} ${item.userPhone ? ' | <i class="fa-solid fa-phone"></i> ' + item.userPhone : ''}</span>
-                        ${item.userBirthDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> DOB: ${/^\d{4}-\d{2}-\d{2}/.test(item.userBirthDate) ? formatDateDMY(item.userBirthDate) : item.userBirthDate}</span>` : ''}
-                        ${item.userHireDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày nhận việc: ${formatDateDMY(item.userHireDate)}</span>` : ''}
-                        ${item.userDisabled && item.userResignationDate ? `<span class="contact" style="display: block; margin-top: 3px;"><i class="fa-regular fa-calendar"></i> Ngày nghỉ việc: ${formatDateDMY(item.userResignationDate)}</span>` : ''}
-                        ${item.userElement ? `
-                            <span class="contact" style="display: flex; align-items: center; margin-top: 2px;">
-                                <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 14px; height: 14px; background: var(--text-muted); color: var(--bg-card, #1e293b); font-size: 9px; font-weight: 800; border-radius: 3px; line-height: 1; margin-right: 5px;">E</span> ${item.userElement}
-                            </span>
-                        ` : ''}
-                        ${item.userKeyElement ? `
-                            <span class="contact" style="display: flex; align-items: center; margin-top: 2px;">
-                                <i class="fa-solid fa-key" style="font-size: 11px; margin-right: 5px;"></i> ${item.userKeyElement}
-                            </span>
-                        ` : ''}
-                        <span class="contact" style="display: block; margin-top: 2px;">ERG chat: ${item.userErgChat === 'installed' ? 'Đã cài' : 'Chưa cài'}</span>
+                    <div class="user-info-card ${item.userDisabled ? 'is-disabled' : ''}">
+                        <div class="user-card-head">
+                            <div class="user-avatar-chip ${item.userDisabled ? 'is-disabled' : ''}" aria-hidden="true">${initials}</div>
+                            <div class="user-head-main">
+                                <div class="user-head-top">
+                                    <span class="user-name-link btn-edit-thietbi" data-index="${originalIndex}" title="Click để chỉnh sửa thông tin nhân sự">
+                                        <span>${safeUserName}</span>
+                                        <i class="fa-regular fa-pen-to-square user-edit-hint" aria-hidden="true"></i>
+                                    </span>
+                                    ${statusBadgeHtml}
+                                </div>
+                                <div class="user-head-sub">
+                                    ${safeUserId ? `<button type="button" class="user-id-chip btn-copy-user-field" data-copy-value="${safeUserId}" data-copy-label="ID nhân sự" title="Click để sao chép ID: ${safeUserId}"><span>${safeUserId}</span><i class="fa-regular fa-copy" aria-hidden="true"></i></button>` : ''}
+                                    <span class="user-role-dept">
+                                        ${safeUserTitle ? `<span>${safeUserTitle}</span>` : ''}
+                                        ${safeUserTitle && safeUserDept ? '<span class="user-sub-sep">&bull;</span>' : ''}
+                                        <span class="user-dept-text">${safeUserDept}</span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="user-head-status">
+                                ${onlineStatusHtml}
+                            </div>
+                        </div>
+                        ${userMetaRows.length > 0 ? `<div class="user-meta-panel">${userMetaRows.join('')}</div>` : ''}
+                        <div class="user-tags-row">${userTagPills.join('')}</div>
                     </div>
                 </td>
                 <td style="min-width: 240px; max-width: 320px; font-size: 13px;">
@@ -2896,6 +3051,34 @@ async function startApp() {
                 
                 // Show modal
                 historyModal.classList.add('show');
+            });
+        });
+
+        tbodyThietBi.querySelectorAll('.btn-copy-user-field').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const value = this.getAttribute('data-copy-value') || '';
+                const label = this.getAttribute('data-copy-label') || 'Thông tin';
+                copyTextWithFeedback(value, label, this);
+            });
+        });
+
+        tbodyThietBi.querySelectorAll('.btn-toggle-key-mask').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const row = this.closest('.user-meta-row');
+                const keyEl = row ? row.querySelector('.user-key-text') : null;
+                if (!keyEl) return;
+                const nextMasked = keyEl.getAttribute('data-masked') !== 'true';
+                keyEl.textContent = nextMasked
+                    ? (keyEl.getAttribute('data-masked-key') || '••••••••')
+                    : (keyEl.getAttribute('data-raw-key') || '');
+                keyEl.setAttribute('data-masked', String(nextMasked));
+                this.title = nextMasked ? 'Hiện Key Element' : 'Ẩn Key Element';
+                const icon = this.querySelector('i');
+                if (icon) {
+                    icon.className = nextMasked ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+                }
             });
         });
     }

@@ -19,7 +19,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=17.0">
+    <link rel="stylesheet" href="style.css?v=19.0">
     <style>
         .troubleshoot-wrapper {
             background: linear-gradient(145deg, #15181c 0%, #101215 100%);
@@ -493,21 +493,22 @@
                             </div>
                         </div>
 
-                        <!-- Right: Thống kê Tình Trạng Thiết Bị -->
+                        <!-- Right: Cảnh Báo Gia Hạn Bản Quyền -->
                         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                                 <h4 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-gauge-high" style="color: #f59e0b;"></i> 
-                                    Tình Trạng Thiết Bị Cấp Phát
+                                    <i class="fa-solid fa-calendar-xmark" style="color: #ef4444;"></i> 
+                                    Cảnh Báo Gia Hạn Bản Quyền
                                 </h4>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-dash-goto-giahan" style="padding: 4px 10px; font-size: 12px;">Xem tất cả</button>
                             </div>
-                            <div id="dash-status-breakdown" style="display: flex; flex-direction: column; gap: 16px;">
+                            <div id="dash-license-alerts" class="dash-scroll-thin" style="display: flex; flex-direction: column; gap: 12px; max-height: 395px; overflow-y: auto; padding-right: 6px;">
                                 <!-- Filled dynamically by JavaScript -->
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bottom Recent History & License Expiry Alerts Grid -->
+                    <!-- Bottom Recent History & Device Status Grid -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px;">
                         <!-- Left: Lịch sử hoạt động gần đây -->
                         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
@@ -524,21 +525,20 @@
                                     </span>
                                 </div>
                             </div>
-                            <div id="dash-recent-activity" style="display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto;">
+                            <div id="dash-recent-activity" class="dash-scroll-thin" style="display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto; padding-right: 6px;">
                                 <!-- Filled dynamically by JavaScript -->
                             </div>
                         </div>
 
-                        <!-- Right: Gia hạn bản quyền sắp tới -->
+                        <!-- Right: Thống kê Tình Trạng Thiết Bị -->
                         <div class="card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                                 <h4 style="font-size: 16px; font-weight: 600; color: var(--text-primary); margin: 0; display: flex; align-items: center; gap: 8px;">
-                                    <i class="fa-solid fa-calendar-xmark" style="color: #ef4444;"></i> 
-                                    Cảnh Báo Gia Hạn Bản Quyền
+                                    <i class="fa-solid fa-gauge-high" style="color: #f59e0b;"></i> 
+                                    Tình Trạng Thiết Bị Cấp Phát
                                 </h4>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-dash-goto-giahan" style="padding: 4px 10px; font-size: 12px;">Xem tất cả</button>
                             </div>
-                            <div id="dash-license-alerts" style="display: flex; flex-direction: column; gap: 12px; max-height: 280px; overflow-y: auto;">
+                            <div id="dash-status-breakdown" style="display: flex; flex-direction: column; gap: 16px;">
                                 <!-- Filled dynamically by JavaScript -->
                             </div>
                         </div>
@@ -3067,6 +3067,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="qrcode-gen.min.js"></script>
     <!-- Custom Script -->
-    <script src="app.js?v=44"></script>
+    <script src="app.js?v=45"></script>
 </body>
 </html>
