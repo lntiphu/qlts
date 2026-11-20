@@ -31,6 +31,7 @@ async function startApp() {
     let cameraList = [];
     let tipsList = [];
     let giaHanList = [];
+    let taskList = [];
     // Dữ liệu thiết bị lưu kho phục hồi an toàn (Initial Seed)
     const initialKhoSeed = [
     {
@@ -759,6 +760,30 @@ async function startApp() {
                 expiry_date: dateToISO(js.expiryDate)
             })
         },
+        tasks: {
+            fromDB: (db) => ({
+                id: db.id,
+                userId: db.user_id || db.userId || '',
+                userName: db.user_name || db.userName || '',
+                supportType: db.support_type || db.supportType || 'Phần cứng',
+                description: db.description || '',
+                time: db.support_time || db.supportTime || db.time || '',
+                date: db.support_date ? formatDateDMY(db.support_date) : (db.date || ''),
+                completed: db.completed === true,
+                createdAt: db.created_at || db.createdAt || '',
+                updatedAt: db.updated_at || db.updatedAt || ''
+            }),
+            toDB: (js) => ({
+                user_id: js.userId || null,
+                user_name: js.userName || null,
+                support_type: js.supportType || 'Phần cứng',
+                description: js.description || '',
+                support_time: js.time || null,
+                support_date: dateToISO(js.date) || js.date,
+                completed: !!js.completed,
+                updated_at: new Date().toISOString()
+            })
+        },
         khoThietBi: {
             fromDB: (db) => {
                 let specs = {};
@@ -860,7 +885,8 @@ async function startApp() {
         { id: 'tab-ho-tro', name: 'Trang hỗ trợ' },
         { id: 'tab-camera', name: 'Thông tin camera' },
         { id: 'tab-tips', name: 'Tip & Trick' },
-        { id: 'tab-gia-han', name: 'Gia hạn bản quyền' }
+        { id: 'tab-gia-han', name: 'Gia hạn bản quyền' },
+        { id: 'tab-task', name: 'Task' }
     ];
 
     function getRolePresetPermissions(role) {
@@ -870,7 +896,7 @@ async function startApp() {
         }
         if (role === 'editor') {
             return { canAdd: true, canEdit: true, canDelete: false, canExport: false,
-                allowedTabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips', 'tab-gia-han'] };
+                allowedTabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-cong-ty', 'tab-ho-tro', 'tab-tips', 'tab-gia-han', 'tab-task'] };
         }
         return { canAdd: false, canEdit: false, canDelete: false, canExport: false,
             allowedTabs: ['tab-trang-chu', 'tab-cap-phat-list', 'tab-kho-thiet-bi', 'tab-ho-tro', 'tab-tips'] };
@@ -944,7 +970,7 @@ async function startApp() {
     }
 
     function hideAllTabForms() {
-        const tabs = ['tab-kho-thiet-bi', 'tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han', 'tab-phan-quyen'];
+        const tabs = ['tab-kho-thiet-bi', 'tab-cong-ty', 'tab-account', 'tab-ho-tro', 'tab-camera', 'tab-tips', 'tab-gia-han', 'tab-task', 'tab-phan-quyen'];
         tabs.forEach(tabId => showTabTableOnly(tabId));
     }
 
@@ -1002,6 +1028,7 @@ async function startApp() {
             if (targetTabId === 'tab-cap-phat-list') tabName = 'Danh sách đã cấp phát';
             else if (targetTabId === 'tab-cap-phat-form') tabName = 'Quản lý cấp phát';
             else if (targetTabId === 'tab-kho-thiet-bi') tabName = 'Thiết bị lưu kho';
+            else if (targetTabId === 'tab-task') tabName = 'Task';
             else if (targetTabId === 'tab-phan-quyen') tabName = 'Phân quyền User';
             else tabName = 'Trang chủ';
         }
@@ -1014,6 +1041,8 @@ async function startApp() {
                 renderDashboard();
             } else if (targetTabId === 'tab-kho-thiet-bi') {
                 renderKho();
+            } else if (targetTabId === 'tab-task') {
+                if (typeof renderTask === 'function') renderTask();
             } else if (targetTabId === 'tab-phan-quyen' && typeof renderPhanQuyen === 'function') {
                 renderPhanQuyen();
             }
@@ -5283,6 +5312,9 @@ async function startApp() {
         } else if (action === 'add-gia-han') {
             targetTabId = 'tab-gia-han';
             resetFn = typeof resetFormGiaHan === 'function' ? resetFormGiaHan : null;
+        } else if (action === 'add-task') {
+            targetTabId = 'tab-task';
+            resetFn = typeof resetFormTask === 'function' ? resetFormTask : null;
         } else if (action === 'add-kho') {
             targetTabId = 'tab-kho-thiet-bi';
             resetFn = typeof resetFormKho === 'function' ? resetFormKho : null;
@@ -9549,6 +9581,690 @@ async function startApp() {
         });
     }
 
+    // =========================================================================
+    // PHÂN HỆ MỚI: QUẢN LÝ TASK HỖ TRỢ (SUPPORT TASKS)
+    // =========================================================================
+    const formTask = document.getElementById('form-task');
+    const tbodyTask = document.getElementById('tbody-task');
+    const searchTask = document.getElementById('search-task');
+    const btnCancelTask = document.getElementById('btn-cancel-task');
+    const btnSaveTask = document.getElementById('btn-save-task');
+    const editIndexTask = document.getElementById('edit-index-task');
+    const btnOpenAddTask = document.getElementById('btn-open-add-task');
+
+    const taskUserIdInput = document.getElementById('task-user-id');
+    const taskUserNameInput = document.getElementById('task-user-name');
+    const taskTypeSelect = document.getElementById('task-type');
+    const taskDescInput = document.getElementById('task-description');
+    const taskTimeInput = document.getElementById('task-time');
+    const taskDateInput = document.getElementById('task-date');
+    const taskCompletedForm = document.getElementById('task-completed-form');
+    const groupTaskStatusEdit = document.getElementById('group-task-status-edit');
+    const titleFormTask = document.getElementById('title-form-task');
+    const taskUserHint = document.getElementById('task-user-hint');
+    const taskUserHintText = document.getElementById('task-user-hint-text');
+
+    const filterTaskType = document.getElementById('filter-task-type');
+    const filterTaskStatus = document.getElementById('filter-task-status');
+    const filterTaskYear = document.getElementById('filter-task-year');
+    const filterTaskMonth = document.getElementById('filter-task-month');
+    const filterTaskDate = document.getElementById('filter-task-date');
+    const btnResetTaskFilter = document.getElementById('btn-reset-task-filter');
+
+    let currentPageTask = 1;
+    const itemsPerPageTask = 10;
+    let currentTaskPreset = 'all';
+
+    function saveTaskToLocalStorage() {
+        try {
+            localStorage.setItem('tasks_list', JSON.stringify(taskList));
+            saveToLocalStorageFallback('tasks', taskList);
+        } catch (e) {
+            console.error("Error writing LocalStorage for tasks:", e);
+        }
+    }
+
+    // Immediate load from local storage
+    try {
+        const storedTasks = localStorage.getItem('tasks_list') || localStorage.getItem('fallback_tasks');
+        if (storedTasks) {
+            const parsed = JSON.parse(storedTasks);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                taskList = parsed;
+            }
+        }
+    } catch (e) {
+        console.warn('Error reading tasks_list from localStorage:', e);
+    }
+
+    function populateTaskUserDatalist() {
+        const datalist = document.getElementById('datalist-task-users');
+        if (!datalist) return;
+        datalist.innerHTML = '';
+        const seen = new Set();
+        (thietBiList || []).forEach(emp => {
+            const uid = (emp.userId || '').trim();
+            const uname = (emp.userName || '').trim();
+            const udept = (emp.userDept || emp.userCompany || '').trim();
+            if (uid && !seen.has(uid)) {
+                seen.add(uid);
+                const opt = document.createElement('option');
+                opt.value = uid;
+                opt.label = `${uname}${udept ? ' - ' + udept : ''}`;
+                datalist.appendChild(opt);
+            }
+        });
+    }
+
+    function checkTaskUserHint() {
+        if (!taskUserIdInput || !taskUserHint || !taskUserHintText) return;
+        const val = taskUserIdInput.value.trim().toLowerCase();
+        if (!val) {
+            taskUserHint.style.display = 'none';
+            if (taskUserNameInput) taskUserNameInput.value = '';
+            return;
+        }
+        const matched = (thietBiList || []).find(emp => 
+            (emp.userId && emp.userId.trim().toLowerCase() === val) ||
+            (emp.userName && emp.userName.trim().toLowerCase() === val)
+        );
+        if (matched) {
+            taskUserHint.style.display = 'block';
+            taskUserHintText.innerHTML = `<strong>${escapeHtml(matched.userName)}</strong> (${escapeHtml(matched.userId)}) — Phòng: ${escapeHtml(matched.userDept || 'Chưa rõ')}`;
+            if (taskUserNameInput) taskUserNameInput.value = matched.userName;
+        } else {
+            taskUserHint.style.display = 'none';
+        }
+    }
+
+    if (taskUserIdInput) {
+        taskUserIdInput.addEventListener('input', checkTaskUserHint);
+        taskUserIdInput.addEventListener('change', checkTaskUserHint);
+    }
+
+    // Attach masks
+    try { attachDateMask(taskDateInput); } catch (e) {}
+    try { attachDateMask(filterTaskDate); } catch (e) {}
+
+    // Time mask for HH:mm
+    if (taskTimeInput) {
+        taskTimeInput.addEventListener('input', (e) => {
+            let v = e.target.value.replace(/\D/g, '');
+            if (v.length > 4) v = v.substring(0, 4);
+            if (v.length > 2) {
+                e.target.value = v.substring(0, 2) + ':' + v.substring(2);
+            } else {
+                e.target.value = v;
+            }
+        });
+    }
+
+    // Buttons now/today
+    const btnNowTaskTime = document.getElementById('btn-now-task-time');
+    if (btnNowTaskTime && taskTimeInput) {
+        btnNowTaskTime.addEventListener('click', () => {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            taskTimeInput.value = `${hh}:${mm}`;
+        });
+    }
+
+    const btnTodayTaskDate = document.getElementById('btn-today-task-date');
+    if (btnTodayTaskDate && taskDateInput) {
+        btnTodayTaskDate.addEventListener('click', () => {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yyyy = now.getFullYear();
+            taskDateInput.value = `${dd}/${mm}/${yyyy}`;
+        });
+    }
+
+    // Quick tags for filter
+    document.querySelectorAll('.task-tag-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.task-tag-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentTaskPreset = btn.getAttribute('data-preset') || 'all';
+            currentPageTask = 1;
+            renderTask();
+        });
+    });
+
+    if (filterTaskType) filterTaskType.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
+    if (filterTaskStatus) filterTaskStatus.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
+    if (filterTaskYear) filterTaskYear.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
+    if (filterTaskMonth) filterTaskMonth.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
+    if (filterTaskDate) filterTaskDate.addEventListener('input', () => { currentPageTask = 1; renderTask(); });
+    if (searchTask) searchTask.addEventListener('input', () => { currentPageTask = 1; renderTask(); });
+
+    if (btnResetTaskFilter) {
+        btnResetTaskFilter.addEventListener('click', () => {
+            if (filterTaskType) filterTaskType.value = '';
+            if (filterTaskStatus) filterTaskStatus.value = '';
+            if (filterTaskYear) filterTaskYear.value = '';
+            if (filterTaskMonth) filterTaskMonth.value = '';
+            if (filterTaskDate) filterTaskDate.value = '';
+            if (searchTask) searchTask.value = '';
+            currentTaskPreset = 'all';
+            document.querySelectorAll('.task-tag-btn').forEach(b => {
+                b.classList.toggle('active', b.getAttribute('data-preset') === 'all');
+            });
+            currentPageTask = 1;
+            renderTask();
+            showToast('Bộ lọc', 'Đã đặt lại toàn bộ bộ lọc về mặc định!', 'info');
+        });
+    }
+
+    function updateTaskYearsDropdown() {
+        if (!filterTaskYear) return;
+        const currentYear = new Date().getFullYear();
+        const yearsSet = new Set([String(currentYear)]);
+        (taskList || []).forEach(t => {
+            if (t.date) {
+                const parts = t.date.split('/');
+                if (parts.length === 3 && parts[2]) {
+                    yearsSet.add(parts[2].trim());
+                }
+            }
+        });
+        const curVal = filterTaskYear.value;
+        const sortedYears = Array.from(yearsSet).sort().reverse();
+        filterTaskYear.innerHTML = '<option value="">Tất cả năm</option>' + 
+            sortedYears.map(y => `<option value="${y}" ${curVal === y ? 'selected' : ''}>Năm ${y}</option>`).join('');
+    }
+
+    function renderTask() {
+        if (!tbodyTask) return;
+        tbodyTask.innerHTML = '';
+        populateTaskUserDatalist();
+        updateTaskYearsDropdown();
+
+        const todayObj = new Date();
+        const todayStr = `${String(todayObj.getDate()).padStart(2, '0')}/${String(todayObj.getMonth() + 1).padStart(2, '0')}/${todayObj.getFullYear()}`;
+        const thisMonthStr = String(todayObj.getMonth() + 1).padStart(2, '0');
+        const thisYearStr = String(todayObj.getFullYear());
+
+        // Update top stats
+        const totalCount = (taskList || []).length;
+        const pendingCount = (taskList || []).filter(t => !t.completed).length;
+        const completedCount = (taskList || []).filter(t => !!t.completed).length;
+        const todayCount = (taskList || []).filter(t => t.date === todayStr).length;
+
+        const elStatTotal = document.getElementById('task-stat-total');
+        const elStatPending = document.getElementById('task-stat-pending');
+        const elStatCompleted = document.getElementById('task-stat-completed');
+        const elStatToday = document.getElementById('task-stat-today');
+
+        if (elStatTotal) elStatTotal.innerText = totalCount;
+        if (elStatPending) elStatPending.innerText = pendingCount;
+        if (elStatCompleted) elStatCompleted.innerText = completedCount;
+        if (elStatToday) elStatToday.innerText = todayCount;
+
+        // Sort tasks: newest date & time first
+        const sortedList = [...(taskList || [])].sort((a, b) => {
+            const dateA = a.date ? a.date.split('/').reverse().join('') : '';
+            const dateB = b.date ? b.date.split('/').reverse().join('') : '';
+            if (dateA !== dateB) return dateB.localeCompare(dateA);
+            const timeA = a.time || '';
+            const timeB = b.time || '';
+            return timeB.localeCompare(timeA);
+        });
+
+        // Apply filters
+        const selType = filterTaskType ? filterTaskType.value.trim() : '';
+        const selStatus = filterTaskStatus ? filterTaskStatus.value.trim() : '';
+        const selYear = filterTaskYear ? filterTaskYear.value.trim() : '';
+        const selMonth = filterTaskMonth ? filterTaskMonth.value.trim() : '';
+        const selDate = filterTaskDate ? filterTaskDate.value.trim() : '';
+        const keyword = searchTask ? searchTask.value.trim().toLowerCase() : '';
+
+        const filtered = sortedList.filter(item => {
+            // Preset filter
+            if (currentTaskPreset === 'today' && item.date !== todayStr) return false;
+            if (currentTaskPreset === 'this-month') {
+                if (!item.date) return false;
+                const p = item.date.split('/');
+                if (p.length !== 3 || p[1] !== thisMonthStr || p[2] !== thisYearStr) return false;
+            }
+            if (currentTaskPreset === 'this-year') {
+                if (!item.date) return false;
+                const p = item.date.split('/');
+                if (p.length !== 3 || p[2] !== thisYearStr) return false;
+            }
+            if (currentTaskPreset === 'pending' && item.completed) return false;
+            if (currentTaskPreset === 'completed' && !item.completed) return false;
+
+            // Type filter
+            if (selType && item.supportType !== selType) return false;
+
+            // Status filter
+            if (selStatus === 'pending' && item.completed) return false;
+            if (selStatus === 'completed' && !item.completed) return false;
+
+            // Date / Month / Year filters
+            if (item.date) {
+                const parts = item.date.split('/');
+                if (parts.length === 3) {
+                    const d = parts[0], m = parts[1], y = parts[2];
+                    if (selYear && y !== selYear) return false;
+                    if (selMonth && m !== selMonth) return false;
+                }
+            }
+            if (selDate && item.date !== selDate) return false;
+
+            // Search keyword
+            if (keyword) {
+                const combined = [
+                    item.userId || '',
+                    item.userName || '',
+                    item.supportType || '',
+                    item.description || '',
+                    item.date || '',
+                    item.time || ''
+                ].join(' ').toLowerCase();
+                if (!combined.includes(keyword)) return false;
+            }
+
+            return true;
+        });
+
+        // Pagination
+        const totalItems = filtered.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPageTask) || 1;
+        if (currentPageTask > totalPages) currentPageTask = totalPages;
+        if (currentPageTask < 1) currentPageTask = 1;
+
+        const startIndex = (currentPageTask - 1) * itemsPerPageTask;
+        const endIndex = Math.min(startIndex + itemsPerPageTask, totalItems);
+
+        const elStart = document.getElementById('pag-start-task');
+        const elEnd = document.getElementById('pag-end-task');
+        const elTotal = document.getElementById('pag-total-task');
+        const elCurrent = document.getElementById('pag-current-task');
+
+        if (elStart) elStart.innerText = totalItems > 0 ? startIndex + 1 : 0;
+        if (elEnd) elEnd.innerText = endIndex;
+        if (elTotal) elTotal.innerText = totalItems;
+        if (elCurrent) elCurrent.innerText = `Trang ${currentPageTask} / ${totalPages}`;
+
+        const btnPrev = document.getElementById('btn-prev-task');
+        const btnNext = document.getElementById('btn-next-task');
+        if (btnPrev) btnPrev.disabled = currentPageTask <= 1;
+        if (btnNext) btnNext.disabled = currentPageTask >= totalPages;
+
+        if (totalItems === 0) {
+            tbodyTask.innerHTML = `
+                <tr class="empty-row">
+                    <td colspan="7" class="text-center text-muted" style="padding: 32px 16px;">
+                        <i class="fa-solid fa-clipboard-list" style="font-size: 32px; opacity: 0.35; display: block; margin-bottom: 10px;"></i>
+                        Chưa có task hỗ trợ nào phù hợp với điều kiện hiển thị!
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        const pageItems = filtered.slice(startIndex, endIndex);
+        pageItems.forEach((task, idx) => {
+            const globalIndex = startIndex + idx + 1;
+            const tr = document.createElement('tr');
+
+            // Support Type Badge
+            let typeBadge = '';
+            if (task.supportType === 'Phần cứng') {
+                typeBadge = `<span class="badge badge-type-hardware"><i class="fa-solid fa-microchip"></i> Phần cứng</span>`;
+            } else if (task.supportType === 'Phần mềm') {
+                typeBadge = `<span class="badge badge-type-software"><i class="fa-solid fa-laptop-code"></i> Phần mềm</span>`;
+            } else {
+                typeBadge = `<span class="badge badge-type-other"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(task.supportType || 'Khác')}</span>`;
+            }
+
+            // User Info
+            let userDisplay = '<span class="text-muted">—</span>';
+            if (task.userId) {
+                userDisplay = `
+                    <div style="font-weight: 600; color: var(--text-primary); font-size: 13px;">${escapeHtml(task.userId)}</div>
+                    ${task.userName ? `<div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;"><i class="fa-regular fa-user" style="font-size: 10px; margin-right: 3px;"></i>${escapeHtml(task.userName)}</div>` : ''}
+                `;
+            } else if (task.userName) {
+                userDisplay = `<div style="font-weight: 500; color: var(--text-primary); font-size: 13px;">${escapeHtml(task.userName)}</div>`;
+            }
+
+            // Time & Date Display
+            const timeDisplay = `
+                <div style="display: flex; flex-direction: column; gap: 2px;">
+                    <div style="font-weight: 600; font-size: 13px; color: var(--text-primary); display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-regular fa-clock" style="color: #60a5fa; font-size: 11px;"></i> ${escapeHtml(task.time || '—')}
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-regular fa-calendar" style="font-size: 11px;"></i> ${escapeHtml(task.date || '—')}
+                    </div>
+                </div>
+            `;
+
+            // Toggle Switch HTML
+            const switchHtml = `
+                <div class="task-toggle-wrapper">
+                    <label class="task-switch" title="Gạt để chuyển trạng thái Hoàn thành / Chưa hoàn thành">
+                        <input type="checkbox" class="task-status-toggle" data-id="${task.id}" ${task.completed ? 'checked' : ''}>
+                        <span class="task-slider"></span>
+                    </label>
+                    <span class="task-status-pill ${task.completed ? 'is-completed' : 'is-pending'}" id="status-pill-${task.id}">
+                        ${task.completed ? '<i class="fa-solid fa-circle-check"></i> Đã hoàn thành' : '<i class="fa-solid fa-clock"></i> Chưa hoàn thành'}
+                    </span>
+                </div>
+            `;
+
+            tr.innerHTML = `
+                <td class="text-center" style="font-size: 12px; color: var(--text-secondary);">${globalIndex}</td>
+                <td>${userDisplay}</td>
+                <td>${typeBadge}</td>
+                <td>
+                    <div style="white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.5; color: var(--text-primary); max-width: 420px;">${escapeHtml(task.description || '')}</div>
+                </td>
+                <td>${timeDisplay}</td>
+                <td class="text-center">${switchHtml}</td>
+                <td class="text-center">
+                    <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                        <button type="button" class="btn btn-secondary btn-sm btn-edit-task" data-id="${task.id}" style="padding: 4px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" title="Chỉnh sửa task">
+                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm btn-delete-task" data-id="${task.id}" style="padding: 4px 8px; font-size: 12px;" title="Xóa task">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+
+            tbodyTask.appendChild(tr);
+        });
+
+        // Event listeners for toggle switches
+        tbodyTask.querySelectorAll('.task-status-toggle').forEach(toggle => {
+            toggle.addEventListener('change', function(e) {
+                if (!requirePermission('canEdit', 'thay đổi trạng thái task')) {
+                    this.checked = !this.checked;
+                    return;
+                }
+                const taskId = this.getAttribute('data-id');
+                const isChecked = this.checked;
+                toggleTaskStatus(taskId, isChecked);
+            });
+        });
+
+        // Event listeners for edit buttons
+        tbodyTask.querySelectorAll('.btn-edit-task').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-id');
+                editTask(taskId);
+            });
+        });
+
+        // Event listeners for delete buttons
+        tbodyTask.querySelectorAll('.btn-delete-task').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const taskId = this.getAttribute('data-id');
+                deleteTask(taskId);
+            });
+        });
+    }
+
+    function toggleTaskStatus(taskId, isCompleted) {
+        const item = (taskList || []).find(t => String(t.id) === String(taskId));
+        if (!item) return;
+
+        item.completed = !!isCompleted;
+        item.updatedAt = new Date().toISOString();
+        saveTaskToLocalStorage();
+
+        // Update pill instantly
+        const pill = document.getElementById(`status-pill-${taskId}`);
+        if (pill) {
+            pill.className = `task-status-pill ${item.completed ? 'is-completed' : 'is-pending'}`;
+            pill.innerHTML = item.completed 
+                ? '<i class="fa-solid fa-circle-check"></i> Đã hoàn thành' 
+                : '<i class="fa-solid fa-clock"></i> Chưa hoàn thành';
+        }
+
+        // Update stats
+        const pendingCount = (taskList || []).filter(t => !t.completed).length;
+        const completedCount = (taskList || []).filter(t => !!t.completed).length;
+        const elStatPending = document.getElementById('task-stat-pending');
+        const elStatCompleted = document.getElementById('task-stat-completed');
+        if (elStatPending) elStatPending.innerText = pendingCount;
+        if (elStatCompleted) elStatCompleted.innerText = completedCount;
+
+        // Sync with Supabase
+        if (supabaseClient) {
+            supabaseClient.from('tasks').update({
+                completed: item.completed,
+                updated_at: new Date().toISOString()
+            }).eq('id', item.id).then(({ error }) => {
+                if (error) console.warn("Supabase update error for 'tasks' (saved locally):", error);
+            }).catch(err => {
+                console.warn("Supabase update catch for 'tasks':", err);
+            });
+        }
+
+        if (item.completed) {
+            showToast('Thành công', 'Đã đánh dấu task là Đã hoàn thành!', 'success');
+        } else {
+            showToast('Cập nhật', 'Đã chuyển task về Chưa hoàn thành!', 'info');
+        }
+    }
+
+    function editTask(taskId) {
+        if (!requirePermission('canEdit', 'chỉnh sửa thông tin task hỗ trợ')) return;
+        const item = (taskList || []).find(t => String(t.id) === String(taskId));
+        if (!item) return;
+
+        showTabFormOnly('tab-task');
+        if (editIndexTask) editIndexTask.value = taskId;
+        if (taskUserIdInput) taskUserIdInput.value = item.userId || '';
+        if (taskUserNameInput) taskUserNameInput.value = item.userName || '';
+        if (taskTypeSelect) taskTypeSelect.value = item.supportType || 'Phần cứng';
+        if (taskDescInput) taskDescInput.value = item.description || '';
+        if (taskTimeInput) taskTimeInput.value = item.time || '';
+        if (taskDateInput) taskDateInput.value = item.date || '';
+
+        if (groupTaskStatusEdit) groupTaskStatusEdit.style.display = 'block';
+        if (taskCompletedForm) taskCompletedForm.checked = !!item.completed;
+
+        if (titleFormTask) titleFormTask.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Cập Nhật Task Hỗ Trợ';
+        if (btnSaveTask) btnSaveTask.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Task';
+
+        checkTaskUserHint();
+        document.querySelector('.tab-container')?.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function deleteTask(taskId) {
+        if (!requirePermission('canDelete', 'xóa task hỗ trợ')) return;
+        const itemIndex = (taskList || []).findIndex(t => String(t.id) === String(taskId));
+        if (itemIndex === -1) return;
+        const item = taskList[itemIndex];
+
+        if (confirm(`Bạn có chắc chắn muốn xóa task hỗ trợ: "${(item.description || '').substring(0, 50)}..." không?`)) {
+            taskList.splice(itemIndex, 1);
+            saveTaskToLocalStorage();
+
+            if (supabaseClient) {
+                supabaseClient.from('tasks').delete().eq('id', item.id).then(({ error }) => {
+                    if (error) console.warn("Supabase delete error for 'tasks' (deleted locally):", error);
+                }).catch(err => {
+                    console.warn("Supabase delete catch for 'tasks':", err);
+                });
+            }
+
+            renderTask();
+            showToast('Đã xóa', 'Xóa task hỗ trợ thành công!', 'warning');
+            if (editIndexTask && editIndexTask.value === String(taskId)) {
+                resetFormTask();
+            }
+        }
+    }
+
+    function resetFormTask() {
+        if (editIndexTask) editIndexTask.value = '';
+        if (formTask) formTask.reset();
+        if (taskUserNameInput) taskUserNameInput.value = '';
+        if (groupTaskStatusEdit) groupTaskStatusEdit.style.display = 'none';
+        if (taskCompletedForm) taskCompletedForm.checked = false;
+        if (taskUserHint) taskUserHint.style.display = 'none';
+
+        if (titleFormTask) titleFormTask.innerHTML = '<i class="fa-solid fa-list-check"></i> Thêm Task Hỗ Trợ Mới';
+        if (btnSaveTask) btnSaveTask.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Task Hỗ Trợ';
+
+        // Auto fill current time and today's date
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const mo = String(now.getMonth() + 1).padStart(2, '0');
+        const yyyy = now.getFullYear();
+
+        if (taskTimeInput) taskTimeInput.value = `${hh}:${mm}`;
+        if (taskDateInput) taskDateInput.value = `${dd}/${mo}/${yyyy}`;
+
+        showTabTableOnly('tab-task');
+    }
+
+    if (btnCancelTask) btnCancelTask.addEventListener('click', resetFormTask);
+
+    if (btnOpenAddTask) {
+        btnOpenAddTask.addEventListener('click', () => {
+            if (!requirePermission('canAdd', 'thêm mới task hỗ trợ')) return;
+            resetFormTask();
+            showTabFormOnly('tab-task');
+            if (taskUserIdInput) taskUserIdInput.focus();
+        });
+    }
+
+    if (formTask) {
+        formTask.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const isEdit = editIndexTask && editIndexTask.value !== '';
+            if (isEdit) {
+                if (!requirePermission('canEdit', 'cập nhật task hỗ trợ')) return;
+            } else {
+                if (!requirePermission('canAdd', 'thêm mới task hỗ trợ')) return;
+            }
+
+            const rawDate = taskDateInput ? taskDateInput.value.trim() : '';
+            if (rawDate) {
+                const parsedDate = parseEmployeeDate(rawDate, 'Ngày hỗ trợ');
+                if (parsedDate === null) return;
+            }
+
+            const rawTime = taskTimeInput ? taskTimeInput.value.trim() : '';
+            const rawUserId = taskUserIdInput ? taskUserIdInput.value.trim() : '';
+            const rawType = taskTypeSelect ? taskTypeSelect.value : 'Khác';
+            const rawDesc = taskDescInput ? taskDescInput.value.trim() : '';
+
+            // Check if userId matches employee
+            let resolvedUserName = taskUserNameInput ? taskUserNameInput.value.trim() : '';
+            if (rawUserId) {
+                const matched = (thietBiList || []).find(emp => 
+                    (emp.userId && emp.userId.trim().toLowerCase() === rawUserId.toLowerCase()) ||
+                    (emp.userName && emp.userName.trim().toLowerCase() === rawUserId.toLowerCase())
+                );
+                if (matched && !resolvedUserName) {
+                    resolvedUserName = matched.userName;
+                }
+            }
+
+            if (isEdit) {
+                const taskId = editIndexTask.value;
+                const idx = (taskList || []).findIndex(t => String(t.id) === String(taskId));
+                if (idx !== -1) {
+                    const oldItem = taskList[idx];
+                    const updatedItem = {
+                        ...oldItem,
+                        userId: rawUserId,
+                        userName: resolvedUserName,
+                        supportType: rawType,
+                        description: rawDesc,
+                        time: rawTime,
+                        date: rawDate,
+                        completed: taskCompletedForm ? !!taskCompletedForm.checked : oldItem.completed,
+                        updatedAt: new Date().toISOString()
+                    };
+                    taskList[idx] = updatedItem;
+                    saveTaskToLocalStorage();
+
+                    if (supabaseClient) {
+                        const dbData = mappers.tasks.toDB(updatedItem);
+                        supabaseClient.from('tasks').update(dbData).eq('id', oldItem.id).then(({ error }) => {
+                            if (error) console.warn("Supabase update error for 'tasks' (saved locally):", error);
+                        }).catch(err => {
+                            console.warn("Supabase update catch for 'tasks':", err);
+                        });
+                    }
+
+                    showToast('Thành công', 'Đã cập nhật thông tin task hỗ trợ!');
+                    resetFormTask();
+                }
+            } else {
+                const newItem = {
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    userId: rawUserId,
+                    userName: resolvedUserName,
+                    supportType: rawType,
+                    description: rawDesc,
+                    time: rawTime,
+                    date: rawDate,
+                    completed: false, // Công việc mới chưa hoàn thành như yêu cầu
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+
+                // Local save first
+                taskList.unshift(newItem);
+                saveTaskToLocalStorage();
+
+                if (supabaseClient) {
+                    const dbData = mappers.tasks.toDB(newItem);
+                    supabaseClient.from('tasks').insert([dbData]).select().then(({ data, error }) => {
+                        if (error) {
+                            console.warn("Supabase insert error for 'tasks' (saved locally):", error);
+                        } else if (data && data[0]) {
+                            newItem.id = data[0].id;
+                            saveTaskToLocalStorage();
+                        }
+                    }).catch(err => {
+                        console.warn("Supabase insert catch for 'tasks':", err);
+                    });
+                }
+
+                showToast('Thành công', 'Đã thêm task hỗ trợ mới thành công!');
+                resetFormTask();
+            }
+
+            renderTask();
+        });
+    }
+
+    // Pagination buttons for Task
+    const btnPrevTask = document.getElementById('btn-prev-task');
+    const btnNextTask = document.getElementById('btn-next-task');
+
+    if (btnPrevTask) {
+        btnPrevTask.addEventListener('click', () => {
+            if (currentPageTask > 1) {
+                currentPageTask--;
+                renderTask();
+            }
+        });
+    }
+
+    if (btnNextTask) {
+        btnNextTask.addEventListener('click', () => {
+            currentPageTask++;
+            renderTask();
+        });
+    }
 
     // =========================================================================
     // 9.2. SAO LƯU & KHÔI PHỤC DỮ LIỆU (IMPORT & EXPORT DATABASE)
@@ -9644,6 +10360,7 @@ async function startApp() {
                 cameras: cameraList || [],
                 tips: tipsList || [],
                 giaHan: giaHanList || [],
+                tasks: taskList || [],
                 khoThietBi: khoList || [],
                 rbacConfig: rbacConfig || null
             };
@@ -9711,6 +10428,15 @@ async function startApp() {
             const khoHeaders = ["Mã thiết bị", "Tên thiết bị", "Số lượng", "Lý do lưu kho", "Ngày lưu kho"];
             const khoKeys = ["code", "name", "quantity", "reason", "dateStored"];
             zip.file("8_Danh_sach_kho_thiet_bi.csv", convertToCSV(khoList, khoHeaders, khoKeys));
+
+            // 9. Task
+            const taskHeaders = ["ID nhân viên", "Tên nhân sự", "Loại hỗ trợ", "Mô tả", "Giờ hỗ trợ", "Ngày hỗ trợ", "Trạng thái"];
+            const taskKeys = ["userId", "userName", "supportType", "description", "time", "date", "statusText"];
+            const taskExportData = (taskList || []).map(t => ({
+                ...t,
+                statusText: t.completed ? 'Đã hoàn thành' : 'Chưa hoàn thành'
+            }));
+            zip.file("9_Danh_sach_task_ho_tro.csv", convertToCSV(taskExportData, taskHeaders, taskKeys));
 
             showToast('Đang xử lý', 'Đang tạo file ZIP chứa các báo cáo...', 'info');
 
@@ -9936,6 +10662,10 @@ async function startApp() {
             giaHanList.length = 0;
             giaHanList.push(...data.giaHan);
         }
+        if (data.tasks) {
+            taskList.length = 0;
+            taskList.push(...data.tasks);
+        }
         if (data.khoThietBi) {
             khoList.length = 0;
             khoList.push(...data.khoThietBi);
@@ -9949,6 +10679,7 @@ async function startApp() {
 
         // 2. Save local storage for fallback
         saveGiaHanToLocalStorage();
+        saveTaskToLocalStorage();
         saveToLocalStorageFallback('kho_thiet_bi', khoList);
 
         // 3. Synchronize with Supabase database
@@ -9992,6 +10723,7 @@ async function startApp() {
                 await restoreTable('camera', cameraList, mappers.camera);
                 await restoreTable('tips', tipsList, mappers.tips);
                 await restoreTable('gia_han', giaHanList, mappers.giaHan);
+                await restoreTable('tasks', taskList, mappers.tasks);
                 await restoreTable('kho_thiet_bi', khoList, mappers.khoThietBi);
             } catch (supabaseErr) {
                 console.warn("Supabase restore warning:", supabaseErr);
@@ -10006,6 +10738,7 @@ async function startApp() {
         renderCamera();
         renderTips();
         renderGiaHan();
+        renderTask();
         renderKho();
 
         // 4. Re-render UI
@@ -10223,6 +10956,25 @@ async function startApp() {
                 console.warn("Fetch gia_han failed, loading fallback:", err);
                 loadFromLocalStorageFallback('gia_han', giaHanList, renderGiaHan);
             }),
+            supabaseClient.from('tasks').select('*').then(({ data, error }) => {
+                if (error) throw error;
+                taskList = (data || []).map(mappers.tasks.fromDB);
+                saveToLocalStorageFallback('tasks', taskList);
+                saveTaskToLocalStorage();
+                renderTask();
+            }).catch(err => {
+                console.warn("Fetch tasks failed, loading fallback:", err);
+                loadFromLocalStorageFallback('tasks', taskList, renderTask);
+                if (!taskList || taskList.length === 0) {
+                    try {
+                        const localTasks = localStorage.getItem('tasks_list');
+                        if (localTasks) {
+                            taskList = JSON.parse(localTasks);
+                            renderTask();
+                        }
+                    } catch (e) {}
+                }
+            }),
             supabaseClient.from('kho_thiet_bi').select('*').then(({ data, error }) => {
                 if (error) throw error;
                 if (data && data.length > 0) {
@@ -10259,6 +11011,7 @@ async function startApp() {
             }
             initCustomAutocompletes();
             renderDashboard();
+            renderTask();
         } catch (err) {
             console.error('Initial load failed:', err);
             const errorDetails = err.message || err.details || (typeof err === 'object' ? JSON.stringify(err) : err);
@@ -10283,7 +11036,8 @@ async function startApp() {
         'tab-ho-tro': 'Thông tin Hỗ trợ',
         'tab-camera': 'Thông tin Camera',
         'tab-tips': 'Tip & Trick',
-        'tab-gia-han': 'Gia hạn Bản quyền'
+        'tab-gia-han': 'Gia hạn Bản quyền',
+        'tab-task': 'Task'
     };
 
     // Supabase is the only source of truth for RBAC.
@@ -10463,9 +11217,10 @@ async function startApp() {
             'add-ho-tro': 'tab-ho-tro',
             'add-camera': 'tab-camera',
             'add-tips': 'tab-tips',
-            'add-gia-han': 'tab-gia-han'
+            'add-gia-han': 'tab-gia-han',
+            'add-task': 'tab-task'
         };
-        document.querySelectorAll('#modal-add-info-options .add-info-option-item').forEach(opt => {
+        document.querySelectorAll('#modal-add-info-options .option-add-card, #modal-add-info-options .add-info-option-item').forEach(opt => {
             const act = opt.getAttribute('data-action');
             if (act === 'add-phan-quyen') {
                 opt.style.display = perm.role === 'admin' ? 'flex' : 'none';

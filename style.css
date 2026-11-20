@@ -6645,4 +6645,189 @@ body.light-theme .hist-modal-footer {
     }
 }
 
+/* =========================================================================
+   TASK HỖ TRỢ (SUPPORT TASKS) STYLES
+   ========================================================================= */
+
+/* Toggle Switch Slider */
+.task-toggle-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.task-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+.task-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.task-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.16);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.task-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 2px;
+    bottom: 2px;
+    background-color: #f1f5f9;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.task-switch input:checked + .task-slider {
+    background-color: #10b981;
+    border-color: #059669;
+}
+
+.task-switch input:checked + .task-slider:before {
+    transform: translateX(20px);
+    background-color: #ffffff;
+}
+
+.task-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.task-status-pill.is-completed {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.task-status-pill.is-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Quick Filter Pills */
+.task-tag-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--text-secondary);
+    padding: 4px 11px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.task-tag-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text-primary);
+}
+
+.task-tag-btn.active {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(124, 58, 237, 0.25));
+    border-color: #a855f7;
+    color: #ffffff;
+    font-weight: 600;
+}
+
+/* Support Type Badges */
+.badge-type-hardware {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+    border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.badge-type-software {
+    background: rgba(99, 102, 241, 0.15);
+    color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+.badge-type-other {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+/* Light Theme overrides */
+body.light-theme .task-slider {
+    background-color: #cbd5e1;
+    border-color: #94a3b8;
+}
+
+body.light-theme .task-slider:before {
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+body.light-theme .task-switch input:checked + .task-slider {
+    background-color: #10b981;
+    border-color: #059669;
+}
+
+body.light-theme .task-tag-btn {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #64748b;
+}
+
+body.light-theme .task-tag-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+body.light-theme .task-tag-btn.active {
+    background: #a855f7;
+    border-color: #9333ea;
+    color: #ffffff;
+}
+
+body.light-theme .badge-type-hardware {
+    background: #fff7ed;
+    color: #c2410c;
+    border-color: #ffedd5;
+}
+
+body.light-theme .badge-type-software {
+    background: #eef2ff;
+    color: #4338ca;
+    border-color: #e0e7ff;
+}
+
+body.light-theme .badge-type-other {
+    background: #faf5ff;
+    color: #7e22ce;
+    border-color: #f3e8ff;
+}
+
+
 

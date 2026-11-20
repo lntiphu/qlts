@@ -309,6 +309,10 @@
                     <i class="fa-solid fa-calendar-check"></i>
                     <span>Gia hạn bản quyền</span>
                 </button>
+                <button class="menu-item" data-tab="tab-task" id="menu-item-task">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Task</span>
+                </button>
                 <button class="menu-item" data-tab="tab-phan-quyen" id="menu-item-phan-quyen">
                     <i class="fa-solid fa-users-gear"></i>
                     <span>Phân quyền User</span>
@@ -1799,7 +1803,281 @@
                     </div>
                 </section>
 
-                <!-- 8. TAB PHÂN QUYỀN USER (CHỈ ADMIN THẤY) -->
+                <!-- 8. TAB TASK HỖ TRỢ -->
+                <section id="tab-task" class="tab-content">
+                    <!-- Top Summary Statistics Cards -->
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Tổng số Task</span>
+                                    <h3 id="task-stat-total" style="font-size: 24px; font-weight: 700; color: var(--text-primary); margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-list-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Chưa hoàn thành</span>
+                                    <h3 id="task-stat-pending" style="font-size: 24px; font-weight: 700; color: #f59e0b; margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); color: #f59e0b; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Đã hoàn thành</span>
+                                    <h3 id="task-stat-completed" style="font-size: 24px; font-weight: 700; color: #10b981; margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-size: 12px; color: var(--text-secondary);">Hôm nay</span>
+                                    <h3 id="task-stat-today" style="font-size: 24px; font-weight: 700; color: #a855f7; margin: 4px 0 0 0;">0</h3>
+                                </div>
+                                <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(168, 85, 247, 0.15); color: #a855f7; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Card (Thêm / Sửa Task) -->
+                    <div class="card form-card" style="display: none;">
+                        <h3 class="section-title text-primary" id="title-form-task">
+                            <i class="fa-solid fa-list-check"></i> Thêm Task Hỗ Trợ Mới
+                        </h3>
+                        
+                        <form id="form-task" autocomplete="off">
+                            <input type="hidden" id="edit-index-task" value="">
+                            <input type="hidden" id="task-user-name" value="">
+                            
+                            <div class="grid grid-col-6">
+                                <!-- ID Nhân viên -->
+                                <div class="form-group col-span-3-lg">
+                                    <label for="task-user-id">
+                                        ID Nhân viên <small style="color: var(--text-secondary); font-weight: normal;">(Có thể chọn từ nhân sự, nhập tùy ý hoặc để trống)</small>
+                                    </label>
+                                    <div style="position: relative;">
+                                        <input type="text" id="task-user-id" list="datalist-task-users" placeholder="VD: NV001, Đoàn Văn Trường hoặc để trống...">
+                                        <datalist id="datalist-task-users"></datalist>
+                                    </div>
+                                    <div id="task-user-hint" style="display: none; font-size: 12px; margin-top: 5px; color: #60a5fa; background: rgba(59, 130, 246, 0.1); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                                        <i class="fa-solid fa-user-check"></i> <span id="task-user-hint-text"></span>
+                                    </div>
+                                </div>
+
+                                <!-- Loại hỗ trợ -->
+                                <div class="form-group col-span-3-lg">
+                                    <label for="task-type">Loại hỗ trợ (*)</label>
+                                    <select id="task-type" required style="width: 100%;">
+                                        <option value="Phần cứng">Phần cứng (Hardware - sửa máy, thay linh kiện, thiết bị...)</option>
+                                        <option value="Phần mềm">Phần mềm (Software - cài Win, Office, app, sửa lỗi mềm...)</option>
+                                        <option value="Khác">Khác (Mạng, tài khoản, hướng dẫn người dùng...)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Giờ hỗ trợ -->
+                                <div class="form-group col-span-3-lg">
+                                    <label for="task-time">Giờ hỗ trợ <small style="color: var(--text-secondary); font-weight: normal;">(Định dạng HH:mm)</small></label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" id="task-time" placeholder="HH:mm (VD: 14:30)" maxlength="5" style="flex: 1;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-now-task-time" style="padding: 0 12px; font-size: 12px; white-space: nowrap;">
+                                            <i class="fa-solid fa-clock"></i> Bây giờ
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Ngày hỗ trợ -->
+                                <div class="form-group col-span-3-lg">
+                                    <label for="task-date">Ngày hỗ trợ (*) <small style="color: var(--text-secondary); font-weight: normal;">(Định dạng dd/mm/yyyy)</small></label>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" id="task-date" required placeholder="dd/mm/yyyy (VD: 20/11/2026)" maxlength="10" style="flex: 1;">
+                                        <button type="button" class="btn btn-secondary btn-sm" id="btn-today-task-date" style="padding: 0 12px; font-size: 12px; white-space: nowrap;">
+                                            <i class="fa-solid fa-calendar-day"></i> Hôm nay
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Mô tả công việc -->
+                                <div class="form-group col-span-6">
+                                    <label for="task-description">Mô tả công việc đã làm (*)</label>
+                                    <textarea id="task-description" rows="3" required placeholder="Nhập chi tiết việc đã thực hiện hoặc cần xử lý (VD: Cài đặt hệ điều hành, cài đặt ứng dụng văn phòng, kết nối máy in văn phòng, thay bàn phím máy tính...)" style="resize: vertical;"></textarea>
+                                </div>
+
+                                <!-- Trạng thái hoàn thành (khi chỉnh sửa) -->
+                                <div class="form-group col-span-6" id="group-task-status-edit" style="display: none; background: rgba(255,255,255,0.03); border: 1px dashed var(--border-color); border-radius: 8px; padding: 12px;">
+                                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+                                        <input type="checkbox" id="task-completed-form" style="width: 18px; height: 18px; cursor: pointer;">
+                                        <span style="font-weight: 600; color: var(--text-primary);">Đánh dấu công việc này đã hoàn thành</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="form-actions" style="margin-top: 18px;">
+                                <button type="submit" class="btn btn-primary" id="btn-save-task">
+                                    <i class="fa-solid fa-floppy-disk"></i> Lưu Task Hỗ Trợ
+                                </button>
+                                <button type="button" class="btn btn-secondary" id="btn-cancel-task">
+                                    Hủy
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Table Card (Danh Sách Task Hỗ Trợ) -->
+                    <div class="card table-card" id="table-card-task">
+                        <div class="table-header" style="flex-direction: column; align-items: stretch; gap: 14px;">
+                            <!-- Header Row 1: Title and Actions -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                                <div>
+                                    <h3 class="table-title" style="margin: 0; display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa-solid fa-clipboard-check" style="color: #a855f7;"></i> Quản Lý Task Hỗ Trợ Người Dùng
+                                    </h3>
+                                    <p style="font-size: 12px; color: var(--text-secondary); margin: 3px 0 0 0;">Theo dõi các yêu cầu hỗ trợ kỹ thuật, tiến độ xử lý và lịch sử hỗ trợ</p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <button type="button" class="btn btn-primary" id="btn-open-add-task" style="font-weight: 600; padding: 8px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                                        <i class="fa-solid fa-plus"></i> Thêm Task Mới
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Header Row 2: Bộ lọc & Mục lục theo Ngày / Tháng / Năm / Loại hỗ trợ -->
+                            <div class="task-filter-panel" style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <!-- Mục lục: Loại hỗ trợ -->
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><i class="fa-solid fa-filter"></i> Loại:</span>
+                                        <select id="filter-task-type" class="form-control" style="font-size: 13px; padding: 6px 10px; min-width: 130px; border-radius: 6px;">
+                                            <option value="">Tất cả loại</option>
+                                            <option value="Phần cứng">Phần cứng</option>
+                                            <option value="Phần mềm">Phần mềm</option>
+                                            <option value="Khác">Khác</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Mục lục: Trạng thái -->
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><i class="fa-solid fa-toggle-on"></i> Trạng thái:</span>
+                                        <select id="filter-task-status" class="form-control" style="font-size: 13px; padding: 6px 10px; min-width: 140px; border-radius: 6px;">
+                                            <option value="">Tất cả trạng thái</option>
+                                            <option value="pending">Chưa hoàn thành</option>
+                                            <option value="completed">Đã hoàn thành</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Mục lục Thời gian: Năm -->
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><i class="fa-solid fa-calendar"></i> Năm:</span>
+                                        <select id="filter-task-year" class="form-control" style="font-size: 13px; padding: 6px 10px; min-width: 105px; border-radius: 6px;">
+                                            <option value="">Tất cả năm</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Mục lục Thời gian: Tháng -->
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><i class="fa-regular fa-calendar-days"></i> Tháng:</span>
+                                        <select id="filter-task-month" class="form-control" style="font-size: 13px; padding: 6px 10px; min-width: 110px; border-radius: 6px;">
+                                            <option value="">Tất cả tháng</option>
+                                            <option value="01">Tháng 01</option>
+                                            <option value="02">Tháng 02</option>
+                                            <option value="03">Tháng 03</option>
+                                            <option value="04">Tháng 04</option>
+                                            <option value="05">Tháng 05</option>
+                                            <option value="06">Tháng 06</option>
+                                            <option value="07">Tháng 07</option>
+                                            <option value="08">Tháng 08</option>
+                                            <option value="09">Tháng 09</option>
+                                            <option value="10">Tháng 10</option>
+                                            <option value="11">Tháng 11</option>
+                                            <option value="12">Tháng 12</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Mục lục Thời gian: Ngày -->
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);"><i class="fa-solid fa-calendar-day"></i> Ngày:</span>
+                                        <input type="text" id="filter-task-date" placeholder="dd/mm/yyyy" maxlength="10" class="form-control" style="font-size: 13px; padding: 6px 10px; width: 115px; border-radius: 6px;">
+                                    </div>
+
+                                    <!-- Nút Reset Filter -->
+                                    <button type="button" id="btn-reset-task-filter" class="btn btn-secondary btn-sm" style="padding: 6px 12px; font-size: 12px;" title="Xóa toàn bộ bộ lọc">
+                                        <i class="fa-solid fa-rotate-left"></i> Đặt lại
+                                    </button>
+                                </div>
+
+                                <!-- Quick Preset Tags & Search bar -->
+                                <div style="display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                    <div class="task-quick-tags" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                                        <span style="font-size: 11px; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; margin-right: 4px;">Xem nhanh:</span>
+                                        <button type="button" class="task-tag-btn active" data-preset="all">Tất cả</button>
+                                        <button type="button" class="task-tag-btn" data-preset="today">Hôm nay</button>
+                                        <button type="button" class="task-tag-btn" data-preset="this-month">Tháng này</button>
+                                        <button type="button" class="task-tag-btn" data-preset="this-year">Năm nay</button>
+                                        <button type="button" class="task-tag-btn" data-preset="pending">Chưa hoàn thành</button>
+                                        <button type="button" class="task-tag-btn" data-preset="completed">Đã hoàn thành</button>
+                                    </div>
+                                    <div class="search-box" style="margin: 0; min-width: 250px;">
+                                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                                        <input type="text" id="search-task" placeholder="Tìm ID nhân viên, mô tả, hỗ trợ...">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table -->
+                        <div class="table-responsive">
+                            <table class="data-table" id="table-task">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;" class="text-center">#</th>
+                                        <th style="width: 170px;">ID Nhân viên</th>
+                                        <th style="width: 130px;">Hỗ trợ</th>
+                                        <th>Mô tả</th>
+                                        <th style="width: 160px;">Thời gian</th>
+                                        <th style="width: 190px;" class="text-center">Trạng thái (Nút gạt)</th>
+                                        <th style="width: 110px;" class="text-center">Thao tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-task">
+                                    <tr class="empty-row">
+                                        <td colspan="7" class="text-center text-muted">Chưa có task hỗ trợ nào!</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
+                            <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
+                                Đang hiển thị <span id="pag-start-task">0</span> - <span id="pag-end-task">0</span> trên tổng số <span id="pag-total-task">0</span> bản ghi
+                            </div>
+                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-task" style="padding: 6px 12px; font-size: 13px;">
+                                    <i class="fa-solid fa-angle-left"></i> Trang trước
+                                </button>
+                                <span id="pag-current-task" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-task" style="padding: 6px 12px; font-size: 13px;">
+                                    Trang sau <i class="fa-solid fa-angle-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 9. TAB PHÂN QUYỀN USER (CHỈ ADMIN THẤY) -->
                 <section id="tab-phan-quyen" class="tab-content">
                     <!-- Top Summary & Default Policy Bar -->
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
@@ -2044,6 +2322,10 @@
                                     <label class="rbac-check-item">
                                         <input type="checkbox" class="rbac-tab-chk" value="tab-gia-han">
                                         <span><i class="fa-solid fa-calendar-check" style="color: #fb7185; width: 18px;"></i> Gia hạn bản quyền</span>
+                                    </label>
+                                    <label class="rbac-check-item">
+                                        <input type="checkbox" class="rbac-tab-chk" value="tab-task" checked>
+                                        <span><i class="fa-solid fa-list-check" style="color: #a855f7; width: 18px;"></i> Task</span>
                                     </label>
                                 </div>
                             </div>
@@ -2656,6 +2938,17 @@
                     <div>
                         <h4 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 3px 0;">Thêm thiết bị lưu kho</h4>
                         <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Mã thiết bị, Tên thiết bị, Lý do lưu kho</p>
+                    </div>
+                </div>
+
+                <!-- Option Task: Task Hỗ Trợ -->
+                <div class="option-add-card" data-action="add-task" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 12px; padding: 16px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 44px; height: 44px; border-radius: 10px; background: rgba(168, 85, 247, 0.15); color: #a855f7; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 3px 0;">Thêm Task Hỗ Trợ</h4>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin: 0;">Ghi nhận công việc hỗ trợ kỹ thuật người dùng</p>
                     </div>
                 </div>
 
