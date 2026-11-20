@@ -6646,10 +6646,349 @@ body.light-theme .hist-modal-footer {
 }
 
 /* =========================================================================
-   TASK HỖ TRỢ (SUPPORT TASKS) STYLES
+   TASK HỖ TRỢ (SUPPORT TASKS) - PREMIUM MODERN UI UPGRADE
    ========================================================================= */
 
-/* Toggle Switch Slider */
+/* --- 1. Top Stat Cards --- */
+.task-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.task-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+    border-color: rgba(168, 85, 247, 0.35);
+}
+
+.task-stat-icon-wrap {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+/* --- 2. Action Header & Add Button --- */
+.task-btn-primary {
+    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 9px 18px !important;
+    border-radius: 10px !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4) !important;
+    transition: all 0.25s ease !important;
+}
+
+.task-btn-primary:hover {
+    background: linear-gradient(135deg, #b86bfc 0%, #8b5cf6 100%) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(168, 85, 247, 0.55) !important;
+}
+
+/* --- 3. Filter Toolbar & Inputs --- */
+.task-filter-panel {
+    background: rgba(19, 25, 41, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(10px);
+}
+
+.task-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 4px 8px;
+    transition: all 0.2s ease;
+}
+
+.task-filter-group:focus-within {
+    border-color: #a855f7;
+    background: rgba(168, 85, 247, 0.06);
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.2);
+}
+
+.task-filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+
+/* Custom styled inputs to completely eliminate stark white background */
+.task-custom-select,
+.task-custom-input {
+    background: #182033 !important;
+    color: #f8fafc !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 6px !important;
+    padding: 6px 10px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    outline: none !important;
+    transition: all 0.2s ease !important;
+    font-family: inherit !important;
+}
+
+.task-custom-select:hover,
+.task-custom-input:hover {
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.task-custom-select:focus,
+.task-custom-input:focus {
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.25) !important;
+    background: #1e2942 !important;
+}
+
+.task-custom-select option {
+    background: #182033;
+    color: #f8fafc;
+    padding: 6px;
+}
+
+/* Reset filter button */
+.btn-task-reset {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--text-secondary) !important;
+    padding: 7px 12px !important;
+    border-radius: 8px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.btn-task-reset:hover {
+    background: rgba(239, 68, 68, 0.15) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #f87171 !important;
+}
+
+/* Quick tags */
+.task-quick-tags {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.task-tag-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.task-tag-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.task-tag-btn.active {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(124, 58, 237, 0.2));
+    border-color: #a855f7;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+}
+
+/* --- 4. Modern Table Styling --- */
+#table-task {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+#table-task thead th {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#table-task tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+#table-task tbody tr:hover {
+    background: rgba(168, 85, 247, 0.04) !important;
+}
+
+#table-task tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+}
+
+/* STT Badge */
+.task-stt-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* User display in table */
+.task-user-box {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.task-uid-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: #60a5fa;
+    background: rgba(59, 130, 246, 0.1);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    width: fit-content;
+}
+
+.task-uname-text {
+    font-size: 12px;
+    color: var(--text-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Support Type Badges (Never wrap or break) */
+.task-type-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+}
+
+.badge-type-hardware {
+    background: rgba(249, 115, 22, 0.15) !important;
+    color: #fb923c !important;
+    border: 1px solid rgba(249, 115, 22, 0.35) !important;
+}
+
+.badge-type-software {
+    background: rgba(99, 102, 241, 0.18) !important;
+    color: #a5b4fc !important;
+    border: 1px solid rgba(99, 102, 241, 0.35) !important;
+}
+
+.badge-type-other {
+    background: rgba(14, 165, 233, 0.16) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(14, 165, 233, 0.35) !important;
+}
+
+/* Support Channel Badges */
+.task-channel-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 4px 10px !important;
+    border-radius: 20px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+}
+
+.badge-channel-remote {
+    background: rgba(14, 165, 233, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(14, 165, 233, 0.35) !important;
+}
+
+.badge-channel-onsite {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+}
+
+/* Time & Date display */
+.task-time-badge {
+    font-weight: 700;
+    font-size: 13px;
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.task-date-badge {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Toggle Switch */
 .task-toggle-wrapper {
     display: inline-flex;
     align-items: center;
@@ -6677,12 +7016,9 @@ body.light-theme .hist-modal-footer {
 .task-slider {
     position: absolute;
     cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.16);
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(255, 255, 255, 0.15);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 24px;
     border: 1px solid rgba(255, 255, 255, 0.18);
 }
@@ -6695,7 +7031,7 @@ body.light-theme .hist-modal-footer {
     left: 2px;
     bottom: 2px;
     background-color: #f1f5f9;
-    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
@@ -6703,6 +7039,7 @@ body.light-theme .hist-modal-footer {
 .task-switch input:checked + .task-slider {
     background-color: #10b981;
     border-color: #059669;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
 }
 
 .task-switch input:checked + .task-slider:before {
@@ -6713,11 +7050,11 @@ body.light-theme .hist-modal-footer {
 .task-status-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    font-size: 11px;
+    gap: 6px;
+    font-size: 11.5px;
     font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
     transition: all 0.2s ease;
     white-space: nowrap;
 }
@@ -6725,73 +7062,292 @@ body.light-theme .hist-modal-footer {
 .task-status-pill.is-completed {
     background: rgba(16, 185, 129, 0.15);
     color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .task-status-pill.is-pending {
     background: rgba(245, 158, 11, 0.15);
     color: #f59e0b;
-    border: 1px solid rgba(245, 158, 11, 0.3);
+    border: 1px solid rgba(245, 158, 11, 0.35);
 }
 
-/* Quick Filter Pills */
-.task-tag-btn {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: var(--text-secondary);
-    padding: 4px 11px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
+/* Action Buttons */
+.btn-task-action {
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.task-tag-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: var(--text-primary);
-}
-
-.task-tag-btn.active {
-    background: linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(124, 58, 237, 0.25));
-    border-color: #a855f7;
-    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 600;
 }
 
-/* Support Type Badges */
-.badge-type-hardware {
-    background: rgba(249, 115, 22, 0.15);
-    color: #f97316;
-    border: 1px solid rgba(249, 115, 22, 0.3);
-}
-
-.badge-type-software {
+.btn-task-edit {
     background: rgba(99, 102, 241, 0.15);
-    color: #818cf8;
+    color: #a5b4fc;
     border: 1px solid rgba(99, 102, 241, 0.3);
+    padding: 6px 12px;
+    font-size: 12.5px;
+    gap: 6px;
 }
 
-.badge-type-other {
-    background: rgba(168, 85, 247, 0.15);
+.btn-task-edit:hover {
+    background: rgba(99, 102, 241, 0.3);
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.btn-task-delete {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 6px 10px;
+    font-size: 12.5px;
+}
+
+.btn-task-delete:hover {
+    background: #ef4444;
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* --- 5. Task Add/Edit Form (Chỗ nhận thêm task) --- */
+.task-editor-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.task-editor-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #a855f7, #6366f1, #10b981);
+}
+
+.task-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 16px;
+    margin-bottom: 20px;
+}
+
+.task-form-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2));
+    border: 1px solid rgba(168, 85, 247, 0.4);
     color: #c084fc;
-    border: 1px solid rgba(168, 85, 247, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
 }
 
-/* Light Theme overrides */
-body.light-theme .task-slider {
-    background-color: #cbd5e1;
-    border-color: #94a3b8;
+.btn-close-task-form {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
 }
 
-body.light-theme .task-slider:before {
-    background-color: #ffffff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+.btn-close-task-form:hover {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
 }
 
-body.light-theme .task-switch input:checked + .task-slider {
-    background-color: #10b981;
-    border-color: #059669;
+.task-type-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 6px;
+}
+
+@media (max-width: 768px) {
+    .task-type-selector-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.task-type-card-opt {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-type-card-opt:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.task-type-card-opt.is-active {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: #a855f7;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25);
+}
+
+.task-type-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.task-channel-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 6px;
+}
+
+@media (max-width: 640px) {
+    .task-channel-selector-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.task-channel-card-opt {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.task-channel-card-opt:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.task-channel-card-opt.is-active {
+    background: rgba(14, 165, 233, 0.12);
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25);
+}
+
+.task-channel-card-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.task-chips-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.task-template-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    color: var(--text-secondary);
+    padding: 4px 11px;
+    border-radius: 14px;
+    font-size: 11.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.task-template-chip:hover {
+    background: rgba(168, 85, 247, 0.18);
+    border-color: #a855f7;
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
+.task-employee-live-preview {
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+
+.task-input-icon-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.task-input-icon-wrap i.task-input-icon {
+    position: absolute;
+    left: 12px;
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.task-input-icon-wrap input {
+    padding-left: 36px !important;
+}
+
+/* Light Theme Support */
+body.light-theme .task-filter-panel {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+body.light-theme .task-filter-group {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+body.light-theme .task-custom-select,
+body.light-theme .task-custom-input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.light-theme .task-custom-select option {
+    background: #ffffff;
+    color: #0f172a;
 }
 
 body.light-theme .task-tag-btn {
@@ -6811,23 +7367,64 @@ body.light-theme .task-tag-btn.active {
     color: #ffffff;
 }
 
-body.light-theme .badge-type-hardware {
-    background: #fff7ed;
-    color: #c2410c;
-    border-color: #ffedd5;
+body.light-theme .task-editor-card {
+    background: #ffffff;
+    border-color: #e2e8f0;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-body.light-theme .badge-type-software {
-    background: #eef2ff;
-    color: #4338ca;
-    border-color: #e0e7ff;
+body.light-theme .task-type-card-opt {
+    background: #f8fafc;
+    border-color: #e2e8f0;
 }
 
-body.light-theme .badge-type-other {
-    background: #faf5ff;
+body.light-theme .task-type-card-opt:hover {
+    background: #f1f5f9;
+}
+
+body.light-theme .task-type-card-opt.is-active {
+    background: rgba(168, 85, 247, 0.08);
+    border-color: #a855f7;
+}
+
+body.light-theme .task-template-chip {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
+}
+
+body.light-theme .task-template-chip:hover {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: #a855f7;
     color: #7e22ce;
-    border-color: #f3e8ff;
 }
+
+body.light-theme .task-channel-card-opt {
+    background: #f8fafc;
+    border-color: #e2e8f0;
+}
+
+body.light-theme .task-channel-card-opt:hover {
+    background: #f1f5f9;
+}
+
+body.light-theme .task-channel-card-opt.is-active {
+    background: rgba(14, 165, 233, 0.08);
+    border-color: #0284c7;
+}
+
+body.light-theme .badge-channel-remote {
+    background: rgba(2, 132, 199, 0.12) !important;
+    color: #0284c7 !important;
+    border-color: rgba(2, 132, 199, 0.3) !important;
+}
+
+body.light-theme .badge-channel-onsite {
+    background: rgba(22, 163, 74, 0.12) !important;
+    color: #15803d !important;
+    border-color: rgba(22, 163, 74, 0.3) !important;
+}
+
 
 
 

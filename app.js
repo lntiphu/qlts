@@ -766,6 +766,7 @@ async function startApp() {
                 userId: db.user_id || db.userId || '',
                 userName: db.user_name || db.userName || '',
                 supportType: db.support_type || db.supportType || 'Phần cứng',
+                supportChannel: db.support_channel || db.supportChannel || 'Remote',
                 description: db.description || '',
                 time: db.support_time || db.supportTime || db.time || '',
                 date: db.support_date ? formatDateDMY(db.support_date) : (db.date || ''),
@@ -777,6 +778,7 @@ async function startApp() {
                 user_id: js.userId || null,
                 user_name: js.userName || null,
                 support_type: js.supportType || 'Phần cứng',
+                support_channel: js.supportChannel || 'Remote',
                 description: js.description || '',
                 support_time: js.time || null,
                 support_date: dateToISO(js.date) || js.date,
@@ -9595,6 +9597,7 @@ async function startApp() {
     const taskUserIdInput = document.getElementById('task-user-id');
     const taskUserNameInput = document.getElementById('task-user-name');
     const taskTypeSelect = document.getElementById('task-type');
+    const taskChannelSelect = document.getElementById('task-channel');
     const taskDescInput = document.getElementById('task-description');
     const taskTimeInput = document.getElementById('task-time');
     const taskDateInput = document.getElementById('task-date');
@@ -9605,6 +9608,7 @@ async function startApp() {
     const taskUserHintText = document.getElementById('task-user-hint-text');
 
     const filterTaskType = document.getElementById('filter-task-type');
+    const filterTaskChannel = document.getElementById('filter-task-channel');
     const filterTaskStatus = document.getElementById('filter-task-status');
     const filterTaskYear = document.getElementById('filter-task-year');
     const filterTaskMonth = document.getElementById('filter-task-month');
@@ -9721,6 +9725,97 @@ async function startApp() {
         });
     }
 
+    // Support Type Cards synchronization
+    function syncTaskTypeCards(type) {
+        const targetType = type || 'Phần mềm';
+        if (taskTypeSelect) taskTypeSelect.value = targetType;
+        document.querySelectorAll('.task-type-card-opt').forEach(card => {
+            if (card.getAttribute('data-type') === targetType) {
+                card.classList.add('is-active');
+            } else {
+                card.classList.remove('is-active');
+            }
+        });
+    }
+
+    document.querySelectorAll('.task-type-card-opt').forEach(card => {
+        card.addEventListener('click', () => {
+            const type = card.getAttribute('data-type');
+            if (type) syncTaskTypeCards(type);
+        });
+    });
+
+    if (taskTypeSelect) {
+        taskTypeSelect.addEventListener('change', () => {
+            syncTaskTypeCards(taskTypeSelect.value);
+        });
+    }
+
+    // Support Channel Cards synchronization (Remote vs Trực tiếp)
+    function syncTaskChannelCards(channel) {
+        const target = channel || 'Remote';
+        if (taskChannelSelect) taskChannelSelect.value = target;
+        document.querySelectorAll('.task-channel-card-opt').forEach(card => {
+            if (card.getAttribute('data-channel') === target) {
+                card.classList.add('is-active');
+            } else {
+                card.classList.remove('is-active');
+            }
+        });
+    }
+
+    document.querySelectorAll('.task-channel-card-opt').forEach(card => {
+        card.addEventListener('click', () => {
+            const ch = card.getAttribute('data-channel');
+            if (ch) syncTaskChannelCards(ch);
+        });
+    });
+
+    if (taskChannelSelect) {
+        taskChannelSelect.addEventListener('change', () => {
+            syncTaskChannelCards(taskChannelSelect.value);
+        });
+    }
+
+    // Template chips click
+    document.querySelectorAll('.task-template-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            const text = chip.getAttribute('data-text');
+            if (!text || !taskDescInput) return;
+            if (taskDescInput.value.trim()) {
+                taskDescInput.value = taskDescInput.value.trim() + '\n' + text;
+            } else {
+                taskDescInput.value = text;
+            }
+            taskDescInput.focus();
+        });
+    });
+
+    // Close form button at header
+    const btnCloseFormTaskTop = document.getElementById('btn-close-form-task-top');
+    if (btnCloseFormTaskTop) {
+        btnCloseFormTaskTop.addEventListener('click', resetFormTask);
+    }
+
+    // Status label updater for switch inside form
+    function updateFormStatusLabel(isChecked) {
+        const lbl = document.getElementById('task-form-status-label');
+        if (!lbl) return;
+        if (isChecked) {
+            lbl.className = 'task-status-pill is-completed';
+            lbl.innerHTML = '<i class="fa-solid fa-circle-check"></i> Đã hoàn thành';
+        } else {
+            lbl.className = 'task-status-pill is-pending';
+            lbl.innerHTML = '<i class="fa-solid fa-clock"></i> Chưa hoàn thành';
+        }
+    }
+
+    if (taskCompletedForm) {
+        taskCompletedForm.addEventListener('change', () => {
+            updateFormStatusLabel(taskCompletedForm.checked);
+        });
+    }
+
     // Quick tags for filter
     document.querySelectorAll('.task-tag-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -9733,6 +9828,7 @@ async function startApp() {
     });
 
     if (filterTaskType) filterTaskType.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
+    if (filterTaskChannel) filterTaskChannel.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
     if (filterTaskStatus) filterTaskStatus.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
     if (filterTaskYear) filterTaskYear.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
     if (filterTaskMonth) filterTaskMonth.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
@@ -9742,6 +9838,7 @@ async function startApp() {
     if (btnResetTaskFilter) {
         btnResetTaskFilter.addEventListener('click', () => {
             if (filterTaskType) filterTaskType.value = '';
+            if (filterTaskChannel) filterTaskChannel.value = '';
             if (filterTaskStatus) filterTaskStatus.value = '';
             if (filterTaskYear) filterTaskYear.value = '';
             if (filterTaskMonth) filterTaskMonth.value = '';
@@ -9814,6 +9911,7 @@ async function startApp() {
 
         // Apply filters
         const selType = filterTaskType ? filterTaskType.value.trim() : '';
+        const selChannel = filterTaskChannel ? filterTaskChannel.value.trim() : '';
         const selStatus = filterTaskStatus ? filterTaskStatus.value.trim() : '';
         const selYear = filterTaskYear ? filterTaskYear.value.trim() : '';
         const selMonth = filterTaskMonth ? filterTaskMonth.value.trim() : '';
@@ -9839,6 +9937,9 @@ async function startApp() {
             // Type filter
             if (selType && item.supportType !== selType) return false;
 
+            // Channel filter (Remote vs Trực tiếp)
+            if (selChannel && (item.supportChannel || 'Remote') !== selChannel) return false;
+
             // Status filter
             if (selStatus === 'pending' && item.completed) return false;
             if (selStatus === 'completed' && !item.completed) return false;
@@ -9860,6 +9961,7 @@ async function startApp() {
                     item.userId || '',
                     item.userName || '',
                     item.supportType || '',
+                    item.supportChannel || '',
                     item.description || '',
                     item.date || '',
                     item.time || ''
@@ -9897,7 +9999,7 @@ async function startApp() {
         if (totalItems === 0) {
             tbodyTask.innerHTML = `
                 <tr class="empty-row">
-                    <td colspan="7" class="text-center text-muted" style="padding: 32px 16px;">
+                    <td colspan="8" class="text-center text-muted" style="padding: 32px 16px;">
                         <i class="fa-solid fa-clipboard-list" style="font-size: 32px; opacity: 0.35; display: block; margin-bottom: 10px;"></i>
                         Chưa có task hỗ trợ nào phù hợp với điều kiện hiển thị!
                     </td>
@@ -9914,33 +10016,40 @@ async function startApp() {
             // Support Type Badge
             let typeBadge = '';
             if (task.supportType === 'Phần cứng') {
-                typeBadge = `<span class="badge badge-type-hardware"><i class="fa-solid fa-microchip"></i> Phần cứng</span>`;
+                typeBadge = `<span class="task-type-badge badge-type-hardware"><i class="fa-solid fa-microchip"></i> Phần cứng</span>`;
             } else if (task.supportType === 'Phần mềm') {
-                typeBadge = `<span class="badge badge-type-software"><i class="fa-solid fa-laptop-code"></i> Phần mềm</span>`;
+                typeBadge = `<span class="task-type-badge badge-type-software"><i class="fa-solid fa-laptop-code"></i> Phần mềm</span>`;
             } else {
-                typeBadge = `<span class="badge badge-type-other"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(task.supportType || 'Khác')}</span>`;
+                typeBadge = `<span class="task-type-badge badge-type-other"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(task.supportType || 'Khác')}</span>`;
+            }
+
+            // Support Channel Badge (Remote vs Trực tiếp)
+            const channelVal = task.supportChannel || 'Remote';
+            let channelBadge = '';
+            if (channelVal === 'Trực tiếp') {
+                channelBadge = `<span class="task-channel-badge badge-channel-onsite"><i class="fa-solid fa-handshake"></i> Trực tiếp</span>`;
+            } else {
+                channelBadge = `<span class="task-channel-badge badge-channel-remote"><i class="fa-solid fa-network-wired"></i> Remote</span>`;
             }
 
             // User Info
-            let userDisplay = '<span class="text-muted">—</span>';
+            let userDisplay = '<span style="font-size: 12px; color: var(--text-muted); font-style: italic;">Chưa gán ID</span>';
             if (task.userId) {
                 userDisplay = `
-                    <div style="font-weight: 600; color: var(--text-primary); font-size: 13px;">${escapeHtml(task.userId)}</div>
-                    ${task.userName ? `<div style="font-size: 11.5px; color: var(--text-secondary); margin-top: 2px;"><i class="fa-regular fa-user" style="font-size: 10px; margin-right: 3px;"></i>${escapeHtml(task.userName)}</div>` : ''}
+                    <div class="task-user-box">
+                        <span class="task-uid-pill"><i class="fa-solid fa-id-badge"></i> ${escapeHtml(task.userId)}</span>
+                        ${task.userName ? `<span class="task-uname-text"><i class="fa-regular fa-user"></i> ${escapeHtml(task.userName)}</span>` : ''}
+                    </div>
                 `;
             } else if (task.userName) {
-                userDisplay = `<div style="font-weight: 500; color: var(--text-primary); font-size: 13px;">${escapeHtml(task.userName)}</div>`;
+                userDisplay = `<span class="task-uname-text"><i class="fa-regular fa-user"></i> ${escapeHtml(task.userName)}</span>`;
             }
 
             // Time & Date Display
             const timeDisplay = `
-                <div style="display: flex; flex-direction: column; gap: 2px;">
-                    <div style="font-weight: 600; font-size: 13px; color: var(--text-primary); display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-regular fa-clock" style="color: #60a5fa; font-size: 11px;"></i> ${escapeHtml(task.time || '—')}
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 5px;">
-                        <i class="fa-regular fa-calendar" style="font-size: 11px;"></i> ${escapeHtml(task.date || '—')}
-                    </div>
+                <div style="display: flex; flex-direction: column; gap: 3px;">
+                    <span class="task-time-badge"><i class="fa-regular fa-clock"></i> ${escapeHtml(task.time || '—')}</span>
+                    <span class="task-date-badge"><i class="fa-regular fa-calendar"></i> ${escapeHtml(task.date || '—')}</span>
                 </div>
             `;
 
@@ -9958,21 +10067,22 @@ async function startApp() {
             `;
 
             tr.innerHTML = `
-                <td class="text-center" style="font-size: 12px; color: var(--text-secondary);">${globalIndex}</td>
+                <td class="text-center"><span class="task-stt-badge">${globalIndex}</span></td>
                 <td>${userDisplay}</td>
                 <td>${typeBadge}</td>
+                <td>${channelBadge}</td>
                 <td>
-                    <div style="white-space: pre-wrap; word-break: break-word; font-size: 13px; line-height: 1.5; color: var(--text-primary); max-width: 420px;">${escapeHtml(task.description || '')}</div>
+                    <div style="white-space: pre-wrap; word-break: break-word; font-size: 13.5px; line-height: 1.55; color: var(--text-primary); max-width: 480px;">${escapeHtml(task.description || '')}</div>
                 </td>
                 <td>${timeDisplay}</td>
                 <td class="text-center">${switchHtml}</td>
                 <td class="text-center">
                     <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                        <button type="button" class="btn btn-secondary btn-sm btn-edit-task" data-id="${task.id}" style="padding: 4px 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 4px;" title="Chỉnh sửa task">
-                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                        <button type="button" class="btn-task-action btn-task-edit btn-edit-task" data-id="${task.id}" title="Chỉnh sửa task">
+                            <i class="fa-solid fa-pen-to-square"></i> <span>Sửa</span>
                         </button>
-                        <button type="button" class="btn btn-danger btn-sm btn-delete-task" data-id="${task.id}" style="padding: 4px 8px; font-size: 12px;" title="Xóa task">
-                            <i class="fa-solid fa-trash"></i>
+                        <button type="button" class="btn-task-action btn-task-delete btn-delete-task" data-id="${task.id}" title="Xóa task">
+                            <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </div>
                 </td>
@@ -9995,7 +10105,7 @@ async function startApp() {
         });
 
         // Event listeners for edit buttons
-        tbodyTask.querySelectorAll('.btn-edit-task').forEach(btn => {
+        tbodyTask.querySelectorAll('.btn-task-edit, .btn-edit-task').forEach(btn => {
             btn.addEventListener('click', function() {
                 const taskId = this.getAttribute('data-id');
                 editTask(taskId);
@@ -10003,7 +10113,7 @@ async function startApp() {
         });
 
         // Event listeners for delete buttons
-        tbodyTask.querySelectorAll('.btn-delete-task').forEach(btn => {
+        tbodyTask.querySelectorAll('.btn-task-delete, .btn-delete-task').forEach(btn => {
             btn.addEventListener('click', function() {
                 const taskId = this.getAttribute('data-id');
                 deleteTask(taskId);
@@ -10065,12 +10175,17 @@ async function startApp() {
         if (taskUserIdInput) taskUserIdInput.value = item.userId || '';
         if (taskUserNameInput) taskUserNameInput.value = item.userName || '';
         if (taskTypeSelect) taskTypeSelect.value = item.supportType || 'Phần cứng';
+        if (taskChannelSelect) taskChannelSelect.value = item.supportChannel || 'Remote';
         if (taskDescInput) taskDescInput.value = item.description || '';
         if (taskTimeInput) taskTimeInput.value = item.time || '';
         if (taskDateInput) taskDateInput.value = item.date || '';
 
+        syncTaskTypeCards(item.supportType || 'Phần cứng');
+        syncTaskChannelCards(item.supportChannel || 'Remote');
+
         if (groupTaskStatusEdit) groupTaskStatusEdit.style.display = 'block';
         if (taskCompletedForm) taskCompletedForm.checked = !!item.completed;
+        updateFormStatusLabel(!!item.completed);
 
         if (titleFormTask) titleFormTask.innerHTML = '<i class="fa-solid fa-pen-to-square"></i> Cập Nhật Task Hỗ Trợ';
         if (btnSaveTask) btnSaveTask.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Task';
@@ -10111,6 +10226,9 @@ async function startApp() {
         if (taskUserNameInput) taskUserNameInput.value = '';
         if (groupTaskStatusEdit) groupTaskStatusEdit.style.display = 'none';
         if (taskCompletedForm) taskCompletedForm.checked = false;
+        updateFormStatusLabel(false);
+        syncTaskTypeCards('Phần mềm');
+        syncTaskChannelCards('Remote');
         if (taskUserHint) taskUserHint.style.display = 'none';
 
         if (titleFormTask) titleFormTask.innerHTML = '<i class="fa-solid fa-list-check"></i> Thêm Task Hỗ Trợ Mới';
@@ -10161,6 +10279,7 @@ async function startApp() {
             const rawTime = taskTimeInput ? taskTimeInput.value.trim() : '';
             const rawUserId = taskUserIdInput ? taskUserIdInput.value.trim() : '';
             const rawType = taskTypeSelect ? taskTypeSelect.value : 'Khác';
+            const rawChannel = taskChannelSelect ? taskChannelSelect.value : 'Remote';
             const rawDesc = taskDescInput ? taskDescInput.value.trim() : '';
 
             // Check if userId matches employee
@@ -10185,6 +10304,7 @@ async function startApp() {
                         userId: rawUserId,
                         userName: resolvedUserName,
                         supportType: rawType,
+                        supportChannel: rawChannel,
                         description: rawDesc,
                         time: rawTime,
                         date: rawDate,
@@ -10212,6 +10332,7 @@ async function startApp() {
                     userId: rawUserId,
                     userName: resolvedUserName,
                     supportType: rawType,
+                    supportChannel: rawChannel,
                     description: rawDesc,
                     time: rawTime,
                     date: rawDate,
