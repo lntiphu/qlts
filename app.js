@@ -9827,6 +9827,19 @@ async function startApp() {
         });
     });
 
+    // Click on top stat cards to filter preset instantly
+    document.querySelectorAll('.task-stat-card[data-filter-preset]').forEach(card => {
+        card.addEventListener('click', () => {
+            const preset = card.getAttribute('data-filter-preset') || 'all';
+            currentTaskPreset = preset;
+            document.querySelectorAll('.task-tag-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-preset') === preset);
+            });
+            currentPageTask = 1;
+            renderTask();
+        });
+    });
+
     if (filterTaskType) filterTaskType.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
     if (filterTaskChannel) filterTaskChannel.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
     if (filterTaskStatus) filterTaskStatus.addEventListener('change', () => { currentPageTask = 1; renderTask(); });
@@ -9898,6 +9911,26 @@ async function startApp() {
         if (elStatPending) elStatPending.innerText = pendingCount;
         if (elStatCompleted) elStatCompleted.innerText = completedCount;
         if (elStatToday) elStatToday.innerText = todayCount;
+
+        // Dynamic Subtext & Performance Badges
+        const elStatSubTotal = document.getElementById('task-stat-sub-total');
+        const elStatSubPending = document.getElementById('task-stat-sub-pending');
+        const elStatSubCompleted = document.getElementById('task-stat-sub-completed');
+        const elStatSubToday = document.getElementById('task-stat-sub-today');
+
+        if (elStatSubTotal) elStatSubTotal.innerHTML = `<i class="fa-solid fa-list-check"></i> Toàn bộ công việc`;
+        if (elStatSubPending) {
+            elStatSubPending.innerHTML = pendingCount > 0 
+                ? `<i class="fa-solid fa-circle-exclamation pulse"></i> ${pendingCount} việc chờ xử lý` 
+                : `<i class="fa-solid fa-circle-check"></i> Không tồn đọng`;
+        }
+        if (elStatSubCompleted) {
+            const rate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            elStatSubCompleted.innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${rate}% hoàn thành`;
+        }
+        if (elStatSubToday) {
+            elStatSubToday.innerHTML = `<i class="fa-regular fa-calendar-check"></i> Hôm nay (${todayStr})`;
+        }
 
         // Sort tasks: newest date & time first
         const sortedList = [...(taskList || [])].sort((a, b) => {
@@ -10145,6 +10178,19 @@ async function startApp() {
         const elStatCompleted = document.getElementById('task-stat-completed');
         if (elStatPending) elStatPending.innerText = pendingCount;
         if (elStatCompleted) elStatCompleted.innerText = completedCount;
+
+        const elStatSubPending = document.getElementById('task-stat-sub-pending');
+        const elStatSubCompleted = document.getElementById('task-stat-sub-completed');
+        const totalCount = (taskList || []).length;
+        if (elStatSubPending) {
+            elStatSubPending.innerHTML = pendingCount > 0 
+                ? `<i class="fa-solid fa-circle-exclamation pulse"></i> ${pendingCount} việc chờ xử lý` 
+                : `<i class="fa-solid fa-circle-check"></i> Không tồn đọng`;
+        }
+        if (elStatSubCompleted) {
+            const rate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+            elStatSubCompleted.innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${rate}% hoàn thành`;
+        }
 
         // Sync with Supabase
         if (supabaseClient) {

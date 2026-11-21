@@ -1805,42 +1805,101 @@
 
                 <!-- 8. TAB TASK HỖ TRỢ -->
                 <section id="tab-task" class="tab-content">
-                    <!-- Top Summary Statistics Cards -->
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 22px;">
-                        <div class="task-stat-card">
-                            <div>
-                                <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Tổng số Task</span>
-                                <h3 id="task-stat-total" style="font-size: 26px; font-weight: 800; color: #f8fafc; margin: 4px 0 0 0;">0</h3>
+                    <!-- Top Summary Statistics Cards (Next-Gen Interactive Stat Cards) -->
+                    <div class="task-stat-grid">
+                        <!-- Card 1: Tổng số Task -->
+                        <div class="task-stat-card card-total" data-filter-preset="all" title="Bấm để lọc Tất cả công việc">
+                            <div class="task-stat-top">
+                                <div>
+                                    <div class="task-stat-label">
+                                        <span class="task-stat-dot"></span>
+                                        <span>Tổng số Task</span>
+                                    </div>
+                                    <div class="task-stat-value" id="task-stat-total">0</div>
+                                </div>
+                                <div class="task-stat-icon-wrap">
+                                    <i class="fa-solid fa-layer-group"></i>
+                                </div>
                             </div>
-                            <div class="task-stat-icon-wrap" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">
-                                <i class="fa-solid fa-list-check"></i>
-                            </div>
-                        </div>
-                        <div class="task-stat-card">
-                            <div>
-                                <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Chưa hoàn thành</span>
-                                <h3 id="task-stat-pending" style="font-size: 26px; font-weight: 800; color: #f59e0b; margin: 4px 0 0 0;">0</h3>
-                            </div>
-                            <div class="task-stat-icon-wrap" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3);">
-                                <i class="fa-solid fa-hourglass-half"></i>
-                            </div>
-                        </div>
-                        <div class="task-stat-card">
-                            <div>
-                                <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Đã hoàn thành</span>
-                                <h3 id="task-stat-completed" style="font-size: 26px; font-weight: 800; color: #10b981; margin: 4px 0 0 0;">0</h3>
-                            </div>
-                            <div class="task-stat-icon-wrap" style="background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                <i class="fa-solid fa-circle-check"></i>
+                            <div class="task-stat-footer">
+                                <span class="task-stat-subtext" id="task-stat-sub-total">
+                                    <i class="fa-solid fa-list-check"></i> Toàn bộ công việc
+                                </span>
+                                <span class="task-stat-action-hint">
+                                    <span>Lọc</span> <i class="fa-solid fa-arrow-right"></i>
+                                </span>
                             </div>
                         </div>
-                        <div class="task-stat-card">
-                            <div>
-                                <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Hôm nay</span>
-                                <h3 id="task-stat-today" style="font-size: 26px; font-weight: 800; color: #c084fc; margin: 4px 0 0 0;">0</h3>
+
+                        <!-- Card 2: Chưa hoàn thành -->
+                        <div class="task-stat-card card-pending" data-filter-preset="pending" title="Bấm để lọc Việc chưa hoàn thành">
+                            <div class="task-stat-top">
+                                <div>
+                                    <div class="task-stat-label">
+                                        <span class="task-stat-dot"></span>
+                                        <span>Chưa hoàn thành</span>
+                                    </div>
+                                    <div class="task-stat-value" id="task-stat-pending">0</div>
+                                </div>
+                                <div class="task-stat-icon-wrap">
+                                    <i class="fa-solid fa-hourglass-half"></i>
+                                </div>
                             </div>
-                            <div class="task-stat-icon-wrap" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
-                                <i class="fa-solid fa-calendar-day"></i>
+                            <div class="task-stat-footer">
+                                <span class="task-stat-subtext text-warning" id="task-stat-sub-pending">
+                                    <i class="fa-solid fa-circle-exclamation pulse"></i> Đang chờ xử lý
+                                </span>
+                                <span class="task-stat-action-hint">
+                                    <span>Lọc</span> <i class="fa-solid fa-arrow-right"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 3: Đã hoàn thành -->
+                        <div class="task-stat-card card-completed" data-filter-preset="completed" title="Bấm để lọc Việc đã hoàn thành">
+                            <div class="task-stat-top">
+                                <div>
+                                    <div class="task-stat-label">
+                                        <span class="task-stat-dot"></span>
+                                        <span>Đã hoàn thành</span>
+                                    </div>
+                                    <div class="task-stat-value" id="task-stat-completed">0</div>
+                                </div>
+                                <div class="task-stat-icon-wrap">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                </div>
+                            </div>
+                            <div class="task-stat-footer">
+                                <span class="task-stat-subtext text-success" id="task-stat-sub-completed">
+                                    <i class="fa-solid fa-chart-pie"></i> 100% hoàn thành
+                                </span>
+                                <span class="task-stat-action-hint">
+                                    <span>Lọc</span> <i class="fa-solid fa-arrow-right"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card 4: Hôm nay -->
+                        <div class="task-stat-card card-today" data-filter-preset="today" title="Bấm để lọc Công việc hôm nay">
+                            <div class="task-stat-top">
+                                <div>
+                                    <div class="task-stat-label">
+                                        <span class="task-stat-dot"></span>
+                                        <span>Hôm nay</span>
+                                    </div>
+                                    <div class="task-stat-value" id="task-stat-today">0</div>
+                                </div>
+                                <div class="task-stat-icon-wrap">
+                                    <i class="fa-solid fa-calendar-day"></i>
+                                </div>
+                            </div>
+                            <div class="task-stat-footer">
+                                <span class="task-stat-subtext text-cyan" id="task-stat-sub-today">
+                                    <i class="fa-regular fa-calendar-check"></i> Trong ngày hôm nay
+                                </span>
+                                <span class="task-stat-action-hint">
+                                    <span>Lọc</span> <i class="fa-solid fa-arrow-right"></i>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -2080,7 +2139,7 @@
                                 <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                                     <!-- Mục lục: Loại hỗ trợ -->
                                     <div class="task-filter-group">
-                                        <span class="task-filter-label"><i class="fa-solid fa-filter" style="color: #a855f7;"></i> Loại:</span>
+                                        <span class="task-filter-label"><i class="fa-solid fa-shapes" style="color: #10b981;"></i> Loại:</span>
                                         <select id="filter-task-type" class="task-custom-select" style="min-width: 130px;">
                                             <option value="">Tất cả loại</option>
                                             <option value="Phần cứng">Phần cứng</option>
@@ -2101,7 +2160,7 @@
 
                                     <!-- Mục lục: Trạng thái -->
                                     <div class="task-filter-group">
-                                        <span class="task-filter-label"><i class="fa-solid fa-toggle-on" style="color: #10b981;"></i> Trạng thái:</span>
+                                        <span class="task-filter-label"><i class="fa-solid fa-toggle-on" style="color: #34d399;"></i> Trạng thái:</span>
                                         <select id="filter-task-status" class="task-custom-select" style="min-width: 140px;">
                                             <option value="">Tất cả trạng thái</option>
                                             <option value="pending">Chưa hoàn thành</option>
@@ -2119,7 +2178,7 @@
 
                                     <!-- Mục lục Thời gian: Tháng -->
                                     <div class="task-filter-group">
-                                        <span class="task-filter-label"><i class="fa-regular fa-calendar-days" style="color: #f59e0b;"></i> Tháng:</span>
+                                        <span class="task-filter-label"><i class="fa-regular fa-calendar-days" style="color: #0284c7;"></i> Tháng:</span>
                                         <select id="filter-task-month" class="task-custom-select" style="min-width: 110px;">
                                             <option value="">Tất cả tháng</option>
                                             <option value="01">Tháng 01</option>
@@ -2139,7 +2198,7 @@
 
                                     <!-- Mục lục Thời gian: Ngày -->
                                     <div class="task-filter-group">
-                                        <span class="task-filter-label"><i class="fa-solid fa-calendar-day" style="color: #ec4899;"></i> Ngày:</span>
+                                        <span class="task-filter-label"><i class="fa-solid fa-calendar-day" style="color: #10b981;"></i> Ngày:</span>
                                         <input type="text" id="filter-task-date" placeholder="dd/mm/yyyy" maxlength="10" class="task-custom-input" style="width: 115px;">
                                     </div>
 
@@ -2202,24 +2261,6 @@
                                 </button>
                                 <span id="pag-current-task" style="font-size: 13.5px; font-weight: 700; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
                                 <button type="button" class="btn btn-secondary btn-sm" id="btn-next-task" style="padding: 7px 14px; font-size: 13px;">
-                                    Trang sau <i class="fa-solid fa-angle-right"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                        <!-- Pagination Controls -->
-                        <div class="pagination-container" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color); flex-wrap: wrap; gap: 12px;">
-                            <div class="pagination-info" style="font-size: 14px; color: var(--text-secondary);">
-                                Đang hiển thị <span id="pag-start-task">0</span> - <span id="pag-end-task">0</span> trên tổng số <span id="pag-total-task">0</span> bản ghi
-                            </div>
-                            <div class="pagination-buttons" style="display: flex; gap: 8px; align-items: center;">
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-prev-task" style="padding: 6px 12px; font-size: 13px;">
-                                    <i class="fa-solid fa-angle-left"></i> Trang trước
-                                </button>
-                                <span id="pag-current-task" style="font-size: 14px; font-weight: 600; color: var(--text-primary); min-width: 80px; text-align: center;">Trang 1 / 1</span>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-next-task" style="padding: 6px 12px; font-size: 13px;">
                                     Trang sau <i class="fa-solid fa-angle-right"></i>
                                 </button>
                             </div>
