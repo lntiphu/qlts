@@ -3213,7 +3213,7 @@ async function startApp() {
                                 </button>
                             ` : ''}
                             ${displayItem.devId ? `
-                                <button class="btn-icon-only btn-qrcode-tag-thietbi" data-index="${originalIndex}" title="Tạo mã QR Code & Tem dán tài sản" style="background: rgba(123, 202, 15, 0.15); color: #7bca0f; border: 1px solid rgba(123, 202, 15, 0.3);">
+                                <button class="btn-icon-only btn-qrcode-tag-thietbi" data-index="${originalIndex}" title="Tạo mã QR Code & Tem dán tài sản" style="background: rgba(165, 206, 58, 0.16); color: #a5ce3a; border: 1px solid rgba(165, 206, 58, 0.35);">
                                     <i class="fa-solid fa-qrcode"></i>
                                 </button>
                             ` : ''}
@@ -5415,18 +5415,27 @@ async function startApp() {
     // =========================================================================
 
     // 1. THEME TOGGLE (DARK / LIGHT MODE)
+    function updateBrandLogo(isLight) {
+        const brandLogo = document.getElementById('sidebar-brand-logo');
+        if (brandLogo) {
+            brandLogo.src = isLight ? 'eras-logo.svg' : 'eras-logo-white.svg';
+        }
+    }
+
     function initTheme() {
         const savedTheme = localStorage.getItem('eras_asset_theme') || 'dark';
         const btnThemeToggle = document.getElementById('btn-theme-toggle');
         
         if (savedTheme === 'light') {
             document.body.classList.add('light-theme');
+            updateBrandLogo(true);
             if (btnThemeToggle) {
                 btnThemeToggle.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
                 btnThemeToggle.title = 'Chuyển sang Chế độ Tối (Dark Mode)';
             }
         } else {
             document.body.classList.remove('light-theme');
+            updateBrandLogo(false);
             if (btnThemeToggle) {
                 btnThemeToggle.innerHTML = '<i class="fa-solid fa-moon"></i>';
                 btnThemeToggle.title = 'Chuyển sang Chế độ Sáng (Light Mode)';
@@ -5437,6 +5446,7 @@ async function startApp() {
             btnThemeToggle.dataset.boundTheme = 'true';
             btnThemeToggle.addEventListener('click', () => {
                 const isLight = document.body.classList.toggle('light-theme');
+                updateBrandLogo(isLight);
                 if (isLight) {
                     btnThemeToggle.innerHTML = '<i class="fa-solid fa-sun" style="color: #f59e0b;"></i>';
                     btnThemeToggle.title = 'Chuyển sang Chế độ Tối (Dark Mode)';
@@ -9816,6 +9826,15 @@ async function startApp() {
         });
     }
 
+    const taskFormStatusLabel = document.getElementById('task-form-status-label');
+    if (taskFormStatusLabel && taskCompletedForm) {
+        taskFormStatusLabel.style.cursor = 'pointer';
+        taskFormStatusLabel.addEventListener('click', () => {
+            taskCompletedForm.checked = !taskCompletedForm.checked;
+            updateFormStatusLabel(taskCompletedForm.checked);
+        });
+    }
+
     // Quick tags for filter
     document.querySelectorAll('.task-tag-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -10180,11 +10199,13 @@ async function startApp() {
         tbodyTask.querySelectorAll('.task-toggle-wrapper').forEach(wrapper => {
             const toggle = wrapper.querySelector('.task-status-toggle');
             const pill = wrapper.querySelector('.task-status-pill');
+            const switchLabel = wrapper.querySelector('.task-switch');
             if (!toggle) return;
             const taskId = toggle.getAttribute('data-id');
 
             // 1. Direct change on checkbox toggle
             toggle.addEventListener('change', function(e) {
+                e.stopPropagation();
                 if (!requirePermission('canEdit', 'thay đổi trạng thái task')) {
                     this.checked = !this.checked;
                     return;
@@ -10192,7 +10213,20 @@ async function startApp() {
                 toggleTaskStatus(taskId, this.checked);
             });
 
-            // 2. Click on the status pill badge
+            // 2. Direct click on switch container (ensures click works even if change event was swallowed)
+            if (switchLabel) {
+                switchLabel.addEventListener('click', function(e) {
+                    if (e.target === toggle) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!requirePermission('canEdit', 'thay đổi trạng thái task')) return;
+                    const item = (taskList || []).find(t => String(t.id) === String(taskId));
+                    const nextStatus = item ? !item.completed : !toggle.checked;
+                    toggleTaskStatus(taskId, nextStatus);
+                });
+            }
+
+            // 3. Click on the status pill badge
             if (pill) {
                 pill.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -10200,7 +10234,6 @@ async function startApp() {
                     if (!requirePermission('canEdit', 'thay đổi trạng thái task')) return;
                     const item = (taskList || []).find(t => String(t.id) === String(taskId));
                     const nextStatus = item ? !item.completed : !toggle.checked;
-                    toggle.checked = nextStatus;
                     toggleTaskStatus(taskId, nextStatus);
                 });
             }
@@ -10231,47 +10264,10 @@ async function startApp() {
         item.updatedAt = new Date().toISOString();
         saveTaskToLocalStorage();
 
-        // 1. Immediately update checkbox state in the DOM
-        const toggle = tbodyTask ? tbodyTask.querySelector(`.task-status-toggle[data-id="${taskId}"]`) : null;
-        if (toggle) toggle.checked = item.completed;
+        // 1. Immediately re-render entire task table and metrics in real-time so changes reflect instantly without F5
+        renderTask();
 
-        // 2. Immediately update pill text, icon, and colors in the DOM
-        const pill = document.getElementById(`status-pill-${taskId}`);
-        if (pill) {
-            pill.className = `task-status-pill ${item.completed ? 'is-completed' : 'is-pending'}`;
-            pill.innerHTML = item.completed 
-                ? '<i class="fa-solid fa-circle-check"></i> Đã hoàn thành' 
-                : '<i class="fa-solid fa-clock"></i> Chưa hoàn thành';
-        }
-
-        // 3. Update top metric counters immediately
-        const totalCount = (taskList || []).length;
-        const pendingCount = (taskList || []).filter(t => !t.completed).length;
-        const completedCount = (taskList || []).filter(t => !!t.completed).length;
-        const elStatPending = document.getElementById('task-stat-pending');
-        const elStatCompleted = document.getElementById('task-stat-completed');
-        if (elStatPending) elStatPending.innerText = pendingCount;
-        if (elStatCompleted) elStatCompleted.innerText = completedCount;
-
-        const elStatSubPending = document.getElementById('task-stat-sub-pending');
-        const elStatSubCompleted = document.getElementById('task-stat-sub-completed');
-        if (elStatSubPending) {
-            elStatSubPending.innerHTML = pendingCount > 0 
-                ? `<i class="fa-solid fa-circle-exclamation pulse"></i> ${pendingCount} việc chờ xử lý` 
-                : `<i class="fa-solid fa-circle-check"></i> Không tồn đọng`;
-        }
-        if (elStatSubCompleted) {
-            const rate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-            elStatSubCompleted.innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${rate}% hoàn thành`;
-        }
-
-        // 4. If current view is filtered by status (pending or completed), re-render so list stays accurate
-        const selStatus = filterTaskStatus ? filterTaskStatus.value : '';
-        if (currentTaskPreset === 'pending' || currentTaskPreset === 'completed' || selStatus === 'pending' || selStatus === 'completed') {
-            renderTask();
-        }
-
-        // 5. Sync with Supabase asynchronously
+        // 2. Sync with Supabase asynchronously in background
         if (supabaseClient) {
             supabaseClient.from('tasks').update({
                 completed: item.completed,
@@ -12576,14 +12572,14 @@ async function startApp() {
         const extraEl = document.getElementById('receipt-devices-extra');
         if (extraEl) {
             extraEl.innerHTML = extraDevices.length ? extraDevices.map((d, i) => `
-                <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(123, 202, 15, 0.22); border-radius: 10px; overflow: hidden; font-size: 11.5px; box-sizing: border-box;">
-                    <div style="background: linear-gradient(90deg, rgba(123, 202, 15, 0.14) 0%, rgba(30, 41, 59, 0.4) 100%); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 7px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <div style="background: rgba(30, 41, 59, 0.45); border: 1px solid rgba(165, 206, 58, 0.25); border-radius: 10px; overflow: hidden; font-size: 11.5px; box-sizing: border-box;">
+                    <div style="background: linear-gradient(90deg, rgba(165, 206, 58, 0.16) 0%, rgba(30, 41, 59, 0.4) 100%); border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding: 7px 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <span style="background: #7bca0f; color: #0f172a; font-weight: 800; font-size: 10.5px; padding: 2px 10px; border-radius: 5px; text-transform: uppercase; letter-spacing: 0.4px;">Thiết bị ${i + 2}</span>
+                            <span style="background: linear-gradient(180deg, #c6e862, #a5ce3a); color: #08113a; font-weight: 800; font-size: 10.5px; padding: 2px 10px; border-radius: 999px; text-transform: uppercase; letter-spacing: 0.4px;">Thiết bị ${i + 2}</span>
                         </div>
                         <div style="display: flex; align-items: center; gap: 14px; font-size: 11px;">
                             <span><span style="color: #94a3b8;">Serial thiết bị:</span> <strong style="color: #e2e8f0; font-family: monospace;">${d.devSn || '—'}</strong></span>
-                            <span><span style="color: #94a3b8;">Tình trạng:</span> <strong style="color: #88dc14; background: rgba(123, 202, 15, 0.14); border: 1px solid rgba(123, 202, 15, 0.3); padding: 1px 8px; border-radius: 999px; font-size: 10.5px;">${d.devStatus || '—'}</strong></span>
+                            <span><span style="color: #94a3b8;">Tình trạng:</span> <strong style="color: #a5ce3a; background: rgba(165, 206, 58, 0.16); border: 1px solid rgba(165, 206, 58, 0.35); padding: 1px 8px; border-radius: 999px; font-size: 10.5px;">${d.devStatus || '—'}</strong></span>
                         </div>
                     </div>
                     <div style="padding: 10px 14px; display: grid; grid-template-columns: 1.75fr 0.95fr 1.15fr 1.05fr 0.85fr; gap: 12px; align-items: start;">
