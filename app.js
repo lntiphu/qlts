@@ -11388,29 +11388,32 @@ async function startApp() {
         }
         if (elRole) {
             if (perm.role === 'admin') {
-                elRole.innerHTML = '<i class="fa-solid fa-crown" style="font-size:10px; color:#f43f5e;"></i> Quản trị viên (Admin)';
-                elRole.style.color = '#fb7185';
+                elRole.innerHTML = '<i class="fa-solid fa-crown" style="font-size:10px; color:#f59e0b; filter:drop-shadow(0 0 3px rgba(245,158,11,0.6));"></i> Quản trị viên (Admin)';
+                elRole.style.color = '#fca5a5';
             } else if (perm.role === 'editor') {
                 elRole.innerHTML = '<i class="fa-solid fa-user-gear" style="font-size:10px; color:#38bdf8;"></i> Quản lý / Kỹ thuật';
-                elRole.style.color = '#38bdf8';
+                elRole.style.color = '#7dd3fc';
             } else {
                 elRole.innerHTML = '<i class="fa-solid fa-eye" style="font-size:10px; color:#4ade80;"></i> Chỉ xem (Viewer)';
-                elRole.style.color = '#4ade80';
+                elRole.style.color = '#86efac';
             }
         }
         if (elAvatar && elAvatarIcon) {
             if (perm.role === 'admin') {
                 elAvatarIcon.className = 'fa-solid fa-user-shield';
-                elAvatar.style.borderColor = 'rgba(244, 63, 94, 0.5)';
-                elAvatar.style.color = '#fb7185';
+                elAvatar.className = 'header-user-avatar role-admin';
+                elAvatar.style.borderColor = '';
+                elAvatar.style.color = '';
             } else if (perm.role === 'editor') {
                 elAvatarIcon.className = 'fa-solid fa-user-gear';
-                elAvatar.style.borderColor = 'rgba(56, 189, 248, 0.5)';
-                elAvatar.style.color = '#38bdf8';
+                elAvatar.className = 'header-user-avatar role-editor';
+                elAvatar.style.borderColor = '';
+                elAvatar.style.color = '';
             } else {
                 elAvatarIcon.className = 'fa-solid fa-user-check';
-                elAvatar.style.borderColor = 'rgba(74, 222, 128, 0.5)';
-                elAvatar.style.color = '#4ade80';
+                elAvatar.className = 'header-user-avatar role-viewer';
+                elAvatar.style.borderColor = '';
+                elAvatar.style.color = '';
             }
         }
         if (elInfoClickable) {

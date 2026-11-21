@@ -151,6 +151,13 @@
     color: #ffffff;
 }
 
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
 body {
     font-family: var(--font-sans);
     background-color: #050b26;
@@ -164,7 +171,9 @@ body {
     color: var(--text-primary);
     line-height: 1.55;
     -webkit-font-smoothing: antialiased;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
 }
 
 /* Headings Typography (Lexend display from erasgroup.vn) */
@@ -181,7 +190,10 @@ h1, h2, h3, h4,
 /* App Container & Sidebar Layout */
 .app-container {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    max-height: 100vh;
+    width: 100%;
+    overflow: hidden;
 }
 
 .sidebar {
@@ -314,7 +326,11 @@ h1, h2, h3, h4,
     flex: 1;
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    max-height: 100vh;
+    overflow: hidden;
     min-width: 0; /* Prevent flex children from overflowing */
+    position: relative;
 }
 
 /* ERAS GROUP Floating Glass Pill Header */
@@ -325,12 +341,12 @@ h1, h2, h3, h4,
     border: 1px solid rgba(255, 255, 255, 0.16) !important;
     border-radius: var(--ios-radius-pill) !important;
     padding: 10px 24px !important;
-    margin: 14px 24px 18px 24px !important;
+    margin: 14px 24px 8px 24px !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 14px;
+    position: relative;
+    flex-shrink: 0;
     z-index: 90;
     min-height: 62px;
     box-shadow: inset 2px 2px 1px -1.5px rgba(255, 255, 255, 0.8),
@@ -340,15 +356,6 @@ h1, h2, h3, h4,
                 0 2px 6px rgba(2, 6, 28, 0.2) !important;
     transition: all 0.35s var(--ease);
 }
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 90;
-    min-height: 64px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
-}
 
 .header-title h1 {
     font-size: 20px;
@@ -356,47 +363,171 @@ h1, h2, h3, h4,
     color: #f8fafc;
 }
 
-.header-user {
-    display: flex;
+/* ==========================================================================
+   HEADER USER PROFILE CAPSULE (ERAS Liquid Glass 2.0)
+   ========================================================================== */
+.header-user-capsule {
+    display: inline-flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    height: 42px;
+    padding: 3px 14px 3px 5px;
+    border-radius: var(--ios-radius-pill);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.03) 48%, rgba(14, 22, 72, 0.6) 100%), rgba(8, 14, 48, 0.72);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.4),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.35),
+                0 4px 18px rgba(2, 6, 28, 0.45);
+    -webkit-backdrop-filter: blur(24px) saturate(1.8);
+    backdrop-filter: blur(24px) saturate(1.8);
+    user-select: none;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    box-sizing: border-box;
 }
 
-.user-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #a5ce3a, #0284c7);
-    color: #ffffff;
+.header-user-capsule:hover {
+    transform: translateY(-1.5px);
+    border-color: rgba(165, 206, 58, 0.45);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0.05) 50%, rgba(20, 32, 95, 0.7) 100%), rgba(10, 18, 58, 0.82);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.65),
+                0 8px 24px -4px rgba(165, 206, 58, 0.25),
+                0 4px 14px rgba(2, 6, 28, 0.5);
+}
+
+.header-user-capsule:active {
+    transform: scale(0.98) translateY(0);
+}
+
+/* Avatar container */
+.header-user-avatar {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
-    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+    font-size: 13px;
+    position: relative;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
 }
 
-.user-info {
+/* Avatar role variants */
+.header-user-avatar.role-admin {
+    background: linear-gradient(135deg, rgba(30, 43, 143, 0.85) 0%, rgba(11, 22, 85, 0.95) 100%);
+    border: 1.5px solid rgba(165, 206, 58, 0.75);
+    color: #a5ce3a;
+    box-shadow: 0 0 10px rgba(165, 206, 58, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.header-user-avatar.role-editor {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.85) 0%, rgba(14, 165, 233, 0.45) 100%);
+    border: 1.5px solid rgba(56, 189, 248, 0.75);
+    color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.header-user-avatar.role-viewer {
+    background: linear-gradient(135deg, rgba(15, 23, 72, 0.85) 0%, rgba(74, 222, 128, 0.35) 100%);
+    border: 1.5px solid rgba(74, 222, 128, 0.75);
+    color: #4ade80;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+}
+
+.header-user-capsule:hover .header-user-avatar.role-admin {
+    transform: scale(1.05);
+    box-shadow: 0 0 14px rgba(165, 206, 58, 0.6), inset 0 1px 1.5px rgba(255, 255, 255, 0.7);
+    border-color: #a5ce3a;
+}
+
+/* User text details */
+.header-user-text-col {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    gap: 1px;
+    min-width: 0;
 }
 
-.user-name {
-    font-size: 14px;
+.header-user-email {
+    font-size: 12.5px;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #f8fafc;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 175px;
+    letter-spacing: -0.01em;
 }
 
-.user-role {
-    font-size: 11px;
-    color: var(--text-secondary);
+.header-user-role-badge {
+    font-size: 10.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.2px;
+}
+
+/* Subtle chevron icon to hint dropdown / clickable */
+.header-user-chevron {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    margin-left: 2px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.header-user-capsule:hover .header-user-chevron {
+    color: #a5ce3a;
+    transform: translateY(1px);
+}
+
+/* LIGHT THEME FOR HEADER USER CAPSULE */
+body.light-theme .header-user-capsule {
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 248, 252, 0.9) 100%);
+    border: 1px solid rgba(11, 22, 85, 0.12);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                0 4px 14px rgba(11, 22, 85, 0.08);
+}
+
+body.light-theme .header-user-capsule:hover {
+    border-color: rgba(165, 206, 58, 0.6);
+    box-shadow: inset 0 1px 1.5px #ffffff,
+                0 6px 18px rgba(165, 206, 58, 0.2),
+                0 2px 6px rgba(11, 22, 85, 0.06);
+}
+
+body.light-theme .header-user-email {
+    color: #0b1655;
+}
+
+body.light-theme .header-user-chevron {
+    color: rgba(11, 22, 85, 0.35);
+}
+
+body.light-theme .header-user-capsule:hover .header-user-chevron {
+    color: #528c11;
+}
+
+body.light-theme .header-user-avatar.role-admin {
+    background: linear-gradient(135deg, rgba(30, 43, 143, 0.15) 0%, rgba(165, 206, 58, 0.2) 100%);
+    border-color: #a5ce3a;
+    color: #0b1655;
 }
 
 /* Tab container and Sections */
 .tab-container {
-    padding: 32px;
+    padding: 10px 24px 64px 24px;
     flex: 1;
+    min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
 }
 
 .tab-content {
@@ -2167,14 +2298,271 @@ body.light-theme #btn-cancel-thiet-bi:hover {
     transform: scale(0.96) translateY(0);
 }
 
-/* Logout sidebar item transitions */
-.btn-logout-sidebar {
-    transition: var(--transition);
+/* ==========================================================================
+   SIDEBAR FOOTER ACTIONS (Logout, Export, Import - ERAS Liquid Glass 2.0)
+   ========================================================================== */
+.sidebar-footer-actions {
+    margin-top: auto;
+    padding: 16px 0 16px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(8, 14, 44, 0) 0%, rgba(5, 11, 38, 0.55) 100%);
 }
 
-.btn-logout-sidebar:hover {
-    background-color: rgba(239, 68, 68, 0.1) !important;
-    border-color: rgba(239, 68, 68, 0.3) !important;
+/* 1. NÚT ĐĂNG XUẤT (Refined Liquid Glass Coral/Ruby) */
+.sidebar-btn-logout {
+    width: 100%;
+    height: 40px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border-radius: var(--ios-radius-pill);
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.14) 0%, rgba(185, 28, 28, 0.08) 100%);
+    border: 1px solid rgba(248, 113, 113, 0.28);
+    color: #fca5a5;
+    font-size: 13.5px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.2),
+                0 4px 14px rgba(220, 38, 38, 0.12);
+    -webkit-backdrop-filter: blur(14px) saturate(1.8);
+    backdrop-filter: blur(14px) saturate(1.8);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.sidebar-btn-logout::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: var(--ios-radius-pill) var(--ios-radius-pill) 0 0;
+    pointer-events: none;
+}
+
+.sidebar-btn-logout i {
+    font-size: 13px;
+    color: #f87171;
+    transition: transform 0.22s ease;
+}
+
+.sidebar-btn-logout:hover {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.26) 0%, rgba(220, 38, 38, 0.2) 100%);
+    border-color: rgba(248, 113, 113, 0.55);
+    color: #ffffff;
+    box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.3),
+                0 6px 20px rgba(239, 68, 68, 0.35);
+    transform: translateY(-1.5px);
+}
+
+.sidebar-btn-logout:hover i {
+    color: #ffffff;
+    transform: translateX(2.5px);
+}
+
+.sidebar-btn-logout:active {
+    transform: scale(0.97) translateY(0);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(239, 68, 68, 0.2);
+}
+
+/* 2. CỤM EXPORT & IMPORT */
+.sidebar-export-import-wrap,
+#sidebar-export-import-box {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+.sidebar-btn-action {
+    flex: 1 1 0px !important;
+    min-width: 0 !important;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 8px;
+    border-radius: var(--ios-radius-pill);
+    font-size: 12px;
+    font-family: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+    box-sizing: border-box;
+}
+
+.sidebar-btn-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 100%);
+    border-radius: var(--ios-radius-pill) var(--ios-radius-pill) 0 0;
+    pointer-events: none;
+}
+
+.sidebar-btn-action i {
+    font-size: 11px;
+    transition: transform 0.2s ease;
+}
+
+/* 2a. NÚT EXPORT (ERAS Royal Sapphire Blue Glass) */
+.sidebar-btn-export {
+    background: linear-gradient(145deg, rgba(30, 58, 138, 0.72) 0%, rgba(15, 23, 72, 0.88) 100%);
+    border: 1px solid rgba(147, 197, 253, 0.35);
+    color: #ffffff;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.35),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.3),
+                0 4px 14px rgba(11, 22, 85, 0.45);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+.sidebar-btn-export i {
+    color: #93c5fd;
+}
+
+.sidebar-btn-export:hover {
+    background: linear-gradient(145deg, rgba(37, 99, 235, 0.88) 0%, rgba(29, 44, 133, 0.96) 100%);
+    border-color: rgba(191, 219, 254, 0.7);
+    color: #ffffff;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.55),
+                0 6px 20px rgba(37, 99, 235, 0.5);
+    transform: translateY(-2px);
+}
+
+.sidebar-btn-export:hover i {
+    color: #dbeafe;
+    transform: translateY(-1px) scale(1.1);
+}
+
+.sidebar-btn-export:active {
+    transform: scale(0.96) translateY(0);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(15, 23, 72, 0.3);
+}
+
+/* 2b. NÚT IMPORT (ERAS Lime Aurora Glass) */
+.sidebar-btn-import {
+    background: linear-gradient(145deg, #c4e85d 0%, #a5ce3a 52%, #8ac415 100%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    color: #061138;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    box-shadow: inset 0 1.5px 1.5px rgba(255, 255, 255, 0.85),
+                inset 0 -1px 1px rgba(0, 0, 0, 0.15),
+                0 4px 16px rgba(165, 206, 58, 0.42);
+}
+
+.sidebar-btn-import i {
+    color: #061138;
+}
+
+.sidebar-btn-import:hover {
+    background: linear-gradient(145deg, #d4f274 0%, #b2dd44 50%, #95d41c 100%);
+    border-color: #ffffff;
+    color: #040c29;
+    box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.95),
+                0 6px 22px rgba(165, 206, 58, 0.65);
+    transform: translateY(-2px);
+}
+
+.sidebar-btn-import:hover i {
+    transform: translateY(-1px) scale(1.1);
+}
+
+.sidebar-btn-import:active {
+    transform: scale(0.96) translateY(0);
+    box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(165, 206, 58, 0.3);
+}
+
+/* 3. DÒNG COPYRIGHT Ở CHÂN SIDEBAR */
+.sidebar-copyright-text {
+    text-align: center;
+    width: 100%;
+    padding: 8px 14px 14px 14px;
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.75;
+    letter-spacing: 0.3px;
+    user-select: none;
+}
+
+/* LIGHT THEME SUPPORT */
+body.light-theme .sidebar-footer-actions {
+    border-top: 1px solid rgba(11, 22, 85, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(246, 248, 252, 0.8) 100%);
+}
+
+body.light-theme .sidebar-btn-logout {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.09) 0%, rgba(220, 38, 38, 0.04) 100%);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #dc2626;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.8),
+                0 2px 8px rgba(220, 38, 38, 0.08);
+}
+
+body.light-theme .sidebar-btn-logout i {
+    color: #ef4444;
+}
+
+body.light-theme .sidebar-btn-logout:hover {
+    background: linear-gradient(145deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.12) 100%);
+    border-color: rgba(239, 68, 68, 0.45);
+    color: #b91c1c;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                0 4px 14px rgba(220, 38, 38, 0.18);
+}
+
+body.light-theme .sidebar-btn-export {
+    background: linear-gradient(145deg, #1e3a8a 0%, #0f1748 100%);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: #ffffff;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4),
+                0 4px 14px rgba(30, 58, 138, 0.25);
+}
+
+body.light-theme .sidebar-btn-export:hover {
+    background: linear-gradient(145deg, #2563eb 0%, #1e3a8a 100%);
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.6),
+                0 6px 18px rgba(37, 99, 235, 0.35);
+}
+
+body.light-theme .sidebar-btn-import {
+    background: linear-gradient(145deg, #c4e85d 0%, #a5ce3a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    color: #061138;
+    box-shadow: inset 0 1.5px 1.5px rgba(255, 255, 255, 0.9),
+                0 4px 16px rgba(165, 206, 58, 0.35);
+}
+
+body.light-theme .sidebar-btn-import:hover {
+    background: linear-gradient(145deg, #d4f274 0%, #b2dd44 100%);
+    box-shadow: inset 0 2px 2px #ffffff,
+                0 6px 20px rgba(165, 206, 58, 0.5);
+}
+
+body.light-theme .sidebar-copyright-text {
+    color: #64748b;
 }
 
 .option-add-card:hover,
@@ -2307,6 +2695,24 @@ body.light-theme #btn-cancel-thiet-bi:hover {
 }
 
 /* Pagination toolbar wrapper styling */
+.pagination-container {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 16px 24px !important;
+    margin-top: 0 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    flex-wrap: wrap !important;
+    gap: 14px !important;
+    background: rgba(10, 18, 54, 0.45);
+    border-radius: 0 0 var(--ios-radius-lg) var(--ios-radius-lg);
+}
+
+body.light-theme .pagination-container {
+    background: rgba(240, 244, 255, 0.6) !important;
+    border-top: 1px solid rgba(11, 22, 85, 0.08) !important;
+}
+
 .pagination-buttons {
     display: inline-flex;
     align-items: center;
@@ -5435,7 +5841,7 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
    FEATURE: NOTES CARDS IN ASSET ALLOCATION TABLE
    ========================================================================== */
 .tab-container:has(#tab-cap-phat-list.active) {
-    padding: 20px 20px;
+    padding: 10px 24px 64px 24px;
 }
 
 .notes-cards-wrap {
