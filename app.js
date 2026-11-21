@@ -1714,6 +1714,94 @@ async function startApp() {
         });
     }
 
+    // -------------------------------------------------------------------------
+    // Shift + Enter Multiline Support for Data Input Boxes
+    // -------------------------------------------------------------------------
+    function autoResizeShiftEnterInput(el) {
+        if (!el || typeof el.getBoundingClientRect !== 'function') return;
+        el.style.height = 'auto';
+        el.style.height = Math.max(el.scrollHeight, 42) + 'px';
+    }
+    window.autoResizeShiftEnterInput = autoResizeShiftEnterInput;
+
+    let isShiftEnterInitialized = false;
+    function initShiftEnterInputs() {
+        if (isShiftEnterInitialized) return;
+        isShiftEnterInitialized = true;
+
+        document.addEventListener('keydown', (e) => {
+            const target = e.target;
+            if (!target || !target.matches('textarea.shift-enter-input, textarea.form-input, .shift-enter-input')) return;
+
+            if (e.key === 'Enter') {
+                if (e.shiftKey) {
+                    // Shift + Enter: Explicitly insert clean newline \n at cursor
+                    e.preventDefault();
+                    let inserted = false;
+                    try {
+                        if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
+                            inserted = document.execCommand('insertText', false, "\n");
+                        }
+                    } catch (err) {
+                        inserted = false;
+                    }
+                    if (!inserted) {
+                        const start = target.selectionStart ?? target.value.length;
+                        const end = target.selectionEnd ?? target.value.length;
+                        const val = target.value || '';
+                        target.value = val.substring(0, start) + "\n" + val.substring(end);
+                        target.selectionStart = target.selectionEnd = start + 1;
+                    }
+                    target.dispatchEvent(new Event('input', { bubbles: true }));
+                    autoResizeShiftEnterInput(target);
+                } else if (!e.ctrlKey && !e.altKey && !e.metaKey) {
+                    // Plain Enter without Shift:
+                    // For compact note inputs, submit the enclosing form (same as standard form input)
+                    if (target.classList.contains('shift-enter-input') && !target.classList.contains('allow-plain-enter')) {
+                        e.preventDefault();
+                        const form = target.closest('form');
+                        if (form) {
+                            const submitBtn = form.querySelector('button[type="submit"]:not([disabled])');
+                            if (submitBtn) {
+                                submitBtn.click();
+                            } else if (typeof form.requestSubmit === 'function') {
+                                form.requestSubmit();
+                            } else {
+                                form.submit();
+                            }
+                        }
+                    }
+                } else if (e.ctrlKey && !e.shiftKey) {
+                    // Ctrl + Enter: also submits form
+                    e.preventDefault();
+                    const form = target.closest('form');
+                    if (form) {
+                        const submitBtn = form.querySelector('button[type="submit"]:not([disabled])');
+                        if (submitBtn) submitBtn.click();
+                        else if (typeof form.requestSubmit === 'function') form.requestSubmit();
+                    }
+                }
+            }
+        });
+
+        // Auto-adjust height on input / paste
+        document.addEventListener('input', (e) => {
+            const target = e.target;
+            if (target && target.matches('textarea.shift-enter-input')) {
+                autoResizeShiftEnterInput(target);
+            }
+        });
+
+        // Auto-adjust height when focused
+        document.addEventListener('focusin', (e) => {
+            const target = e.target;
+            if (target && target.matches('textarea.shift-enter-input')) {
+                autoResizeShiftEnterInput(target);
+            }
+        });
+    }
+    initShiftEnterInputs();
+
     function getItemCreatedTimestamp(item) {
         if (!item) return 0;
         if (item.history && item.history.length > 0) {
@@ -3907,7 +3995,11 @@ async function startApp() {
         document.getElementById('user-email').value = item.userEmail || '';
         document.getElementById('user-phone').value = item.userPhone || '';
         document.getElementById('user-birth-date').value = item.userBirthDate || '';
-        if (document.getElementById('user-notes')) document.getElementById('user-notes').value = item.userNotes || '';
+        const elUserNotes = document.getElementById('user-notes');
+        if (elUserNotes) {
+            elUserNotes.value = item.userNotes || '';
+            autoResizeShiftEnterInput(elUserNotes);
+        }
         if (document.getElementById('user-element')) document.getElementById('user-element').value = item.userElement || '';
         if (document.getElementById('user-key-element')) document.getElementById('user-key-element').value = item.userKeyElement || '';
         if (document.getElementById('user-erg-chat')) document.getElementById('user-erg-chat').value = item.userErgChat || 'not_installed';
@@ -3935,7 +4027,11 @@ async function startApp() {
         document.getElementById('key-win').value = item.keyWin || '';
         document.getElementById('key-office').value = item.keyOffice || '';
         document.getElementById('key-pdf').value = item.keyPdf || '';
-        document.getElementById('dev-notes').value = item.devNotes || '';
+        const elDevNotes = document.getElementById('dev-notes');
+        if (elDevNotes) {
+            elDevNotes.value = item.devNotes || '';
+            autoResizeShiftEnterInput(elDevNotes);
+        }
         document.getElementById('dev-apps').value = item.devApps || '';
         populateTroubleshootForm(item.devIssueDesc, item.devIssueFix);
         document.getElementById('dev-status').value = item.devStatus || '';
@@ -4079,6 +4175,16 @@ async function startApp() {
             badgeMode.style.borderColor = 'rgba(123, 202, 15, 0.3)';
         }
         formCapPhat.reset();
+        const elUserNotesReset = document.getElementById('user-notes');
+        if (elUserNotesReset) {
+            elUserNotesReset.value = '';
+            elUserNotesReset.style.height = '42px';
+        }
+        const elDevNotesReset = document.getElementById('dev-notes');
+        if (elDevNotesReset) {
+            elDevNotesReset.value = '';
+            elDevNotesReset.style.height = '42px';
+        }
         resetTroubleshootForm();
         const resetDeviceCount = document.getElementById('device-count');
         if (resetDeviceCount) { resetDeviceCount.value = '1'; renderSecondDeviceForm(); }
@@ -7308,7 +7414,7 @@ async function startApp() {
             const tr = document.createElement('tr');
             
             const notesSubText = item.notes 
-                ? `<div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">${item.notes}</div>` 
+                ? `<div class="cell-multiline-text" style="font-size: 12px; color: var(--text-muted); margin-top: 2px; white-space: pre-wrap; word-break: break-word; line-height: 1.45;">${escapeHtml(item.notes)}</div>` 
                 : '';
 
             tr.innerHTML = `
@@ -7468,7 +7574,11 @@ async function startApp() {
         document.getElementById('acc-ip').value = item.ip;
         document.getElementById('acc-username').value = item.username;
         document.getElementById('acc-password').value = item.password;
-        document.getElementById('acc-notes').value = item.notes || '';
+        const elAccNotes = document.getElementById('acc-notes');
+        if (elAccNotes) {
+            elAccNotes.value = item.notes || '';
+            autoResizeShiftEnterInput(elAccNotes);
+        }
 
         // Reset toggled raw pass view inside input if it was open
         const passInput = document.getElementById('acc-password');
@@ -7511,7 +7621,11 @@ async function startApp() {
         btnSaveAccount.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Tài Khoản';
         btnCancelAccount.classList.add('hidden');
         formAccount.reset();
-        document.getElementById('acc-notes').value = '';
+        const elAccNotesReset = document.getElementById('acc-notes');
+        if (elAccNotesReset) {
+            elAccNotesReset.value = '';
+            elAccNotesReset.style.height = '42px';
+        }
 
         const passInput = document.getElementById('acc-password');
         passInput.type = 'password';
@@ -7932,7 +8046,7 @@ async function startApp() {
                     </div>
                 `;
             }
-            const notesHTML = item.notes ? `<span class="text-secondary" style="font-size: 12px; font-style: italic;">${item.notes}</span>` : '<span class="text-muted">—</span>';
+            const notesHTML = item.notes ? `<div class="text-secondary cell-multiline-text" style="font-size: 12px; font-style: italic; white-space: pre-wrap; word-break: break-word; line-height: 1.45;">${escapeHtml(item.notes)}</div>` : '<span class="text-muted">—</span>';
 
             tr.innerHTML = `
                 <td>
@@ -8119,7 +8233,11 @@ async function startApp() {
         document.getElementById('cam-https').value = item.https;
         document.getElementById('cam-username').value = item.username;
         document.getElementById('cam-password').value = item.password;
-        document.getElementById('cam-notes').value = item.notes;
+        const elCamNotes = document.getElementById('cam-notes');
+        if (elCamNotes) {
+            elCamNotes.value = item.notes || '';
+            autoResizeShiftEnterInput(elCamNotes);
+        }
         document.getElementById('cam-onvif-user').value = item.onvifUser;
         document.getElementById('cam-onvif-pass').value = item.onvifPass;
 
@@ -8158,6 +8276,11 @@ async function startApp() {
         btnSaveCamera.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Camera';
         btnCancelCamera.classList.add('hidden');
         formCamera.reset();
+        const elCamNotesReset = document.getElementById('cam-notes');
+        if (elCamNotesReset) {
+            elCamNotesReset.value = '';
+            elCamNotesReset.style.height = '42px';
+        }
         showTabTableOnly('tab-camera');
     }
 
@@ -8801,7 +8924,7 @@ async function startApp() {
                     <div style="font-weight: 600; color: var(--text-primary);">${item.name}</div>
                 </td>
                 <td>
-                    <span style="font-size: 13px; color: var(--text-secondary); font-style: italic; white-space: pre-line; word-break: break-word; display: block; line-height: 1.4;">${item.notes || '—'}</span>
+                    <div class="cell-multiline-text" style="font-size: 13px; color: var(--text-secondary); white-space: pre-wrap; word-break: break-word; line-height: 1.5;">${escapeHtml(item.notes || '—')}</div>
                 </td>
                 <td>
                     <span style="font-weight: 500; color: var(--text-secondary);">${item.provider || '—'}</span>
@@ -8925,7 +9048,12 @@ async function startApp() {
         
         document.getElementById('license-name').value = item.name;
         document.getElementById('license-provider').value = item.provider || '';
-        document.getElementById('license-notes').value = item.notes || '';
+        const elLicNotes = document.getElementById('license-notes');
+        if (elLicNotes) {
+            elLicNotes.value = item.notes || '';
+            elLicNotes.style.height = 'auto';
+            elLicNotes.style.height = Math.max(elLicNotes.scrollHeight, 42) + 'px';
+        }
         document.getElementById('license-expiry').value = formatDateDMY(item.expiryDate);
 
         btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật Bản Quyền';
@@ -8967,6 +9095,8 @@ async function startApp() {
         if (btnSaveGiaHan) btnSaveGiaHan.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thông Tin Gia Hạn';
         if (btnCancelGiaHan) btnCancelGiaHan.classList.add('hidden');
         if (formGiaHan) formGiaHan.reset();
+        const elLicNotes = document.getElementById('license-notes');
+        if (elLicNotes) elLicNotes.style.height = '42px';
         showTabTableOnly('tab-gia-han');
     }
 
@@ -9169,7 +9299,7 @@ async function startApp() {
                 <td><span class="badge" style="${statusStyle} font-size: 11px; font-weight: 600;">${statusVal}</span>${locationHtml}</td>
                 <td class="text-center"><span class="badge badge-warning" style="font-size: 13px; font-weight: 700;">${item.quantity || 1}</span></td>
                 <td>
-                    <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">${item.reason || '—'}</div>
+                    <div class="cell-multiline-text" style="font-size: 13px; color: var(--text-primary); font-weight: 500; white-space: pre-wrap; word-break: break-word; line-height: 1.5;">${escapeHtml(item.reason || '—')}</div>
                     <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><i class="fa-regular fa-calendar"></i> ${formatDateDMY(item.dateStored)}</div>
                 </td>
                 <td>
@@ -9477,7 +9607,11 @@ async function startApp() {
         if (document.getElementById('kho-stored-by')) document.getElementById('kho-stored-by').value = item.storedBy || specs.storedBy || '';
 
         const cleanNotes = (item.notes || '').replace(/\[SPECS_JSON:[\s\S]*$/g, '').replace(/\[SPECS_JSON:.*?\]/s, '').trim();
-        if (document.getElementById('kho-notes')) document.getElementById('kho-notes').value = cleanNotes;
+        const elKhoNotes = document.getElementById('kho-notes');
+        if (elKhoNotes) {
+            elKhoNotes.value = cleanNotes;
+            autoResizeShiftEnterInput(elKhoNotes);
+        }
 
         if (btnSaveKho) btnSaveKho.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> LƯU CẬP NHẬT';
 
@@ -9530,6 +9664,11 @@ async function startApp() {
         const formTitle = document.getElementById('title-form-kho');
         if (formTitle) formTitle.innerHTML = '<i class="fa-solid fa-boxes-stacked"></i> Thêm & Cập Nhật Thiết Bị Lưu Kho';
         if (formKho) formKho.reset();
+        const elKhoNotesReset = document.getElementById('kho-notes');
+        if (elKhoNotesReset) {
+            elKhoNotesReset.value = '';
+            elKhoNotesReset.style.height = '42px';
+        }
 
         if (document.getElementById('kho-quantity')) document.getElementById('kho-quantity').value = '1';
         if (document.getElementById('kho-status')) document.getElementById('kho-status').value = 'Sẵn sàng cấp phát';
@@ -11252,6 +11391,7 @@ async function startApp() {
                 showToast('Thành công', 'Đã đồng bộ xong dữ liệu từ Supabase!', 'success');
             }
             initCustomAutocompletes();
+            initShiftEnterInputs();
             renderDashboard();
             renderTask();
         } catch (err) {

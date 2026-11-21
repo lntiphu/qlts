@@ -860,8 +860,7 @@ body.light-theme .header-user-avatar.role-admin {
 }
 
 .btn-secondary,
-.btn.glass,
-.btn-task-reset {
+.btn.glass {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.05) 46%, rgba(255, 255, 255, 0.08)) !important;
     border: 1px solid rgba(255, 255, 255, 0.18) !important;
     border-radius: var(--ios-radius-pill) !important;
@@ -877,15 +876,12 @@ body.light-theme .header-user-avatar.role-admin {
 }
 
 .btn-secondary:hover,
-.btn.glass:hover,
-.btn-task-reset:hover {
+.btn.glass:hover {
     background: linear-gradient(145deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.08) 46%, rgba(255, 255, 255, 0.14)) !important;
     border-color: rgba(165, 206, 58, 0.55) !important;
     color: #c6e862 !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 14px 32px -8px rgba(0, 0, 0, 0.5), 0 0 20px rgba(165, 206, 58, 0.25) !important;
-}
-                0 6px 18px rgba(165, 206, 58, 0.25) !important;
 }
 
 .btn-secondary:active {
@@ -6014,7 +6010,7 @@ body.light-theme .device-empty-card.is-offboarded .device-empty-pill {
     flex: 1;
     font-size: 12px;
     color: #e2e8f0;
-    white-space: pre-line;
+    white-space: pre-wrap;
     overflow-wrap: anywhere;
     word-break: break-word;
     line-height: 1.45;
@@ -7878,11 +7874,13 @@ body.light-theme .hist-modal-footer {
 .task-filter-group {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 6px 12px;
+    border-radius: 9px;
+    padding: 3px 6px;
+    height: 34px;
+    box-sizing: border-box;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
 }
@@ -7899,12 +7897,12 @@ body.light-theme .hist-modal-footer {
 }
 
 .task-filter-label {
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 600;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 4px;
     white-space: nowrap;
 }
 
@@ -7914,10 +7912,12 @@ body.light-theme .hist-modal-footer {
     background: rgba(255, 255, 255, 0.06) !important;
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: 9px !important;
-    padding: 6px 11px !important;
-    font-size: 13px !important;
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+    font-size: 11.5px !important;
     font-weight: 500 !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
     outline: none !important;
     transition: all 0.2s ease !important;
     font-family: inherit !important;
@@ -7943,31 +7943,37 @@ body.light-theme .hist-modal-footer {
     padding: 6px;
 }
 
-/* Reset filter button (Frosted Liquid Glass) */
+/* Reset filter button (Compact Frosted Liquid Glass) */
 .btn-task-reset {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 8px !important;
+    border-radius: 9px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
     background: rgba(255, 255, 255, 0.06) !important;
     border: 1px solid rgba(255, 255, 255, 0.14) !important;
-    color: var(--text-secondary) !important;
-    padding: 7px 16px !important;
-    border-radius: var(--ios-radius-pill) !important;
-    font-size: 12px !important;
-    font-weight: 600 !important;
     cursor: pointer !important;
     transition: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
     display: inline-flex !important;
     align-items: center !important;
-    gap: 6px !important;
-    backdrop-filter: blur(12px) !important;
-    -webkit-backdrop-filter: blur(12px) !important;
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15) !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
 .btn-task-reset:hover {
-    background: rgba(231, 29, 54, 0.16) !important;
-    border-color: rgba(231, 29, 54, 0.4) !important;
-    color: #f87171 !important;
-    transform: translateY(-1.5px) !important;
-    box-shadow: 0 4px 12px rgba(231, 29, 54, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+    background: rgba(239, 68, 68, 0.18) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #fca5a5 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
 }
 
 .btn-task-reset:active {
@@ -8018,6 +8024,43 @@ body.light-theme .hist-modal-footer {
     color: #08113a !important;
     font-weight: 700 !important;
     box-shadow: 0 4px 16px rgba(165, 206, 58, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.6) !important;
+}
+
+/* --- Multiline Shift+Enter Inputs & Displays --- */
+textarea.shift-enter-input {
+    min-height: 42px !important;
+    height: 42px;
+    padding: 8px 12px !important;
+    resize: vertical !important;
+    line-height: 1.45 !important;
+    font-size: 13.5px !important;
+    border-radius: 10px !important;
+    box-sizing: border-box !important;
+    transition: height 0.15s ease, border-color 0.25s ease, background-color 0.25s ease !important;
+}
+
+textarea.shift-enter-input:focus {
+    border-color: #a5ce3a !important;
+    box-shadow: 0 0 0 3px rgba(165, 206, 58, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2) !important;
+}
+
+.cell-multiline-text {
+    white-space: pre-wrap !important;
+    word-break: break-word !important;
+    line-height: 1.5 !important;
+}
+
+body.light-theme textarea.shift-enter-input {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(203, 213, 225, 0.9) !important;
+    color: #0f172a !important;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-theme textarea.shift-enter-input:focus {
+    background: #ffffff !important;
+    border-color: #a5ce3a !important;
+    box-shadow: 0 0 0 3px rgba(165, 206, 58, 0.28), inset 0 1px 1px #ffffff !important;
 }
 
 /* --- 4. Modern Table Styling --- */
@@ -8689,6 +8732,20 @@ body.light-theme .task-custom-input {
 body.light-theme .task-custom-select option {
     background: #ffffff;
     color: #0f172a;
+}
+
+body.light-theme .btn-task-reset {
+    background: rgba(241, 245, 249, 0.9) !important;
+    border-color: rgba(203, 213, 225, 0.9) !important;
+    color: #64748b !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.light-theme .btn-task-reset:hover {
+    background: rgba(254, 226, 226, 0.95) !important;
+    border-color: rgba(239, 68, 68, 0.45) !important;
+    color: #dc2626 !important;
+    box-shadow: 0 3px 8px rgba(239, 68, 68, 0.16) !important;
 }
 
 body.light-theme .task-tag-btn {
