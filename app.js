@@ -9932,14 +9932,66 @@ async function startApp() {
             elStatSubToday.innerHTML = `<i class="fa-regular fa-calendar-check"></i> Hôm nay (${todayStr})`;
         }
 
-        // Sort tasks: newest date & time first
+        // Helper: Calculate exact absolute timestamp for sorting (newest date & time first)
+        function getTaskSortTimestamp(task) {
+            if (!task) return 0;
+            let y = 0, m = 0, d = 0;
+            if (task.date) {
+                const str = String(task.date).trim();
+                if (str.includes('/')) {
+                    const parts = str.split('/');
+                    if (parts.length === 3) {
+                        d = parseInt(parts[0], 10) || 0;
+                        m = parseInt(parts[1], 10) || 0;
+                        y = parseInt(parts[2], 10) || 0;
+                    }
+                } else if (str.includes('-')) {
+                    const parts = str.split('-');
+                    if (parts.length === 3) {
+                        y = parseInt(parts[0], 10) || 0;
+                        m = parseInt(parts[1], 10) || 0;
+                        d = parseInt(parts[2], 10) || 0;
+                    }
+                }
+            }
+            let hh = 0, mm = 0, ss = 0;
+            if (task.time) {
+                const timeParts = String(task.time).trim().split(':');
+                hh = parseInt(timeParts[0], 10) || 0;
+                mm = parseInt(timeParts[1], 10) || 0;
+                ss = parseInt(timeParts[2], 10) || 0;
+            }
+
+            let dateTimeVal = 0;
+            if (y > 0 && m > 0 && d > 0) {
+                dateTimeVal = new Date(y, m - 1, d, hh, mm, ss).getTime();
+            }
+
+            let createdVal = 0;
+            if (task.createdAt) {
+                const t = new Date(task.createdAt).getTime();
+                if (!isNaN(t)) createdVal = t;
+            } else if (task.updatedAt) {
+                const t = new Date(task.updatedAt).getTime();
+                if (!isNaN(t)) createdVal = t;
+            } else if (typeof task.id === 'string' && /^\d{13}/.test(task.id)) {
+                createdVal = parseInt(task.id.slice(0, 13), 10);
+            }
+
+            return dateTimeVal > 0 ? dateTimeVal : createdVal;
+        }
+
+        // Sort tasks: newest date & time first (mới nhất lên trên cùng)
         const sortedList = [...(taskList || [])].sort((a, b) => {
-            const dateA = a.date ? a.date.split('/').reverse().join('') : '';
-            const dateB = b.date ? b.date.split('/').reverse().join('') : '';
-            if (dateA !== dateB) return dateB.localeCompare(dateA);
-            const timeA = a.time || '';
-            const timeB = b.time || '';
-            return timeB.localeCompare(timeA);
+            const timeA = getTaskSortTimestamp(a);
+            const timeB = getTaskSortTimestamp(b);
+            if (timeB !== timeA) return timeB - timeA;
+
+            const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            if (createdB !== createdA) return createdB - createdA;
+
+            return String(b.id || '').localeCompare(String(a.id || ''));
         });
 
         // Apply filters
@@ -10093,7 +10145,7 @@ async function startApp() {
                         <input type="checkbox" class="task-status-toggle" data-id="${task.id}" ${task.completed ? 'checked' : ''}>
                         <span class="task-slider"></span>
                     </label>
-                    <span class="task-status-pill ${task.completed ? 'is-completed' : 'is-pending'}" id="status-pill-${task.id}">
+                    <span class="task-status-pill ${task.completed ? 'is-completed' : 'is-pending'}" id="status-pill-${task.id}" data-id="${task.id}" style="cursor: pointer;" title="Nhấn để chuyển trạng thái Hoàn thành / Chưa hoàn thành">
                         ${task.completed ? '<i class="fa-solid fa-circle-check"></i> Đã hoàn thành' : '<i class="fa-solid fa-clock"></i> Chưa hoàn thành'}
                     </span>
                 </div>
@@ -10124,17 +10176,34 @@ async function startApp() {
             tbodyTask.appendChild(tr);
         });
 
-        // Event listeners for toggle switches
-        tbodyTask.querySelectorAll('.task-status-toggle').forEach(toggle => {
+        // Event listeners for toggle switches and status pills (click switch OR pill toggles immediately)
+        tbodyTask.querySelectorAll('.task-toggle-wrapper').forEach(wrapper => {
+            const toggle = wrapper.querySelector('.task-status-toggle');
+            const pill = wrapper.querySelector('.task-status-pill');
+            if (!toggle) return;
+            const taskId = toggle.getAttribute('data-id');
+
+            // 1. Direct change on checkbox toggle
             toggle.addEventListener('change', function(e) {
                 if (!requirePermission('canEdit', 'thay đổi trạng thái task')) {
                     this.checked = !this.checked;
                     return;
                 }
-                const taskId = this.getAttribute('data-id');
-                const isChecked = this.checked;
-                toggleTaskStatus(taskId, isChecked);
+                toggleTaskStatus(taskId, this.checked);
             });
+
+            // 2. Click on the status pill badge
+            if (pill) {
+                pill.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!requirePermission('canEdit', 'thay đổi trạng thái task')) return;
+                    const item = (taskList || []).find(t => String(t.id) === String(taskId));
+                    const nextStatus = item ? !item.completed : !toggle.checked;
+                    toggle.checked = nextStatus;
+                    toggleTaskStatus(taskId, nextStatus);
+                });
+            }
         });
 
         // Event listeners for edit buttons
@@ -10158,11 +10227,15 @@ async function startApp() {
         const item = (taskList || []).find(t => String(t.id) === String(taskId));
         if (!item) return;
 
-        item.completed = !!isCompleted;
+        item.completed = (typeof isCompleted === 'boolean') ? isCompleted : !item.completed;
         item.updatedAt = new Date().toISOString();
         saveTaskToLocalStorage();
 
-        // Update pill instantly
+        // 1. Immediately update checkbox state in the DOM
+        const toggle = tbodyTask ? tbodyTask.querySelector(`.task-status-toggle[data-id="${taskId}"]`) : null;
+        if (toggle) toggle.checked = item.completed;
+
+        // 2. Immediately update pill text, icon, and colors in the DOM
         const pill = document.getElementById(`status-pill-${taskId}`);
         if (pill) {
             pill.className = `task-status-pill ${item.completed ? 'is-completed' : 'is-pending'}`;
@@ -10171,7 +10244,8 @@ async function startApp() {
                 : '<i class="fa-solid fa-clock"></i> Chưa hoàn thành';
         }
 
-        // Update stats
+        // 3. Update top metric counters immediately
+        const totalCount = (taskList || []).length;
         const pendingCount = (taskList || []).filter(t => !t.completed).length;
         const completedCount = (taskList || []).filter(t => !!t.completed).length;
         const elStatPending = document.getElementById('task-stat-pending');
@@ -10181,7 +10255,6 @@ async function startApp() {
 
         const elStatSubPending = document.getElementById('task-stat-sub-pending');
         const elStatSubCompleted = document.getElementById('task-stat-sub-completed');
-        const totalCount = (taskList || []).length;
         if (elStatSubPending) {
             elStatSubPending.innerHTML = pendingCount > 0 
                 ? `<i class="fa-solid fa-circle-exclamation pulse"></i> ${pendingCount} việc chờ xử lý` 
@@ -10192,7 +10265,13 @@ async function startApp() {
             elStatSubCompleted.innerHTML = `<i class="fa-solid fa-chart-pie"></i> ${rate}% hoàn thành`;
         }
 
-        // Sync with Supabase
+        // 4. If current view is filtered by status (pending or completed), re-render so list stays accurate
+        const selStatus = filterTaskStatus ? filterTaskStatus.value : '';
+        if (currentTaskPreset === 'pending' || currentTaskPreset === 'completed' || selStatus === 'pending' || selStatus === 'completed') {
+            renderTask();
+        }
+
+        // 5. Sync with Supabase asynchronously
         if (supabaseClient) {
             supabaseClient.from('tasks').update({
                 completed: item.completed,
