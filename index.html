@@ -19,7 +19,7 @@
     <!-- FontAwesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom Style -->
-    <link rel="stylesheet" href="style.css?v=52.0">
+    <link rel="stylesheet" href="style.css?v=55.0">
     <style>
         .troubleshoot-wrapper {
             background: var(--glass-bg);
@@ -1975,6 +1975,7 @@
                                     <select id="task-type" required style="display: none;">
                                         <option value="Phần cứng">Phần cứng</option>
                                         <option value="Phần mềm" selected>Phần mềm</option>
+                                        <option value="Hỗ trợ phòng họp">Hỗ trợ phòng họp</option>
                                         <option value="Khác">Khác</option>
                                     </select>
                                     
@@ -2001,7 +2002,18 @@
                                             </div>
                                         </div>
 
-                                        <!-- Card 3: Khác -->
+                                        <!-- Card 3: Hỗ trợ phòng họp -->
+                                        <div class="task-type-card-opt" data-type="Hỗ trợ phòng họp">
+                                            <div class="task-type-card-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">
+                                                <i class="fa-solid fa-people-roof"></i>
+                                            </div>
+                                            <div>
+                                                <h4 style="margin: 0; font-size: 13.5px; font-weight: 700; color: #c084fc;">Hỗ trợ phòng họp</h4>
+                                                <p style="margin: 2px 0 0 0; font-size: 11.5px; color: var(--text-secondary);">Máy chiếu, TV, micro, họp trực tuyến, âm thanh...</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Card 4: Khác -->
                                         <div class="task-type-card-opt" data-type="Khác">
                                             <div class="task-type-card-icon" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3);">
                                                 <i class="fa-solid fa-screwdriver-wrench"></i>
@@ -2066,6 +2078,7 @@
                                             <span class="task-template-chip" data-text="Khắc phục sự cố mất mạng LAN / Wifi">+ Sửa mạng LAN/Wifi</span>
                                             <span class="task-template-chip" data-text="Cấu hình tài khoản email Outlook">+ Cấu hình Outlook</span>
                                             <span class="task-template-chip" data-text="Thay bàn phím và chuột mới">+ Thay phím/chuột</span>
+                                            <span class="task-template-chip" data-text="Setup âm thanh, máy chiếu và họp trực tuyến phòng họp">+ Setup phòng họp</span>
                                             <span class="task-template-chip" data-text="Vệ sinh máy và tra keo tản nhiệt">+ Vệ sinh máy</span>
                                         </div>
                                     </div>
@@ -2129,14 +2142,15 @@
 
                             <!-- Header Row 2: Bộ lọc & Mục lục theo Ngày / Tháng / Năm / Loại hỗ trợ -->
                             <div class="task-filter-panel">
-                                <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
+                                <div style="display: flex; align-items: center; gap: 3px; flex-wrap: wrap;">
                                     <!-- Mục lục: Loại hỗ trợ -->
                                     <div class="task-filter-group">
                                         <span class="task-filter-label"><i class="fa-solid fa-shapes" style="color: #a5ce3a;"></i> Loại:</span>
-                                        <select id="filter-task-type" class="task-custom-select" style="width: 80px;">
+                                        <select id="filter-task-type" class="task-custom-select">
                                             <option value="">Tất cả loại</option>
                                             <option value="Phần cứng">Phần cứng</option>
                                             <option value="Phần mềm">Phần mềm</option>
+                                            <option value="Hỗ trợ phòng họp">Hỗ trợ phòng họp</option>
                                             <option value="Khác">Khác</option>
                                         </select>
                                     </div>
@@ -2144,7 +2158,7 @@
                                     <!-- Mục lục: Kênh hỗ trợ -->
                                     <div class="task-filter-group">
                                         <span class="task-filter-label"><i class="fa-solid fa-headset" style="color: #38bdf8;"></i> Kênh:</span>
-                                        <select id="filter-task-channel" class="task-custom-select" style="width: 80px;">
+                                        <select id="filter-task-channel" class="task-custom-select">
                                             <option value="">Tất cả kênh</option>
                                             <option value="Remote">Remote</option>
                                             <option value="Trực tiếp">Trực tiếp</option>
@@ -2154,7 +2168,7 @@
                                     <!-- Mục lục: Trạng thái -->
                                     <div class="task-filter-group">
                                         <span class="task-filter-label"><i class="fa-solid fa-toggle-on" style="color: #34d399;"></i> Trạng thái:</span>
-                                        <select id="filter-task-status" class="task-custom-select" style="width: 92px;">
+                                        <select id="filter-task-status" class="task-custom-select">
                                             <option value="">Tất cả</option>
                                             <option value="pending">Chưa hoàn thành</option>
                                             <option value="completed">Đã hoàn thành</option>
@@ -2164,7 +2178,7 @@
                                     <!-- Mục lục Thời gian: Năm -->
                                     <div class="task-filter-group">
                                         <span class="task-filter-label"><i class="fa-solid fa-calendar" style="color: #60a5fa;"></i> Năm:</span>
-                                        <select id="filter-task-year" class="task-custom-select" style="width: 74px;">
+                                        <select id="filter-task-year" class="task-custom-select">
                                             <option value="">Tất cả năm</option>
                                         </select>
                                     </div>
@@ -2172,7 +2186,7 @@
                                     <!-- Mục lục Thời gian: Tháng -->
                                     <div class="task-filter-group">
                                         <span class="task-filter-label"><i class="fa-regular fa-calendar-days" style="color: #0284c7;"></i> Tháng:</span>
-                                        <select id="filter-task-month" class="task-custom-select" style="width: 78px;">
+                                        <select id="filter-task-month" class="task-custom-select">
                                             <option value="">Tất cả tháng</option>
                                             <option value="01">Tháng 01</option>
                                             <option value="02">Tháng 02</option>
@@ -2192,7 +2206,7 @@
                                     <!-- Mục lục Thời gian: Ngày -->
                                     <div class="task-filter-group">
                                         <span class="task-filter-label"><i class="fa-solid fa-calendar-day" style="color: #a5ce3a;"></i> Ngày:</span>
-                                        <input type="text" id="filter-task-date" placeholder="dd/mm/yyyy" maxlength="10" class="task-custom-input" style="width: 76px;">
+                                        <input type="text" id="filter-task-date" placeholder="dd/mm/yyyy" maxlength="10" class="task-custom-input">
                                     </div>
 
                                     <!-- Nút Reset Filter -->

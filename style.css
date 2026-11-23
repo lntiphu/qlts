@@ -7855,10 +7855,10 @@ body.light-theme .hist-modal-footer {
     backdrop-filter: blur(28px) saturate(190%);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: var(--ios-radius-lg);
-    padding: 18px 20px;
+    padding: 14px 16px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     box-shadow: 0 10px 32px 0 rgba(0, 0, 0, 0.38), inset 0 1px 1px 0 rgba(255, 255, 255, 0.22);
     position: relative;
 }
@@ -7874,12 +7874,12 @@ body.light-theme .hist-modal-footer {
 .task-filter-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 9px;
-    padding: 3px 6px;
-    height: 34px;
+    padding: 2px 4px;
+    height: 32px;
     box-sizing: border-box;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.15);
@@ -7897,12 +7897,12 @@ body.light-theme .hist-modal-footer {
 }
 
 .task-filter-label {
-    font-size: 11.5px;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     white-space: nowrap;
 }
 
@@ -7913,15 +7913,17 @@ body.light-theme .hist-modal-footer {
     color: #f8fafc !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     border-radius: 6px !important;
-    padding: 2px 6px !important;
+    padding: 0 5px !important;
     font-size: 11.5px !important;
     font-weight: 500 !important;
-    height: 26px !important;
+    height: 24px !important;
+    line-height: 22px !important;
     box-sizing: border-box !important;
     outline: none !important;
     transition: all 0.2s ease !important;
     font-family: inherit !important;
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+    white-space: nowrap !important;
 }
 
 .task-custom-select:hover,
@@ -7943,11 +7945,45 @@ body.light-theme .hist-modal-footer {
     padding: 6px;
 }
 
+.task-custom-select {
+    cursor: pointer !important;
+    padding-right: 15px !important;
+    padding-left: 5px !important;
+}
+
+/* Individual filter widths to guarantee single-line fit with NO text clipping whatsoever */
+#filter-task-type {
+    width: 110px !important;
+    min-width: 110px !important;
+}
+#filter-task-channel {
+    width: 88px !important;
+    min-width: 88px !important;
+}
+#filter-task-status {
+    width: 82px !important;
+    min-width: 82px !important;
+}
+#filter-task-year {
+    width: 82px !important;
+    min-width: 82px !important;
+}
+#filter-task-month {
+    width: 90px !important;
+    min-width: 90px !important;
+}
+#filter-task-date {
+    width: 78px !important;
+    min-width: 78px !important;
+    text-align: center !important;
+    cursor: text !important;
+}
+
 /* Reset filter button (Compact Frosted Liquid Glass) */
 .btn-task-reset {
-    height: 34px !important;
-    min-height: 34px !important;
-    padding: 0 8px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 7px !important;
     border-radius: 9px !important;
     font-size: 11.5px !important;
     font-weight: 600 !important;
@@ -8163,6 +8199,12 @@ body.light-theme textarea.shift-enter-input:focus {
     background: rgba(30, 43, 143, 0.25) !important;
     color: #93c5fd !important;
     border: 1px solid rgba(46, 61, 191, 0.35) !important;
+}
+
+.badge-type-meeting {
+    background: rgba(168, 85, 247, 0.16) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(168, 85, 247, 0.35) !important;
 }
 
 .badge-type-other {
@@ -8427,6 +8469,13 @@ body.light-theme .task-type-badge.badge-type-software {
     font-weight: 600 !important;
 }
 
+body.light-theme .task-type-badge.badge-type-meeting {
+    background: rgba(147, 51, 234, 0.12) !important;
+    color: #7e22ce !important;
+    border: 1px solid rgba(147, 51, 234, 0.25) !important;
+    font-weight: 600 !important;
+}
+
 body.light-theme .task-switch {
     background: rgba(0, 0, 0, 0.05);
     border-radius: 24px;
@@ -8559,12 +8608,18 @@ body.light-theme .task-switch {
 
 .task-type-selector-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 12px;
     margin-top: 6px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+    .task-type-selector-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
     .task-type-selector-grid {
         grid-template-columns: 1fr;
     }

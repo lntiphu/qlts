@@ -10262,6 +10262,8 @@ async function startApp() {
                 typeBadge = `<span class="task-type-badge badge-type-hardware"><i class="fa-solid fa-microchip"></i> Phần cứng</span>`;
             } else if (task.supportType === 'Phần mềm') {
                 typeBadge = `<span class="task-type-badge badge-type-software"><i class="fa-solid fa-laptop-code"></i> Phần mềm</span>`;
+            } else if (task.supportType === 'Hỗ trợ phòng họp') {
+                typeBadge = `<span class="task-type-badge badge-type-meeting"><i class="fa-solid fa-people-roof"></i> Hỗ trợ phòng họp</span>`;
             } else {
                 typeBadge = `<span class="task-type-badge badge-type-other"><i class="fa-solid fa-screwdriver-wrench"></i> ${escapeHtml(task.supportType || 'Khác')}</span>`;
             }
