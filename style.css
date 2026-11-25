@@ -744,6 +744,17 @@ body.light-theme .header-user-avatar.role-admin {
     box-shadow: 0 0 0 3px rgba(165, 206, 58, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
 
+.form-group select {
+    color-scheme: dark;
+}
+
+.form-group select option,
+select.form-input option,
+#rbac-default-new-user-role option {
+    background-color: #0f172a;
+    color: #f8fafc;
+}
+
 .error-msg {
     color: var(--danger-color);
     font-size: 12px;
@@ -3253,6 +3264,17 @@ body.light-theme .search-box input:focus {
     background: #ffffff !important;
     border-color: #a5ce3a !important;
     box-shadow: 0 0 0 3px rgba(165, 206, 58, 0.28), inset 0 1px 1px rgba(255, 255, 255, 1) !important;
+}
+
+body.light-theme .form-group select {
+    color-scheme: light;
+}
+
+body.light-theme .form-group select option,
+body.light-theme select.form-input option,
+body.light-theme #rbac-default-new-user-role option {
+    background-color: #ffffff;
+    color: #0f172a;
 }
 
 body.light-theme .data-table thead th {
