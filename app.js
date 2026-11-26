@@ -525,6 +525,7 @@ async function startApp() {
                     userErgChat: db.user_erg_chat || db.userErgChat || 'not_installed',
                     devId: db.dev_id || db.devId || '',
                     devUps: db.dev_ups || db.devUps || '',
+                    devCharger: db.dev_charger || db.devCharger || '',
                     devExtraDevices: db.dev_extra_devices || db.devExtraDevices || '',
                     devType: db.dev_type || db.devType || '',
                     devMain: db.dev_main || db.devMain || '',
@@ -602,6 +603,7 @@ async function startApp() {
                     has_device: js.devAllocation === 'yes',
                     dev_id: js.devId || null,
                     dev_ups: js.devUps || null,
+                    dev_charger: js.devCharger || null,
                     dev_extra_devices: js.devExtraDevices || null,
                     dev_type: js.devType,
                     dev_main: js.devMain,
@@ -1302,7 +1304,7 @@ async function startApp() {
     // cột cũ để không làm ảnh hưởng dữ liệu hiện có; máy thứ hai được lưu trong
     // mảng devices và có thể đồng bộ xuống cột devices_json khi DB đã nâng cấp.
     const DEVICE_FORM_FIELDS = [
-        ['devId', 'dev-id'], ['devUps', 'dev-ups'], ['devExtraDevices', 'dev-extra-devices'],
+        ['devId', 'dev-id'], ['devUps', 'dev-ups'], ['devCharger', 'dev-charger'], ['devExtraDevices', 'dev-extra-devices'],
         ['devType', 'dev-type'], ['devSn', 'dev-sn'], ['devStatus', 'dev-status'],
         ['devMain', 'dev-main'], ['devCpu', 'dev-cpu'], ['devRam', 'dev-ram'],
         ['devRamSlots', 'dev-ram-slots'], ['devSsd', 'dev-ssd'], ['devSsd2', 'dev-ssd-2'],
@@ -2482,6 +2484,7 @@ async function startApp() {
         item.devMonitorSn2 = '';
         item.devSn = '';
         item.devUps = '';
+        item.devCharger = '';
         item.devExtraDevices = '';
         item.devKeyboard = '';
         item.devMouse = '';
@@ -2508,7 +2511,7 @@ async function startApp() {
         const dateStored = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
         const specsData = {};
         [
-            'devId', 'devUps', 'devExtraDevices', 'devType', 'devMain', 'devCpu', 'devRam', 'devRamSlots', 'devSsd', 'devSsd2',
+            'devId', 'devUps', 'devCharger', 'devExtraDevices', 'devType', 'devMain', 'devCpu', 'devRam', 'devRamSlots', 'devSsd', 'devSsd2',
             'devHdd', 'devHdd2', 'devVga', 'devMonitor', 'devMonitor2', 'devMonitorSn', 'devMonitorSn2',
             'devSn', 'devKeyboard', 'devMouse', 'devCables', 'keyWin', 'keyOffice', 'keyPdf', 'devNotes',
             'devApps', 'devStatus', 'devIssueDesc', 'devIssueFix', 'assetCode', 'maTaiSan', 'assetCompany',
@@ -2769,7 +2772,7 @@ async function startApp() {
                 devSsd: '', devSsd2: '', devHdd: '', devHdd2: '', devVga: '',
                 devMonitor: '', devMonitor2: '', devMonitorSn: '', devMonitorSn2: '',
                 devSn: '', devKeyboard: '', devMouse: '', devCables: '',
-                devStatus: 'Không cấp', devUps: '', devExtraDevices: '',
+                devStatus: 'Không cấp', devUps: '', devCharger: '', devExtraDevices: '',
                 devApps: '', devIssueDesc: '', devIssueFix: '',
                 keyWin: '', keyOffice: '', keyPdf: '', devices: [], deviceCount: 1
             } : item;
@@ -2901,7 +2904,7 @@ async function startApp() {
                     device.devId, device.devType, device.devSn, device.devMain, device.devCpu,
                     device.devRam, device.devSsd, device.devSsd2, device.devHdd, device.devHdd2,
                     device.devVga, device.devMonitor, device.devMonitor2, device.devKeyboard,
-                    device.devMouse, device.devUps, device.devExtraDevices, device.devCables
+                    device.devMouse, device.devUps, device.devCharger, device.devExtraDevices, device.devCables
                 ].some(value => String(value || '').trim() !== '')
             ));
 
@@ -2977,6 +2980,7 @@ async function startApp() {
                 }
                 pushPeriphChip('fa-solid fa-computer-mouse', 'Chuột', device.devMouse);
                 pushPeriphChip('fa-solid fa-car-battery', 'UPS', device.devUps);
+                pushPeriphChip('fa-solid fa-bolt', 'Sạc', device.devCharger);
                 pushPeriphChip('fa-solid fa-plug', 'Dây', device.devCables);
                 pushPeriphChip('fa-solid fa-cubes', 'Thiết bị rời', device.devExtraDevices);
 
@@ -3668,6 +3672,7 @@ async function startApp() {
             userErgChat: document.getElementById('user-erg-chat')?.value || 'not_installed',
             devId: hasDevice && devIdInput ? devIdInput.value.trim() : '',
             devUps: hasDevice ? (document.getElementById('dev-ups')?.value || '') : '',
+            devCharger: hasDevice ? (document.getElementById('dev-charger')?.value || '') : '',
             devExtraDevices: hasDevice ? (document.getElementById('dev-extra-devices')?.value.trim() || '') : '',
             devType: hasDevice ? document.getElementById('dev-type').value.trim() : '',
             devMain: hasDevice ? document.getElementById('dev-main').value.trim() : '',
@@ -3867,6 +3872,7 @@ async function startApp() {
                 const devFields = {
                     devId: "ID Thiết bị",
                     devUps: "UPS",
+                    devCharger: "Sạc",
                     devExtraDevices: "Thiết bị rời",
                     devType: "Loại thiết bị",
                     devMain: "Mainboard",
@@ -4036,6 +4042,7 @@ async function startApp() {
         populateTroubleshootForm(item.devIssueDesc, item.devIssueFix);
         document.getElementById('dev-status').value = item.devStatus || '';
         if (document.getElementById('dev-ups')) document.getElementById('dev-ups').value = item.devUps || '';
+        if (document.getElementById('dev-charger')) document.getElementById('dev-charger').value = item.devCharger || '';
         if (document.getElementById('dev-extra-devices')) document.getElementById('dev-extra-devices').value = item.devExtraDevices || '';
         document.getElementById('dev-monitor').value = item.devMonitor || '';
         if (document.getElementById('dev-monitor-2')) document.getElementById('dev-monitor-2').value = item.devMonitor2 || '';
@@ -4366,6 +4373,7 @@ async function startApp() {
                 hasDevice: u.hasDevice !== false && u.devAllocation !== 'no' && (u.devId || u.devType || u.devCpu || u.devRam),
                 devId: u.devId || '',
                 devUps: u.devUps || '',
+                devCharger: u.devCharger || '',
                 devExtraDevices: u.devExtraDevices || '',
                 devType: u.devType || 'PC / Laptop',
                 devMain: u.devMain || '',
@@ -4445,6 +4453,7 @@ async function startApp() {
             hasDevice: devAllocVal === 'yes' && (devId || devType || devCpu || devRam),
             devId: devId,
             devUps: document.getElementById('dev-ups')?.value || '',
+            devCharger: document.getElementById('dev-charger')?.value || '',
             devExtraDevices: document.getElementById('dev-extra-devices')?.value.trim() || '',
             devType: devType || 'PC / Laptop',
             devMain: devMain,
@@ -4513,6 +4522,7 @@ async function startApp() {
         let html = `<strong>Mã thiết bị:</strong> ${specs.devId || 'Chưa đặt ID'}<br>`;
         html += `<strong>Loại:</strong> ${specs.devType} | <strong>Tình trạng:</strong> ${specs.devStatus}<br>`;
         if (specs.devUps) html += `<strong>UPS:</strong> ${specs.devUps}<br>`;
+        if (specs.devCharger) html += `<strong>Sạc:</strong> ${specs.devCharger}<br>`;
         let hardware = [];
         if (specs.devMain) hardware.push(`Main: ${specs.devMain}`);
         if (specs.devCpu) hardware.push(`CPU: ${specs.devCpu}`);
@@ -4687,6 +4697,7 @@ async function startApp() {
                 targetUser.devAllocation = 'yes';
                 targetUser.devId = specs.devId;
                         targetUser.devUps = specs.devUps || '';
+                        targetUser.devCharger = specs.devCharger || '';
                         targetUser.devExtraDevices = specs.devExtraDevices || '';
                 targetUser.devType = specs.devType;
                 targetUser.devMain = specs.devMain;
@@ -4814,6 +4825,7 @@ async function startApp() {
                 // Đóng gói 100% linh kiện chi tiết thành JSON
                 const specsData = {
                     devUps: specs.devUps || '',
+                    devCharger: specs.devCharger || '',
                     devExtraDevices: specs.devExtraDevices || '',
                     devType: specs.devType,
                     devMain: specs.devMain,
@@ -5087,6 +5099,7 @@ async function startApp() {
             targetUser.assetType = khoItem.assetType || specsObj.assetType || 'LT';
             targetUser.devType = specsObj.devType || khoItem.name || 'PC / Laptop';
             targetUser.devUps = specsObj.devUps || '';
+            targetUser.devCharger = specsObj.devCharger || '';
             targetUser.devExtraDevices = specsObj.devExtraDevices || '';
             targetUser.devMain = khoItem.devMain || specsObj.devMain || '';
             targetUser.devCpu = khoItem.devCpu || specsObj.devCpu || '';
@@ -5263,6 +5276,7 @@ async function startApp() {
         // 2. Điền ĐẦY ĐỦ 100% CẤU HÌNH vào form
         if (devIdInput) devIdInput.value = khoItem.code || '';
         if (document.getElementById('dev-ups')) document.getElementById('dev-ups').value = specsObj.devUps || '';
+        if (document.getElementById('dev-charger')) document.getElementById('dev-charger').value = specsObj.devCharger || '';
         if (document.getElementById('dev-extra-devices')) document.getElementById('dev-extra-devices').value = specsObj.devExtraDevices || '';
         const devTypeInput = document.getElementById('dev-type');
         if (devTypeInput) devTypeInput.value = specsObj.devType || khoItem.name || 'PC / Laptop';
@@ -12527,7 +12541,7 @@ async function startApp() {
                 devRamSlots: '', devSsd: '', devSsd2: '', devHdd: '', devHdd2: '',
                 devMonitor: '', devMonitor2: '', devMonitorSn: '', devMonitorSn2: '',
                 devSn: '', devKeyboard: '', devMouse: '', devVga: '', devStatus: 'Không cấp',
-                devCables: '', devUps: '', devExtraDevices: '', keyWin: '', keyOffice: '',
+                devCables: '', devUps: '', devCharger: '', devExtraDevices: '', keyWin: '', keyOffice: '',
                 keyPdf: '', devApps: '', devNotes: '', devices: [], deviceCount: 1
             };
         }
@@ -12596,6 +12610,7 @@ async function startApp() {
             var devStatus = item.devStatus || '—';
             var devCables = item.devCables || '—';
             var devUps = item.devUps || '—';
+            var devCharger = item.devCharger || '—';
             var devExtraDevices = item.devExtraDevices || '—';
 
             keyWin = item.keyWin || '—';
@@ -12655,6 +12670,7 @@ async function startApp() {
             var devStatus = (document.getElementById('dev-status') ? document.getElementById('dev-status').value : '') || '—';
             var devCables = (document.getElementById('dev-cables') ? document.getElementById('dev-cables').value : '') || '—';
             var devUps = (document.getElementById('dev-ups') ? document.getElementById('dev-ups').value : '') || '—';
+            var devCharger = (document.getElementById('dev-charger') ? document.getElementById('dev-charger').value : '') || '—';
             var devExtraDevices = (document.getElementById('dev-extra-devices') ? document.getElementById('dev-extra-devices').value.trim() : '') || '—';
 
             keyWin = (document.getElementById('key-win') ? document.getElementById('key-win').value.trim() : '') || '—';
@@ -12689,6 +12705,7 @@ async function startApp() {
         if (document.getElementById('receipt-dev-status')) document.getElementById('receipt-dev-status').innerText = devStatus;
         if (document.getElementById('receipt-dev-cables')) document.getElementById('receipt-dev-cables').innerText = devCables;
         if (document.getElementById('receipt-dev-ups')) document.getElementById('receipt-dev-ups').innerText = devUps;
+        if (document.getElementById('receipt-dev-charger')) document.getElementById('receipt-dev-charger').innerText = devCharger;
         if (document.getElementById('receipt-dev-extra-devices')) document.getElementById('receipt-dev-extra-devices').innerText = devExtraDevices;
 
         if (document.getElementById('receipt-key-win')) document.getElementById('receipt-key-win').innerText = keyWin;
